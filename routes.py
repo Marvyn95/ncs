@@ -11,6 +11,7 @@ from utils import save_file, login_required
 @login_required
 def home():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     return render_template("home.html",
                            section="home",
                            user=user,
@@ -140,6 +141,7 @@ def change_password():
 @login_required
 def umbrellas():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     umbrellas = db.Umbrellas.find()
     return render_template("umbrellas.html",
                            user=user,
@@ -198,7 +200,7 @@ def delete_umbrella():
 @login_required
 def users():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
 
     users = list(db.Users.find())
     for u in users:
@@ -306,6 +308,8 @@ def delete_user():
 @login_required
 def areas():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    
     areas = list(db.Areas.find())
 
     for a in areas:
@@ -374,6 +378,8 @@ def delete_area():
 @login_required
 def schemes():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+
     schemes = list(db.Schemes.find())
     areas = list(db.Areas.find())
     districts = list(db.Districts.find())
@@ -450,6 +456,7 @@ def delete_scheme():
 @login_required
 def districts():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     districts = db.Districts.find()
     return render_template("districts.html",
                            user=user,
@@ -504,6 +511,8 @@ def delete_district():
 @login_required
 def villages():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+
     villages = list(db.Villages.find())
     districts = list(db.Districts.find())
 
@@ -559,6 +568,7 @@ def delete_village():
 @login_required
 def customers():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     return render_template("customers.html",
                            user=user,
                            section="customers",
@@ -568,6 +578,7 @@ def customers():
 @login_required
 def reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     return render_template("reports.html",
                            user=user,
                            section="reports",
