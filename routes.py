@@ -3,11 +3,12 @@ from flask import render_template, flash, request, url_for, session, redirect, s
 import json
 from bson.objectid import ObjectId
 import datetime
-from utils import save_file
+from utils import save_file, login_required
 
 
 
 @app.route('/home', methods=["GET", "POST"])
+@login_required
 def home():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     return render_template("home.html",
@@ -85,6 +86,7 @@ def register():
 
 # profile
 @app.route('/profile', methods=["GET"])
+@login_required
 def profile():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella")
@@ -135,6 +137,7 @@ def change_password():
 
 # umbrellas
 @app.route('/umbrellas', methods=["GET"])
+@login_required
 def umbrellas():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     umbrellas = db.Umbrellas.find()
@@ -190,7 +193,9 @@ def delete_umbrella():
 
 
 
+# users
 @app.route('/users', methods=["GET"])
+@login_required
 def users():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     return render_template("users.html",
@@ -201,6 +206,7 @@ def users():
 
 # areas
 @app.route('/areas', methods=["GET"])
+@login_required
 def areas():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     areas = list(db.Areas.find())
@@ -221,14 +227,18 @@ def add_area():
     flash("Area added successfully!", "success")
     return redirect(url_for("areas"))
 
+
 @app.route('/edit_area', methods=["POST"])
 def edit_area():
     area_id = request.form.get("area_id")
     new_area_name = request.form.get("area")
+
     area_info = db.Areas.find_one({"_id": ObjectId(area_id)})
+
     if new_area_name != area_info['area'] and db.Areas.find_one({"area": new_area_name}) is not None:
         flash("Area already exists!", "danger")
         return redirect(url_for("areas"))
+    
     db.Areas.update_one({"_id": ObjectId(area_id)}, {"$set": {"area": new_area_name}})
     flash("Area updated successfully!", "success")
     return redirect(url_for("areas"))
@@ -236,9 +246,12 @@ def edit_area():
 @app.route('/delete_area', methods=["POST"])
 def delete_area():
     area_id = request.form.get("area_id")
+
     schemes = db.Schemes.find({"area_id": str(area_id)})
-    if len(list(schemes)) > 0:
-        flash("Cannot delete area, it is assigned to schemes!", "danger")
+    users = db.Users.find({"area_id": str(area_id)})
+
+    if len(list(schemes)) > 0 and len(list(users)) > 0:
+        flash("Cannot delete area, it has schemes and users assigned!", "danger")
         return redirect(url_for("areas"))
     db.Areas.delete_one({"_id": ObjectId(area_id)})
     flash("Area deleted successfully!", "success")
@@ -246,18 +259,76 @@ def delete_area():
 
 
 
+# schemes
 @app.route('/schemes', methods=["GET"])
+@login_required
 def schemes():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    schemes = list(db.Schemes.find())
+    areas = list(db.Areas.find())
+    districts = list(db.Districts.find())
+
+    # Attach area and district names for display if needed
+    for scheme in schemes:
+        area = db.Areas.find_one({"_id": ObjectId(scheme["area_id"])}) if scheme.get("area_id") else None
+        district = db.Districts.find_one({"_id": ObjectId(scheme["district_id"])}) if scheme.get("district_id") else None
+        scheme["area"] = area["area"] if area else "N/A"
+        scheme["district"] = district["district"] if district else "N/A"
+
     return render_template("schemes.html",
                            user=user,
                            section="schemes",
-                           date=datetime.datetime.now().strftime("%d %B %Y"))
+                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           schemes=schemes,
+                           areas=areas,
+                           districts=districts)
+
+@app.route('/add_scheme', methods=["POST"])
+@login_required
+def add_scheme():
+    scheme_name = request.form.get("scheme")
+    area_id = request.form.get("area_id")
+    district_id = request.form.get("district_id")
+    if db.Schemes.find_one({"scheme": scheme_name, "area_id": area_id, "district_id": district_id}) is not None:
+        flash("Scheme already exists for this area and district!", "danger")
+        return redirect(url_for("schemes"))
+    db.Schemes.insert_one({"scheme": scheme_name, "area_id": area_id, "district_id": district_id})
+    flash("Scheme added successfully!", "success")
+    return redirect(url_for("schemes"))
+
+@app.route('/edit_scheme', methods=["POST"])
+@login_required
+def edit_scheme():
+    scheme_id = request.form.get("scheme_id")
+    new_scheme_name = request.form.get("scheme")
+    new_area_id = request.form.get("area_id")
+    new_district_id = request.form.get("district_id")
+    scheme_info = db.Schemes.find_one({"_id": ObjectId(scheme_id)})
+    if (new_scheme_name != scheme_info['scheme'] or new_area_id != scheme_info['area_id'] or new_district_id != scheme_info['district_id']) and \
+       db.Schemes.find_one({"scheme": new_scheme_name, "area_id": new_area_id, "district_id": new_district_id}) is not None:
+        flash("Scheme already exists for this area and district!", "danger")
+        return redirect(url_for("schemes"))
+    db.Schemes.update_one({"_id": ObjectId(scheme_id)}, {"$set": {"scheme": new_scheme_name, "area_id": new_area_id, "district_id": new_district_id}})
+    flash("Scheme updated successfully!", "success")
+    return redirect(url_for("schemes"))
+
+@app.route('/delete_scheme', methods=["POST"])
+@login_required
+def delete_scheme():
+    scheme_id = request.form.get("scheme_id")
+    customers = db.Customers.find({"scheme_id": str(scheme_id)})
+    if len(list(customers)) > 0:
+        flash("Cannot delete scheme, it is assigned to customers!", "danger")
+        return redirect(url_for("schemes"))
+    db.Schemes.delete_one({"_id": ObjectId(scheme_id)})
+    flash("Scheme deleted successfully!", "success")
+    return redirect(url_for("schemes"))
 
 
 
 # districts
 @app.route('/districts', methods=["GET"])
+@login_required
 def districts():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     districts = db.Districts.find()
@@ -312,6 +383,7 @@ def delete_district():
 
 # villages
 @app.route('/villages', methods=["GET"])
+@login_required
 def villages():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     villages = list(db.Villages.find())
@@ -366,6 +438,7 @@ def delete_village():
 
 
 @app.route('/customers', methods=["GET"])
+@login_required
 def customers():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     return render_template("customers.html",
@@ -374,6 +447,7 @@ def customers():
                            date=datetime.datetime.now().strftime("%d %B %Y"))
 
 @app.route('/reports', methods=["GET"])
+@login_required
 def reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     return render_template("reports.html",

@@ -1,5 +1,8 @@
 import os
 import secrets
+from functools import wraps
+from flask import session, flash, redirect, url_for
+
 
 def save_file(file, upload_folder='static/uploads'):
     if not file or file.filename == '':
@@ -10,3 +13,12 @@ def save_file(file, upload_folder='static/uploads'):
     os.makedirs(folder, exist_ok=True)
     file.save(os.path.join(folder, filename))
     return filename
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("userid"):
+            flash("Please log in to access this page.", "warning")
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
