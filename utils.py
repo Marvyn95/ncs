@@ -14,6 +14,13 @@ def save_file(file, upload_folder='static/uploads'):
     file.save(os.path.join(folder, filename))
     return filename
 
+def delete_file(filename, upload_folder='static/uploads'):
+    file_path = os.path.join(os.getcwd(), upload_folder, filename)
+    try:
+        os.remove(file_path)
+        print(f"Deleted file: {file_path}")
+    except FileNotFoundError:
+        pass
 
 def login_required(f):
     @wraps(f)

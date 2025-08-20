@@ -3,7 +3,7 @@ from flask import render_template, flash, request, url_for, session, redirect, s
 import json
 from bson.objectid import ObjectId
 import datetime
-from utils import save_file, login_required
+from utils import save_file, login_required, delete_file
 
 
 
@@ -628,6 +628,8 @@ def edit_customer():
     recommendation_letter = request.files.get("recommendation_letter")
     wealth_assessment_form = request.files.get("wealth_assessment_form")
 
+    customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
+
     update_data = {
         "name": name,
         "contact": contact,
@@ -637,25 +639,69 @@ def edit_customer():
     }
 
     if id_document and id_document.filename:
+        if customer.get("id_document"):
+            delete_file(customer.get("id_document"))
         update_data["id_document"] = save_file(id_document)
     if recommendation_letter and recommendation_letter.filename:
+        if customer.get("recommendation_letter"):
+            delete_file(customer.get("recommendation_letter"))
         update_data["recommendation_letter"] = save_file(recommendation_letter)
-    if wealth_assessment_form and wealth_assessment_form.filename:
-        update_data["wealth_assessment_form"] = save_file(wealth_assessment_form)
+
+
+    if request.files.get("wealth_assessment_form") is not None:
+        if wealth_assessment_form and wealth_assessment_form.filename:
+            if customer.get("wealth_assessment_form"):
+                delete_file(customer.get("wealth_assessment_form"))
+            update_data["wealth_assessment_form"] = save_file(wealth_assessment_form)
+
+    if "pipe_type" in request.form:
+        update_data["pipe_type"] = request.form.get("pipe_type")
+
+    if "pipe_diameter" in request.form:
+        update_data["pipe_diameter"] = request.form.get("pipe_diameter")
+
+    if "pipe_length" in request.form:
+        update_data["pipe_length"] = request.form.get("pipe_length")
 
     db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
     flash("Customer updated successfully!", "success")
     return redirect(url_for("customers"))
 
 
-#comd edit this later on
+#come edit this later on for certain cases
 @app.route('/delete_customer', methods=["POST"])
 @login_required
 def delete_customer():
     customer_id = request.form.get("customer_id")
+
     db.Customers.delete_one({"_id": ObjectId(customer_id)})
     flash("Customer deleted successfully!", "success")
     return redirect(url_for("customers"))
+
+
+@app.route('/customer_survey', methods=["POST"])
+@login_required
+def customer_survey():
+    customer_id = request.form.get("customer_id")
+    pipe_type = request.form.get("pipe_type")
+    pipe_diameter = request.form.get("pipe_diameter")
+    pipe_length = request.form.get("pipe_length")
+    wealth_assessment_form = request.files.get("wealth_assessment_form")
+
+    update_data = {
+        "pipe_type": pipe_type,
+        "pipe_diameter": pipe_diameter,
+        "pipe_length": pipe_length,
+        "status": "surveyed"
+    }
+
+    if wealth_assessment_form and wealth_assessment_form.filename:
+        update_data["wealth_assessment_form"] = save_file(wealth_assessment_form)
+
+    db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
+    flash("Survey details saved successfully!", "success")
+    return redirect(url_for("customers"))
+
 
 
 @app.route('/reports', methods=["GET"])
