@@ -70,14 +70,8 @@
         {% for scheme in schemes %}
         <tr class="bg-dark-subtle my-1">
           <td class="fw-semibold text-truncate" style="max-width: 200px;">{{ scheme.scheme }}</td>
-          <td class="text-truncate" style="max-width: 150px;">
-            {% set area = areas | selectattr('_id', 'equalto', scheme.area_id) | list | first %}
-            {{ area.area if area else 'N/A' }}
-          </td>
-          <td class="text-truncate" style="max-width: 150px;">
-            {% set district = districts | selectattr('_id', 'equalto', scheme.district_id) | list | first %}
-            {{ district.district if district else 'N/A' }}
-          </td>
+          <td class="fw-semibold text-truncate" style="max-width: 200px;">{{ scheme.area }}</td>
+          <td class="fw-semibold text-truncate" style="max-width: 200px;">{{ scheme.district }}</td>
           <td>
             <div class="d-flex gap-1">
               <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ scheme._id }}">
@@ -104,22 +98,22 @@
                     <label for="scheme_{{ scheme._id }}" class="form-label">Scheme Name</label>
                     <input type="text" class="form-control" id="scheme_{{ scheme._id }}" name="scheme" value="{{ scheme.scheme }}">
                   </div>
-                  <div class="mb-3">
-                    <label for="area_id_{{ scheme._id }}" class="form-label">Area</label>
-                    <select class="form-select" id="area_id_{{ scheme._id }}" name="area_id" required>
-                      {% for area in areas %}
-                        <option value="{{ area._id }}" {% if area._id == scheme.area_id %}selected{% endif %}>{{ area.area }}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
-                  <div class="mb-3">
-                    <label for="district_id_{{ scheme._id }}" class="form-label">District</label>
-                    <select class="form-select" id="district_id_{{ scheme._id }}" name="district_id" required>
-                      {% for district in districts %}
-                        <option value="{{ district._id }}" {% if district._id == scheme.district_id %}selected{% endif %}>{{ district.district }}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
+<div class="mb-3">
+  <label for="area_id_{{ scheme._id }}" class="form-label">Area</label>
+  <select class="form-select" id="area_id_{{ scheme._id }}" name="area_id" required>
+    {% for area in areas %}
+      <option value="{{ area._id }}" {% if area._id|string == scheme.area_id|string %}selected{% endif %}>{{ area.area }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="mb-3">
+  <label for="district_id_{{ scheme._id }}" class="form-label">District</label>
+  <select class="form-select" id="district_id_{{ scheme._id }}" name="district_id" required>
+    {% for district in districts %}
+      <option value="{{ district._id }}" {% if district._id|string == scheme.district_id|string %}selected{% endif %}>{{ district.district }}</option>
+    {% endfor %}
+  </select>
+</div>
                 </div>
                 <div class="modal-footer">
                   <button type="submit" class="btn btn-primary">Save Changes</button>

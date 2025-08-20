@@ -87,14 +87,14 @@
                     <label for="village_{{ village._id }}" class="form-label">Village Name</label>
                     <input type="text" class="form-control" id="village_{{ village._id }}" name="village" value="{{ village.village }}">
                   </div>
-                  <div class="mb-3">
-                    <label for="district_id_{{ village._id }}" class="form-label">District</label>
-                    <select class="form-select" id="district_id_{{ village._id }}" name="district_id" required>
-                      {% for district in districts %}
-                        <option value="{{ district._id }}" {% if district._id == village.district_id %}selected{% endif %}>{{ district.district }}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
+<div class="mb-3">
+  <label for="district_id_{{ village._id }}" class="form-label">District</label>
+  <select class="form-select" id="district_id_{{ village._id }}" name="district_id" required>
+    {% for district in districts %}
+      <option value="{{ district._id }}" {% if district._id|string == village.district_id|string %}selected{% endif %}>{{ district.district }}</option>
+    {% endfor %}
+  </select>
+</div>
                 </div>
                 <div class="modal-footer">
                   <button type="submit" class="btn btn-primary">Save Changes</button>

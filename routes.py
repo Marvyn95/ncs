@@ -75,7 +75,7 @@ def register():
             "last_name": form_info["last_name"].strip(),
             "email": form_info["email"].strip(),
             "password": bcrypt.generate_password_hash(form_info["password"].strip()).decode("utf-8"),
-            "role": "admin",
+            "role": "administrator",
             "active_status": True
         })
         flash("You have been registered successfully!", "success")
@@ -198,10 +198,107 @@ def delete_umbrella():
 @login_required
 def users():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+
+    users = list(db.Users.find())
+    for u in users:
+        u["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(u.get("umbrella_id"))})["umbrella"] if u.get("umbrella_id") else "N/A"
+        u["area"] = db.Areas.find_one({"_id": ObjectId(u.get("area_id"))})["area"] if u.get("area_id") else "N/A"
+        u["scheme"] = db.Schemes.find_one({"_id": ObjectId(u.get("scheme_id"))})["scheme"] if u.get("scheme_id") else "N/A"
+
+    umbrellas = list(db.Umbrellas.find())
+    areas = list(db.Areas.find())
+    schemes = list(db.Schemes.find())
     return render_template("users.html",
                            user=user,
                            section="users",
-                           date=datetime.datetime.now().strftime("%d %B %Y"))
+                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           users=users,
+                           umbrellas=umbrellas,
+                           areas=areas,
+                           schemes=schemes)
+
+@app.route('/add_user', methods=["POST"])
+@login_required
+def add_user():
+    first_name = request.form.get("first_name")
+    last_name = request.form.get("last_name")
+    email = request.form.get("email")
+    role = request.form.get("role")
+    password = request.form.get("password")
+    confirm_password = request.form.get("confirm_password")
+    umbrella_id = request.form.get("umbrella_id")
+    area_id = request.form.get("area_id") or None
+    scheme_id = request.form.get("scheme_id") or None
+
+    if password != confirm_password:
+        flash("Passwords do not match!", "danger")
+        return redirect(url_for("users"))
+    if db.Users.find_one({"email": email}):
+        flash("Email already exists!", "danger")
+        return redirect(url_for("users"))
+
+    hashed_pw = bcrypt.generate_password_hash(password).decode("utf-8")
+
+    db.Users.insert_one({
+        "first_name": first_name,
+        "last_name": last_name,
+        "email": email,
+        "role": role,
+        "password": hashed_pw,
+        "umbrella_id": umbrella_id,
+        "area_id": area_id,
+        "scheme_id": scheme_id
+    })
+
+    flash("User added successfully!", "success")
+    return redirect(url_for("users"))
+
+
+@app.route('/edit_user', methods=["POST"])
+@login_required
+def edit_user():
+    user_id = request.form.get("user_id")
+    first_name = request.form.get("first_name")
+    last_name = request.form.get("last_name")
+    email = request.form.get("email")
+    role = request.form.get("role")
+    umbrella_id = request.form.get("umbrella_id")
+    area_id = request.form.get("area_id") or None
+    scheme_id = request.form.get("scheme_id") or None
+
+    update_info = {
+        "first_name": first_name,
+        "last_name": last_name,
+        "role": role,
+        "umbrella_id": umbrella_id,
+        "area_id": area_id,
+        "scheme_id": scheme_id
+    }
+
+    user_info = db.Users.find_one({"_id": ObjectId(user_id)})
+    if email != user_info['email'] and db.Users.find_one({"email": email}) is not None:
+        flash("There is a user with this email!", "danger")
+    else:
+        update_info["email"] = email
+
+    db.Users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": update_info}
+    )
+    flash("User updated successfully!", "success")
+    return redirect(url_for("users"))
+
+
+
+@app.route('/delete_user', methods=["POST"])
+@login_required
+def delete_user():
+    user_id = request.form.get("user_id")
+    db.Users.delete_one({"_id": ObjectId(user_id)})
+    flash("User deleted successfully!", "success")
+    return redirect(url_for("users"))
+
 
 
 # areas
@@ -210,20 +307,29 @@ def users():
 def areas():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     areas = list(db.Areas.find())
+
+    for a in areas:
+        umbrella = db.Umbrellas.find_one({"_id": ObjectId(a.get("umbrella_id"))})
+        a["umbrella"] = umbrella["umbrella"] if umbrella else "N/A"
+
+    umbrellas = list(db.Umbrellas.find())
     return render_template("areas.html",
                            user=user,
                            section="areas",
                            date=datetime.datetime.now().strftime("%d %B %Y"),
-                           areas=areas)
+                           areas=areas,
+                           umbrellas=umbrellas)
 
 @app.route('/add_area', methods=["POST"])
 def add_area():
     area_name = request.form.get("area")
-    if db.Areas.find_one({"area": area_name}) is not None:
-        flash("Area already exists!", "danger")
+    umbrella_id = request.form.get("umbrella_id")
+
+    if db.Areas.find_one({"area": area_name, "umbrella_id": umbrella_id}) is not None:
+        flash("Area already exists for this Umbrella!", "danger")
         return redirect(url_for("areas"))
-    
-    db.Areas.insert_one({"area": area_name})
+
+    db.Areas.insert_one({"area": area_name, "umbrella_id": umbrella_id})
     flash("Area added successfully!", "success")
     return redirect(url_for("areas"))
 
@@ -232,14 +338,17 @@ def add_area():
 def edit_area():
     area_id = request.form.get("area_id")
     new_area_name = request.form.get("area")
+    new_umbrella_id = request.form.get("umbrella_id")
 
     area_info = db.Areas.find_one({"_id": ObjectId(area_id)})
+    print(new_area_name, area_info.get("area"), new_umbrella_id, area_info.get("umbrella_id"))
 
-    if new_area_name != area_info['area'] and db.Areas.find_one({"area": new_area_name}) is not None:
-        flash("Area already exists!", "danger")
-        return redirect(url_for("areas"))
-    
-    db.Areas.update_one({"_id": ObjectId(area_id)}, {"$set": {"area": new_area_name}})
+    if new_area_name != area_info.get("area") or new_umbrella_id != area_info.get("umbrella_id"):
+        if db.Areas.find_one({"area": new_area_name, "umbrella_id": new_umbrella_id}) is not None:
+            flash("Area already exists!", "danger")
+            return redirect(url_for("areas"))
+
+    db.Areas.update_one({"_id": ObjectId(area_id)}, {"$set": {"area": new_area_name, "umbrella_id": new_umbrella_id}})
     flash("Area updated successfully!", "success")
     return redirect(url_for("areas"))
 
@@ -253,6 +362,7 @@ def delete_area():
     if len(list(schemes)) > 0 and len(list(users)) > 0:
         flash("Cannot delete area, it has schemes and users assigned!", "danger")
         return redirect(url_for("areas"))
+    
     db.Areas.delete_one({"_id": ObjectId(area_id)})
     flash("Area deleted successfully!", "success")
     return redirect(url_for("areas"))
@@ -289,12 +399,15 @@ def add_scheme():
     scheme_name = request.form.get("scheme")
     area_id = request.form.get("area_id")
     district_id = request.form.get("district_id")
+
     if db.Schemes.find_one({"scheme": scheme_name, "area_id": area_id, "district_id": district_id}) is not None:
         flash("Scheme already exists for this area and district!", "danger")
         return redirect(url_for("schemes"))
+    
     db.Schemes.insert_one({"scheme": scheme_name, "area_id": area_id, "district_id": district_id})
     flash("Scheme added successfully!", "success")
     return redirect(url_for("schemes"))
+
 
 @app.route('/edit_scheme', methods=["POST"])
 @login_required
@@ -303,11 +416,14 @@ def edit_scheme():
     new_scheme_name = request.form.get("scheme")
     new_area_id = request.form.get("area_id")
     new_district_id = request.form.get("district_id")
+
     scheme_info = db.Schemes.find_one({"_id": ObjectId(scheme_id)})
-    if (new_scheme_name != scheme_info['scheme'] or new_area_id != scheme_info['area_id'] or new_district_id != scheme_info['district_id']) and \
-       db.Schemes.find_one({"scheme": new_scheme_name, "area_id": new_area_id, "district_id": new_district_id}) is not None:
-        flash("Scheme already exists for this area and district!", "danger")
-        return redirect(url_for("schemes"))
+
+    if (new_scheme_name != scheme_info['scheme'] or new_area_id != scheme_info['area_id'] or new_district_id != scheme_info['district_id']):
+        if db.Schemes.find_one({"scheme": new_scheme_name, "area_id": new_area_id, "district_id": new_district_id}) is not None:
+            flash("Scheme already exists for this area and district!", "danger")
+            return redirect(url_for("schemes"))
+        
     db.Schemes.update_one({"_id": ObjectId(scheme_id)}, {"$set": {"scheme": new_scheme_name, "area_id": new_area_id, "district_id": new_district_id}})
     flash("Scheme updated successfully!", "success")
     return redirect(url_for("schemes"))
@@ -316,14 +432,17 @@ def edit_scheme():
 @login_required
 def delete_scheme():
     scheme_id = request.form.get("scheme_id")
+
     customers = db.Customers.find({"scheme_id": str(scheme_id)})
-    if len(list(customers)) > 0:
-        flash("Cannot delete scheme, it is assigned to customers!", "danger")
+    users = db.Users.find({"scheme_id": str(scheme_id)})
+
+    if len(list(customers)) > 0 or len(list(users)) > 0:
+        flash("Cannot delete scheme, it is assigned to customers or users!", "danger")
         return redirect(url_for("schemes"))
+    
     db.Schemes.delete_one({"_id": ObjectId(scheme_id)})
     flash("Scheme deleted successfully!", "success")
     return redirect(url_for("schemes"))
-
 
 
 # districts
@@ -380,7 +499,6 @@ def delete_district():
 
 
 
-
 # villages
 @app.route('/villages', methods=["GET"])
 @login_required
@@ -424,11 +542,11 @@ def edit_village():
 @app.route('/delete_village', methods=["POST"])
 def delete_village():
     village_id = request.form.get("village_id")
-    customers = db.Customers.find({"village_id": str(village_id)})
-    schemes = db.Schemes.find({"village_id": str(village_id)})
 
-    if len(list(customers)) > 0 or len(list(schemes)) > 0:
-        flash("Cannot delete village, it is assigned to customers or schemes!", "danger")
+    customers = db.Customers.find({"village_id": str(village_id)})
+
+    if len(list(customers)) > 0:
+        flash("Cannot delete village, it is assigned to customers!", "danger")
         return redirect(url_for("villages"))
     
     db.Villages.delete_one({"_id": ObjectId(village_id)})
