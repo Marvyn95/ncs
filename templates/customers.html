@@ -1,5 +1,304 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Page-specific content goes here -->
+<div class="w-100 h-100">
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h5 class="fw-bold mb-1">Customers</h5>
+      <p class="mb-0">Manage customers</p>
+    </div>
+    <div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+        <i class="bi bi-plus-lg me-1"></i>
+      </button>
+    </div>
+  </div>
+
+<!-- Add Customer Modal -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('add_customer') }}" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCustomerModalLabel">Add New Customer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-md-6 mb-2">
+              <label for="name" class="form-label">Name</label>
+              <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="contact" class="form-label">Contact</label>
+              <input type="text" class="form-control" id="contact" name="contact" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="scheme_id" class="form-label">Scheme</label>
+              <select name="scheme_id" class="form-select" required>
+                <option value="" disabled selected>Select Scheme</option>
+                {% for scheme in schemes %}
+                  <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="village_id" class="form-label">Village</label>
+              <select name="village_id" class="form-select" required>
+                <option value="" disabled selected>Select Village</option>
+                {% for village in villages %}
+                  <option value="{{ village._id }}">{{ village.village }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="application_id" class="form-label">Application ID</label>
+              <input type="text" class="form-control" id="application_id" name="application_id" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="id_document" class="form-label">Identification Document</label>
+              <input type="file" class="form-control" id="id_document" name="id_document" accept="application/pdf,image/*" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="recommendation_letter" class="form-label">Recommendation Letter</label>
+              <input type="file" class="form-control" id="recommendation_letter" name="recommendation_letter" accept="application/pdf,image/*" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="submit" class="btn btn-success btn-sm">Add Customer</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+        <tr class="table-primary">
+          <th>Name</th>
+          <th>Type</th>
+          <th>Contact</th>
+          <th>Scheme</th>
+          <th>Village</th>
+          <th>Status</th>
+          <th>Connection Fee</th>
+          <th>Amount Due</th>
+          <th>Amount Paid</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for customer in customers %}
+        <tr class="bg-dark-subtle my-1">
+          <td class="fw-semibold text-truncate" style="max-width: 120px;">{{ customer.name or '-' }}</td>
+          <td class="text-truncate" style="max-width: 100px;">{{ customer.type or '-' }}</td>
+          <td class="text-truncate" style="max-width: 120px;">{{ customer.contact or '-' }}</td>
+          <td class="text-truncate" style="max-width: 120px;">{{ customer.scheme or '-' }}</td>
+          <td class="text-truncate" style="max-width: 120px;">{{ customer.village or '-' }}</td>
+          <td class="text-truncate" style="max-width: 80px;">{{ customer.status or '-' }}</td>
+          <td class="text-truncate" style="max-width: 100px;">{{ customer.connection_fee or '-' }}</td>
+          <td class="text-truncate" style="max-width: 100px;">{{ customer.amount_due or '-' }}</td>
+          <td class="text-truncate" style="max-width: 100px;">{{ customer.amount_paid or '-' }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <button class="btn btn-outline-info btn-sm p-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ customer._id }}">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-sm p-1" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ customer._id }}">
+                <i class="bi bi-trash"></i>
+              </button>
+              <button class="btn btn-outline-warning btn-sm p-1" data-bs-toggle="modal" data-bs-target="#actionModal-{{ customer._id }}">
+                <i class="bi bi-lightning"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+<!-- View Modal -->
+<div class="modal fade" id="viewModal-{{ customer._id }}" tabindex="-1" aria-labelledby="viewModalLabel-{{ customer._id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="font-size:0.90rem;">
+      <div class="modal-header py-2">
+        <h5 class="modal-title" id="viewModalLabel-{{ customer._id }}">Customer Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body py-2">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item py-1"><strong>Name:</strong> <span class="text-primary">{{ customer.name or 'N/A' }}</span></li>
+          <li class="list-group-item py-1"><strong>Type:</strong> <span class="text-primary">{{ customer.type or 'N/A' }}</span></li>
+          <li class="list-group-item py-1"><strong>Contact:</strong> <span class="text-primary">{{ customer.contact }}</span></li>
+          <li class="list-group-item py-1"><strong>Scheme:</strong> <span class="text-primary">{{ customer.scheme or 'N/A' }}</span></li>
+          <li class="list-group-item py-1"><strong>Village:</strong> <span class="text-primary">{{ customer.village or 'N/A' }}</span></li>
+          <li class="list-group-item py-1"><strong>Status:</strong> <span class="text-primary">{{ customer.status or 'N/A' }}</span></li>
+          <li class="list-group-item py-1"><strong>Connection Fee:</strong> <span class="text-primary">{{ customer.connection_fee or 'N/A' }}</span></li>
+          <li class="list-group-item py-1"><strong>Amount Due:</strong> <span class="text-primary">{{ customer.amount_due or 'N/A' }}</span></li>
+          <li class="list-group-item py-1"><strong>Amount Paid:</strong> <span class="text-primary">{{ customer.amount_paid or 'N/A' }}</span></li>
+          <li class="list-group-item py-1">
+            <strong>ID Document:</strong>
+            {% if customer.id_document %}
+              <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">View Document</a>
+            {% else %}
+              <span class="text-primary">N/A</span>
+            {% endif %}
+          </li>
+          <li class="list-group-item py-1">
+            <strong>Recommendation Letter:</strong>
+            {% if customer.recommendation_letter %}
+              <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">View Document</a>
+            {% else %}
+              <span class="text-primary">N/A</span>
+            {% endif %}
+          </li>
+          <li class="list-group-item py-1">
+            <strong>Wealth Assessment Form:</strong>
+            {% if customer.wealth_assessment_form %}
+              <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">View Document</a>
+            {% else %}
+              <span class="text-primary">N/A</span>
+            {% endif %}
+          </li>
+        </ul>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Customer Modal -->
+<div class="modal fade" id="editModal-{{ customer._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ customer._id }}" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" style="font-size:0.85rem;">
+      <form method="POST" action="{{ url_for('edit_customer') }}" enctype="multipart/form-data">
+        <div class="modal-header py-1">
+          <h6 class="modal-title" id="editModalLabel-{{ customer._id }}">Edit Customer</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body py-1">
+          <input type="hidden" name="customer_id" value="{{ customer._id }}">
+          <div class="row g-2">
+            <div class="col-md-6 mb-2">
+              <label for="name_{{ customer._id }}" class="form-label">Name</label>
+              <input type="text" class="form-control" id="name_{{ customer._id }}" name="name" value="{{ customer.name }}" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="contact_{{ customer._id }}" class="form-label">Contact</label>
+              <input type="text" class="form-control" id="contact_{{ customer._id }}" name="contact" value="{{ customer.contact }}" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="scheme_id_{{ customer._id }}" class="form-label">Scheme</label>
+              <select name="scheme_id" class="form-select" id="scheme_id_{{ customer._id }}" required>
+                {% for scheme in schemes %}
+                  <option value="{{ scheme._id }}" {% if scheme._id|string == customer.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="village_id_{{ customer._id }}" class="form-label">Village</label>
+              <select name="village_id" class="form-select" id="village_id_{{ customer._id }}" required>
+                {% for village in villages %}
+                  <option value="{{ village._id }}" {% if village._id|string == customer.village_id|string %}selected{% endif %}>{{ village.village }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="application_id_{{ customer._id }}" class="form-label">Application ID</label>
+              <input type="text" class="form-control" id="application_id_{{ customer._id }}" name="application_id" value="{{ customer.application_id }}" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="id_document_{{ customer._id }}" class="form-label">Identification Document</label>
+              <input type="file" class="form-control" id="id_document_{{ customer._id }}" name="id_document" accept="application/pdf,image/*">
+              {% if customer.id_document %}
+                <div class="mt-1">
+                  <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">
+                    <span class="text-primary">view current ID document</span>
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="recommendation_letter_{{ customer._id }}" class="form-label">Recommendation Letter</label>
+              <input type="file" class="form-control" id="recommendation_letter_{{ customer._id }}" name="recommendation_letter" accept="application/pdf,image/*">
+              {% if customer.recommendation_letter %}
+                <div class="mt-1">
+                  <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">
+                    <span class="text-primary">view current recommendation letter</span>
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
+              <input type="file" class="form-control" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form" accept="application/pdf,image/*">
+              {% if customer.wealth_assessment_form %}
+                <div class="mt-1">
+                  <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">
+                    <span class="text-primary">view current wealth assessment form</span>
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer py-1">
+          <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal-{{ customer._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ customer._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('delete_customer') }}">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="deleteModalLabel-{{ customer._id }}">Delete Customer</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="customer_id" value="{{ customer._id }}">
+                  <p>Are you sure you want to delete <strong>{{ customer.name }}</strong>?</p>
+                </div>
+                <div class="modal-footer py-2">
+                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Modal -->
+        <div class="modal fade" id="actionModal-{{ customer._id }}" tabindex="-1" aria-labelledby="actionModalLabel-{{ customer._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="actionModalLabel-{{ customer._id }}">Customer Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <!-- Add your custom action content here -->
+                <p>Perform an action for <strong>{{ customer.name }}</strong>.</p>
+              </div>
+              <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}

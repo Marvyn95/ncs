@@ -564,15 +564,99 @@ def delete_village():
 
 
 
+# customers
 @app.route('/customers', methods=["GET"])
 @login_required
 def customers():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+
+    customers = list(db.Customers.find())
+    for customer in customers:
+        scheme = db.Schemes.find_one({"_id": ObjectId(customer["scheme_id"])})
+        village = db.Villages.find_one({"_id": ObjectId(customer["village_id"])})
+        customer["scheme"] = scheme["scheme"] if scheme else 'N/A'
+        customer["village"] = village["village"] if village else 'N/A'
+
+    schemes = list(db.Schemes.find())
+    villages = list(db.Villages.find())
+
     return render_template("customers.html",
                            user=user,
                            section="customers",
-                           date=datetime.datetime.now().strftime("%d %B %Y"))
+                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           customers=customers,
+                           schemes=schemes,
+                           villages=villages)
+
+
+@app.route('/add_customer', methods=["POST"])
+@login_required
+def add_customer():
+    name = request.form.get("name")
+    contact = request.form.get("contact")
+    scheme_id = request.form.get("scheme_id")
+    village_id = request.form.get("village_id")
+    application_id = request.form.get("application_id")
+    id_document = request.files.get("id_document")
+    recommendation_letter = request.files.get("recommendation_letter")
+
+    db.Customers.insert_one({
+        "name": name,
+        "contact": contact,
+        "scheme_id": scheme_id,
+        "village_id": village_id,
+        "application_id": application_id,
+        "id_document": save_file(id_document),
+        "recommendation_letter": save_file(recommendation_letter),
+        "status": "applied"
+    })
+    flash("Customer added successfully!", "success")
+    return redirect(url_for("customers"))
+
+
+@app.route('/edit_customer', methods=["POST"])
+@login_required
+def edit_customer():
+    customer_id = request.form.get("customer_id")
+    name = request.form.get("name")
+    contact = request.form.get("contact")
+    scheme_id = request.form.get("scheme_id")
+    village_id = request.form.get("village_id")
+    application_id = request.form.get("application_id")
+    id_document = request.files.get("id_document")
+    recommendation_letter = request.files.get("recommendation_letter")
+    wealth_assessment_form = request.files.get("wealth_assessment_form")
+
+    update_data = {
+        "name": name,
+        "contact": contact,
+        "scheme_id": scheme_id,
+        "village_id": village_id,
+        "application_id": application_id
+    }
+
+    if id_document and id_document.filename:
+        update_data["id_document"] = save_file(id_document)
+    if recommendation_letter and recommendation_letter.filename:
+        update_data["recommendation_letter"] = save_file(recommendation_letter)
+    if wealth_assessment_form and wealth_assessment_form.filename:
+        update_data["wealth_assessment_form"] = save_file(wealth_assessment_form)
+
+    db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
+    flash("Customer updated successfully!", "success")
+    return redirect(url_for("customers"))
+
+
+#comd edit this later on
+@app.route('/delete_customer', methods=["POST"])
+@login_required
+def delete_customer():
+    customer_id = request.form.get("customer_id")
+    db.Customers.delete_one({"_id": ObjectId(customer_id)})
+    flash("Customer deleted successfully!", "success")
+    return redirect(url_for("customers"))
+
 
 @app.route('/reports', methods=["GET"])
 @login_required

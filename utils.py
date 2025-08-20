@@ -14,6 +14,7 @@ def save_file(file, upload_folder='static/uploads'):
     file.save(os.path.join(folder, filename))
     return filename
 
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
