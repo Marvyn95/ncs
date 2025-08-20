@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="w-100 h-100">
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h5 class="fw-bold mb-1">Districts</h5>
+      <p class="mb-0">Manage districts</p>
+    </div>
+    <div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDistrictModal">
+        <i class="bi bi-plus-lg me-1"></i> Add District
+      </button>
+    </div>
+  </div>
+
+  <!-- Add District Modal -->
+  <div class="modal fade" id="addDistrictModal" tabindex="-1" aria-labelledby="addDistrictModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="POST" action="{{ url_for('add_district') }}">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addDistrictModalLabel">Add New District</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="new_district" class="form-label">District Name</label>
+              <input type="text" class="form-control" id="new_district" name="district" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Add District</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+        <tr class="table-primary">
+          <th>District Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for district in districts %}
+        <tr class="bg-dark-subtle my-1">
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ district.district }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ district._id }}">
+                <i class="bi bi-pencil fs-6"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-sm p-1" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ district._id }}">
+                <i class="bi bi-trash fs-6"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal-{{ district._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ district._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('edit_district') }}">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="editModalLabel-{{ district._id }}">Edit District</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="district_id" value="{{ district._id }}">
+                  <div class="mb-3">
+                    <label for="district_{{ district._id }}" class="form-label">District Name</label>
+                    <input type="text" class="form-control" id="district_{{ district._id }}" name="district" value="{{ district.district }}">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal-{{ district._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ district._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('delete_district') }}">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="deleteModalLabel-{{ district._id }}">Delete District</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="district_id" value="{{ district._id }}">
+                  <p>Are you sure you want to delete <strong>{{ district.district }}</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-danger">Delete</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
