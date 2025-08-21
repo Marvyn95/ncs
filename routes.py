@@ -627,6 +627,9 @@ def edit_customer():
     id_document = request.files.get("id_document")
     recommendation_letter = request.files.get("recommendation_letter")
     wealth_assessment_form = request.files.get("wealth_assessment_form")
+    approval = request.form.get("approval")
+    customer_type = request.form.get("customer_type")
+    connection_fee = request.form.get("connection_fee")
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
 
@@ -642,17 +645,17 @@ def edit_customer():
         if customer.get("id_document"):
             delete_file(customer.get("id_document"))
         update_data["id_document"] = save_file(id_document)
+    
     if recommendation_letter and recommendation_letter.filename:
         if customer.get("recommendation_letter"):
             delete_file(customer.get("recommendation_letter"))
         update_data["recommendation_letter"] = save_file(recommendation_letter)
 
 
-    if request.files.get("wealth_assessment_form") is not None:
-        if wealth_assessment_form and wealth_assessment_form.filename:
-            if customer.get("wealth_assessment_form"):
-                delete_file(customer.get("wealth_assessment_form"))
-            update_data["wealth_assessment_form"] = save_file(wealth_assessment_form)
+    if wealth_assessment_form and wealth_assessment_form.filename:
+        if customer.get("wealth_assessment_form"):
+            delete_file(customer.get("wealth_assessment_form"))
+        update_data["wealth_assessment_form"] = save_file(wealth_assessment_form)
 
     if "pipe_type" in request.form:
         update_data["pipe_type"] = request.form.get("pipe_type")
@@ -662,6 +665,16 @@ def edit_customer():
 
     if "pipe_length" in request.form:
         update_data["pipe_length"] = request.form.get("pipe_length")
+
+    if "approval" in request.form:
+        update_data["status"] = request.form.get("approval")
+
+    if "customer_type" in request.form:
+        update_data["type"] = request.form.get("customer_type")
+    
+    if "connection_fee" in request.form:
+        update_data["connection_fee"] = connection_fee
+        update_data["amount_due"] = connection_fee
 
     db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
     flash("Customer updated successfully!", "success")
@@ -700,6 +713,62 @@ def customer_survey():
 
     db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
     flash("Survey details saved successfully!", "success")
+    return redirect(url_for("customers"))
+
+
+@app.route('/customer_approval', methods=["POST"])
+@login_required
+def customer_approval():
+    customer_id = request.form.get("customer_id")
+    approval = request.form.get("approval")
+    
+    if approval == "approved":
+        connection_fee = request.form.get("connection_fee")
+        customer_type = request.form.get("customer_type")
+        update_data = {
+            "status": 'approved',
+            "type": customer_type,
+            "connection_fee": connection_fee,
+            "amount_due": float(connection_fee)
+        }
+    else:
+        update_data = {
+            "status": 'disapproved'
+        }
+
+    db.Customers.update_one(
+        {"_id": ObjectId(customer_id)},
+        {"$set": update_data}
+    )
+    flash("Approval status updated!", "success")
+    return redirect(url_for("customers"))
+
+
+
+@app.route('/customer_payment', methods=["POST"])
+@login_required
+def customer_payment():
+    customer_id = request.form.get("customer_id")
+    amount_paid = request.form.get("amount_paid")
+    proof_of_payment = request.files.get("proof_of_payment")
+
+    customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
+
+    update_data = {
+        "amount_paid": float(amount_paid),
+        "amount_due": float(customer.get("amount_due", 0)) - float(amount_paid),
+        "status": 'paid'
+    }
+
+    if proof_of_payment and proof_of_payment.filename:
+        filename = save_file(proof_of_payment)
+        update_data["proof_of_payment"] = filename
+
+    db.Customers.update_one(
+        {"_id": ObjectId(customer_id)},
+        {"$set": update_data}
+    )
+    flash("Payment recorded successfully!", "success")
     return redirect(url_for("customers"))
 
 

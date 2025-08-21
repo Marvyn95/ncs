@@ -85,8 +85,8 @@
           <th>Village</th>
           <th>Status</th>
           <th>Connection Fee</th>
-          <th>Amount Due</th>
           <th>Amount Paid</th>
+          <th>Amount Due</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -100,8 +100,8 @@
           <td class="text-truncate" style="max-width: 120px;">{{ customer.village or '-' }}</td>
           <td class="text-truncate" style="max-width: 80px;">{{ customer.status or '-' }}</td>
           <td class="text-truncate" style="max-width: 100px;">{{ customer.connection_fee or '-' }}</td>
-          <td class="text-truncate" style="max-width: 100px;">{{ customer.amount_due or '-' }}</td>
           <td class="text-truncate" style="max-width: 100px;">{{ customer.amount_paid or '-' }}</td>
+          <td class="text-truncate" style="max-width: 100px;">{{ customer.amount_due or '-' }}</td>
           <td>
             <div class="d-flex gap-1">
               <button class="btn btn-outline-info btn-sm p-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ customer._id }}">
@@ -136,9 +136,13 @@
           <li class="list-group-item py-1"><strong>Scheme:</strong> <span class="text-primary">{{ customer.scheme or 'N/A' }}</span></li>
           <li class="list-group-item py-1"><strong>Village:</strong> <span class="text-primary">{{ customer.village or 'N/A' }}</span></li>
           <li class="list-group-item py-1"><strong>Status:</strong> <span class="text-primary">{{ customer.status or 'N/A' }}</span></li>
+          <li class="list-group-item py-1"><strong>Pipe Type:</strong> <span class="text-primary">{{ customer.pipe_type or 'N/A' }}</span></li>
+          <li class="list-group-item py-1"><strong>Pipe Diameter:</strong> <span class="text-primary">{{ customer.pipe_diameter or 'N/A' }} mm</span></li>
+          <li class="list-group-item py-1"><strong>Pipe Length:</strong> <span class="text-primary">{{ customer.pipe_length or 'N/A' }} M</span></li>
+          <li class="list-group-item py-1"><strong>Status:</strong> <span class="text-primary">{{ customer.status or 'N/A' }}</span></li>
           <li class="list-group-item py-1"><strong>Connection Fee:</strong> <span class="text-primary">{{ customer.connection_fee or 'N/A' }}</span></li>
-          <li class="list-group-item py-1"><strong>Amount Due:</strong> <span class="text-primary">{{ customer.amount_due or 'N/A' }}</span></li>
           <li class="list-group-item py-1"><strong>Amount Paid:</strong> <span class="text-primary">{{ customer.amount_paid or 'N/A' }}</span></li>
+          <li class="list-group-item py-1"><strong>Amount Due:</strong> <span class="text-primary">{{ customer.amount_due or 'N/A' }}</span></li>
           <li class="list-group-item py-1">
             <strong>ID Document:</strong>
             {% if customer.id_document %}
@@ -163,11 +167,14 @@
               <span class="text-primary">N/A</span>
             {% endif %}
           </li>
-          {% if customer.status == "surveyed" %}
-          <li class="list-group-item py-1"><strong>Pipe Length Needed:</strong> <span class="text-primary">{{ customer.pipe_length or 'N/A' }} M</span></li>
-          <li class="list-group-item py-1"><strong>Pipe Diameter:</strong> <span class="text-primary">{{ customer.pipe_diameter or 'N/A' }} mm</span></li>
-          <li class="list-group-item py-1"><strong>Pipe Type:</strong> <span class="text-primary">{{ customer.pipe_type or 'N/A' }}</span></li>
-          {% endif %}
+          <li class="list-group-item py-1">
+            <strong>Proof of Payment:</strong>
+            {% if customer.proof_of_payment %}
+              <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.proof_of_payment) }}" target="_blank">View Document</a>
+            {% else %}
+              <span class="text-primary">N/A</span>
+            {% endif %}
+          </li>
         </ul>
       </div>
       <div class="modal-footer py-2">
@@ -180,8 +187,8 @@
 
 <!-- Edit Customer Modal -->
 <div class="modal fade" id="editModal-{{ customer._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ customer._id }}" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content" style="font-size:0.85rem;">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="font-size:0.80rem;">
       <form method="POST" action="{{ url_for('edit_customer') }}" enctype="multipart/form-data">
         <div class="modal-header py-1">
           <h6 class="modal-title" id="editModalLabel-{{ customer._id }}">Edit Customer</h6>
@@ -189,38 +196,38 @@
         </div>
         <div class="modal-body py-1">
           <input type="hidden" name="customer_id" value="{{ customer._id }}">
-          <div class="row g-2">
-            <div class="col-md-6 mb-2">
+          <div class="row g-1">
+            <div class="col-12 col-md-6 mb-1">
               <label for="name_{{ customer._id }}" class="form-label">Name</label>
-              <input type="text" class="form-control" id="name_{{ customer._id }}" name="name" value="{{ customer.name }}" required>
+              <input type="text" class="form-control form-control-sm" id="name_{{ customer._id }}" name="name" value="{{ customer.name }}" required>
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-12 col-md-6 mb-1">
               <label for="contact_{{ customer._id }}" class="form-label">Contact</label>
-              <input type="text" class="form-control" id="contact_{{ customer._id }}" name="contact" value="{{ customer.contact }}" required>
+              <input type="text" class="form-control form-control-sm" id="contact_{{ customer._id }}" name="contact" value="{{ customer.contact }}" required>
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-12 col-md-6 mb-1">
               <label for="scheme_id_{{ customer._id }}" class="form-label">Scheme</label>
-              <select name="scheme_id" class="form-select" id="scheme_id_{{ customer._id }}" required>
+              <select name="scheme_id" class="form-select form-select-sm" id="scheme_id_{{ customer._id }}" required>
                 {% for scheme in schemes %}
                   <option value="{{ scheme._id }}" {% if scheme._id|string == customer.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
                 {% endfor %}
               </select>
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-12 col-md-6 mb-1">
               <label for="village_id_{{ customer._id }}" class="form-label">Village</label>
-              <select name="village_id" class="form-select" id="village_id_{{ customer._id }}" required>
+              <select name="village_id" class="form-select form-select-sm" id="village_id_{{ customer._id }}" required>
                 {% for village in villages %}
                   <option value="{{ village._id }}" {% if village._id|string == customer.village_id|string %}selected{% endif %}>{{ village.village }}</option>
                 {% endfor %}
               </select>
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-12 col-md-6 mb-1">
               <label for="application_id_{{ customer._id }}" class="form-label">Application ID</label>
-              <input type="text" class="form-control" id="application_id_{{ customer._id }}" name="application_id" value="{{ customer.application_id }}" required>
+              <input type="text" class="form-control form-control-sm" id="application_id_{{ customer._id }}" name="application_id" value="{{ customer.application_id }}" required>
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-12 col-md-6 mb-1">
               <label for="id_document_{{ customer._id }}" class="form-label">Identification Document</label>
-              <input type="file" class="form-control" id="id_document_{{ customer._id }}" name="id_document" accept="application/pdf,image/*">
+              <input type="file" class="form-control form-control-sm" id="id_document_{{ customer._id }}" name="id_document" accept="application/pdf,image/*">
               {% if customer.id_document %}
                 <div class="mt-1">
                   <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">
@@ -229,9 +236,9 @@
                 </div>
               {% endif %}
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-12 col-md-6 mb-1">
               <label for="recommendation_letter_{{ customer._id }}" class="form-label">Recommendation Letter</label>
-              <input type="file" class="form-control" id="recommendation_letter_{{ customer._id }}" name="recommendation_letter" accept="application/pdf,image/*">
+              <input type="file" class="form-control form-control-sm" id="recommendation_letter_{{ customer._id }}" name="recommendation_letter" accept="application/pdf,image/*">
               {% if customer.recommendation_letter %}
                 <div class="mt-1">
                   <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">
@@ -240,10 +247,10 @@
                 </div>
               {% endif %}
             </div>
-            {% if customer.status == "surveyed" %}
-            <div class="col-md-6 mb-2">
+            {% if customer.status in ["surveyed", "approved", "disapproved", 'paid'] %}
+            <div class="col-12 col-md-6 mb-1">
               <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
-              <input type="file" class="form-control" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form" accept="application/pdf,image/*">
+              <input type="file" class="form-control form-control-sm" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form" accept="application/pdf,image/*">
               {% if customer.wealth_assessment_form %}
                 <div class="mt-1">
                   <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">
@@ -252,22 +259,59 @@
                 </div>
               {% endif %}
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-12 col-md-6 mb-1">
               <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
-              <select class="form-select" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
+              <select class="form-select form-select-sm" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
                 <option value="PE" {% if customer.pipe_type == "PE" %}selected{% endif %}>PE</option>
                 <option value="PVC" {% if customer.pipe_type == "PVC" %}selected{% endif %}>PVC</option>
               </select>
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-12 col-md-6 mb-1">
               <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
-              <input type="number" class="form-control" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" value="{{ customer.pipe_diameter or 20 }}" min="1" step="1" required>
+              <input type="number" class="form-control form-control-sm" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" value="{{ customer.pipe_diameter or 20 }}" min="1" step="1" required>
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-12 col-md-6 mb-1">
               <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (meters)</label>
-              <input type="number" class="form-control" id="pipe_length_{{ customer._id }}" name="pipe_length" value="{{ customer.pipe_length or '' }}" min="0" step="0.01" required>
+              <input type="number" class="form-control form-control-sm" id="pipe_length_{{ customer._id }}" name="pipe_length" value="{{ customer.pipe_length or '' }}" min="0" step="0.01" required>
             </div>
             {% endif %}
+            {% if customer.status in ['approved', 'paid'] %}
+            <div class="col-12 col-md-6 mb-1">
+              <label for="approval_{{ customer._id }}" class="form-label">Approval</label>
+              <select class="form-select form-select-sm" id="approval_{{ customer._id }}" name="approval" required>
+                <option value="approved" {% if customer.approval == "approved" %}selected{% endif %}>Approved</option>
+                <option value="disapproved" {% if customer.approval == "disapproved" %}selected{% endif %}>Disapproved</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-6 mb-1">
+              <label for="customer_type_{{ customer._id }}" class="form-label">Customer Type</label>
+              <select class="form-select form-select-sm" id="customer_type_{{ customer._id }}" name="customer_type" required>
+                <option value="MS" {% if customer.type == "MS" %}selected{% endif %}>MS</option>
+                <option value="ES" {% if customer.type == "ES" %}selected{% endif %}>ES</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-6 mb-1">
+              <label for="connection_fee_{{ customer._id }}" class="form-label">Connection Fee</label>
+              <input type="number" class="form-control form-control-sm" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" value="{{ customer.connection_fee or '' }}" required>
+            </div>
+            {% endif %}
+{% if customer.status == "paid" %}
+<div class="col-12 col-md-6 mb-1">
+  <label for="amount_paid_{{ customer._id }}" class="form-label">Amount Paid</label>
+  <input type="number" class="form-control form-control-sm" id="amount_paid_{{ customer._id }}" name="amount_paid" value="{{ customer.amount_paid or '' }}" min="0" step="0.01" required>
+</div>
+<div class="col-12 col-md-6 mb-1">
+  <label for="proof_of_payment_{{ customer._id }}" class="form-label">Proof of Payment</label>
+  <input type="file" class="form-control form-control-sm" id="proof_of_payment_{{ customer._id }}" name="proof_of_payment" accept="application/pdf,image/*">
+  {% if customer.proof_of_payment %}
+    <div class="mt-1">
+      <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.proof_of_payment) }}" target="_blank">
+        <span class="text-primary">view current proof of payment</span>
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endif %}
           </div>
         </div>
         <div class="modal-footer py-1">
@@ -352,12 +396,75 @@
             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
           </div>
         </form>
-        {% else %}
-        <p>Perform an action for <strong class="text-primary">{{ customer.name }}</strong>.</p>
-        <div class="modal-footer py-1">
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-        </div>
-        {% endif %}
+{% elif customer.status == 'surveyed' or customer.status == 'disapproved' %}
+<form method="POST" action="{{ url_for('customer_approval') }}">
+  <input type="hidden" name="customer_id" value="{{ customer._id }}">
+<div class="mb-2">
+  <label for="approval_{{ customer._id }}" class="form-label">Approval</label>
+  <select class="form-select" id="approval_{{ customer._id }}" name="approval" required onchange="toggleApprovalFields_{{ customer._id }}(this)">
+    <option value="" disabled selected>Select Approval</option>
+    <option value="approved">Approved</option>
+    <option value="disapproved">Disapproved</option>
+  </select>
+</div>
+  <div id="approvalFields_{{ customer._id }}">
+    <div class="mb-2" id="customerTypeField_{{ customer._id }}">
+      <label for="customer_type_{{ customer._id }}" class="form-label">Customer Type</label>
+      <select class="form-select" id="customer_type_{{ customer._id }}" name="customer_type" required>
+        <option value="MS" selected>MS</option>
+        <option value="ES">ES</option>
+      </select>
+    </div>
+    <div class="mb-2">
+      <label for="connection_fee_{{ customer._id }}" class="form-label">Connection Fee</label>
+      <input type="number" class="form-control" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" required>
+    </div>
+  </div>
+  <div class="modal-footer py-1">
+    <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+  </div>
+</form>
+<script>
+function toggleApprovalFields_{{ customer._id }}(select) {
+  var fields = document.getElementById('approvalFields_{{ customer._id }}');
+  var customerTypeField = document.getElementById('customerTypeField_{{ customer._id }}');
+  if (select.value === 'approved') {
+    fields.style.display = 'block';
+    customerTypeField.style.display = 'block';
+    fields.querySelectorAll('input, select').forEach(function(el) { el.required = true; });
+  } else {
+    fields.style.display = 'none';
+    customerTypeField.style.display = 'none';
+    fields.querySelectorAll('input, select').forEach(function(el) { el.required = false; });
+  }
+}
+document.addEventListener('DOMContentLoaded', function() {
+  toggleApprovalFields_{{ customer._id }}(document.getElementById('approval_{{ customer._id }}'));
+});
+</script>
+{% elif customer.status == 'approved' %}
+<form method="POST" action="{{ url_for('customer_payment') }}" enctype="multipart/form-data">
+  <input type="hidden" name="customer_id" value="{{ customer._id }}">
+  <div class="mb-2">
+    <label for="amount_paid_{{ customer._id }}" class="form-label">Amount Paid</label>
+    <input type="number" class="form-control" id="amount_paid_{{ customer._id }}" name="amount_paid" min="0" step="0.01" required>
+  </div>
+  <div class="mb-2">
+    <label for="proof_of_payment_{{ customer._id }}" class="form-label">Proof of Payment</label>
+    <input type="file" class="form-control" id="proof_of_payment_{{ customer._id }}" name="proof_of_payment" accept="application/pdf,image/*" required>
+  </div>
+  <div class="modal-footer py-1">
+    <button type="submit" class="btn btn-primary btn-sm">Submit Payment</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+  </div>
+</form>
+{% else %}
+<p>Perform an action for <strong class="text-primary">{{ customer.name }}</strong>.</p>
+<div class="modal-footer py-1">
+  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+</div>
+{% endif %}
       </div>
     </div>
   </div>
