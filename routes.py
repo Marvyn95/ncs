@@ -695,7 +695,10 @@ def edit_customer():
         update_data["connection_date"] = datetime.datetime.strptime(request.form.get("connection_date"), "%Y-%m-%d")
     
     if 'connection_status' in request.form:
-        update_data["status"] = request.form.get("connection_status")
+        if request.form.get("connection_status") == "connected" and customer.get("customer_reference") is not None:
+            update_data["status"] = "confirmed"
+        else:
+            update_data["status"] = request.form.get("connection_status")
 
     if 'customer_reference' in request.form:
         update_data["customer_reference"] = int(request.form.get("customer_reference"))
@@ -790,6 +793,15 @@ def customer_payment():
 def customer_connection():
     customer_id = request.form.get("customer_id")
     connection_date = request.form.get("connection_date")
+
+    customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
+    if customer.get("customer_reference") is not None:
+        update_data = {
+            "status": "confirmed",
+            "connection_date": datetime.datetime.strptime(connection_date, "%Y-%m-%d")
+        }
+        db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
+        return redirect(url_for("customers"))
 
     update_data = {
         "status": "connected",
