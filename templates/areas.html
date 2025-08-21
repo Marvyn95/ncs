@@ -29,9 +29,9 @@
             <input type="text" class="form-control" id="new_area" name="area" required>
           </div>
 <div class="mb-3">
-  <label for="umbrella_id" class="form-label">Umbrella</label>
+  <label for="umbrella_id" class="form-label">Umbrella <span class="text-danger">*</span></label>
   <select class="form-select" id="umbrella_id" name="umbrella_id" required>
-    <option value="" disabled selected>Select Umbrella</option>
+    <option value="" disabled selected hidden>Select Umbrella</option>
     {% for umbrella in umbrellas %}
       <option value="{{ umbrella._id }}">{{ umbrella.umbrella }}</option>
     {% endfor %}

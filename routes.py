@@ -293,6 +293,27 @@ def edit_user():
 
 
 
+@app.route('/update_user_password', methods=["POST"])
+@login_required
+def update_user_password():
+    user_id = request.form.get("user_id")
+    new_password = request.form.get("new_password")
+    confirm_password = request.form.get("confirm_password")
+
+    if new_password != confirm_password:
+        flash("Passwords do not match!", "danger")
+        return redirect(url_for("users"))
+
+    hashed_pw = bcrypt.generate_password_hash(new_password).decode("utf-8")
+
+    db.Users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"password": hashed_pw}}
+    )
+    flash("Password updated successfully!", "success")
+    return redirect(url_for("users"))
+
+
 @app.route('/delete_user', methods=["POST"])
 @login_required
 def delete_user():
@@ -601,6 +622,7 @@ def add_customer():
     application_id = request.form.get("application_id")
     id_document = request.files.get("id_document")
     recommendation_letter = request.files.get("recommendation_letter")
+    date_applied = request.form.get("date_applied")
 
     db.Customers.insert_one({
         "name": name,
@@ -610,7 +632,8 @@ def add_customer():
         "application_id": application_id,
         "id_document": save_file(id_document),
         "recommendation_letter": save_file(recommendation_letter),
-        "status": "applied"
+        "status": "applied",
+        "date_applied": datetime.datetime.strptime(date_applied, "%Y-%m-%d"),
     })
     flash("Customer added successfully!", "success")
     return redirect(url_for("customers"))
@@ -620,31 +643,20 @@ def add_customer():
 @login_required
 def edit_customer():
     customer_id = request.form.get("customer_id")
-    name = request.form.get("name")
-    contact = request.form.get("contact")
-    scheme_id = request.form.get("scheme_id")
-    village_id = request.form.get("village_id")
-    application_id = request.form.get("application_id")
     id_document = request.files.get("id_document")
     recommendation_letter = request.files.get("recommendation_letter")
     wealth_assessment_form = request.files.get("wealth_assessment_form")
-    approval = request.form.get("approval")
-    customer_type = request.form.get("customer_type")
-    connection_fee = request.form.get("connection_fee")
-    amount_paid = request.form.get("amount_paid")
     proof_of_payment = request.files.get("proof_of_payment")
-    connection_date = request.form.get("connection_date")
-    connection_status = request.form.get("connection_status")
-    customer_reference = request.form.get("customer_reference")
+
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
 
     update_data = {
-        "name": name,
-        "contact": contact,
-        "scheme_id": scheme_id,
-        "village_id": village_id,
-        "application_id": application_id
+        "name": request.form.get("name"),
+        "contact": request.form.get("contact"),
+        "scheme_id": request.form.get("scheme_id"),
+        "village_id": request.form.get("village_id"),
+        "application_id": request.form.get("application_id")
     }
 
     if id_document and id_document.filename:
@@ -667,6 +679,9 @@ def edit_customer():
             delete_file(customer.get("proof_of_payment"))
         update_data["proof_of_payment"] = save_file(proof_of_payment)
 
+    if "date_applied" in request.form:
+        update_data["date_applied"] = datetime.datetime.strptime(request.form.get("date_applied"), "%Y-%m-%d")
+
     if "pipe_type" in request.form:
         update_data["pipe_type"] = request.form.get("pipe_type")
 
@@ -683,13 +698,16 @@ def edit_customer():
         update_data["type"] = request.form.get("customer_type")
     
     if "connection_fee" in request.form:
-        update_data["connection_fee"] = float(connection_fee)
+        update_data["connection_fee"] = int(request.form.get("connection_fee"))
 
     if "amount_paid" in request.form:
-        update_data["amount_paid"] = float(amount_paid)
+        update_data["amount_paid"] = int(request.form.get("amount_paid"))
+
+    if "date_paid" in request.form:
+        update_data["date_paid"] = datetime.datetime.strptime(request.form.get("date_paid"), "%Y-%m-%d")
 
     if 'connection_fee' in request.form and 'amount_paid' in request.form:
-        update_data["amount_due"] = float(connection_fee) - float(amount_paid)
+        update_data["amount_due"] = int(request.form.get("connection_fee")) - int(request.form.get("amount_paid"))
 
     if 'connection_date' in request.form:
         update_data["connection_date"] = datetime.datetime.strptime(request.form.get("connection_date"), "%Y-%m-%d")
@@ -700,12 +718,19 @@ def edit_customer():
         else:
             update_data["status"] = request.form.get("connection_status")
 
+    if 'meter_serial' in request.form:
+        update_data["meter_serial"] = request.form.get("meter_serial")
+
+    if 'first_meter_reading' in request.form:
+        update_data["first_meter_reading"] = float(request.form.get("first_meter_reading"))
+
     if 'customer_reference' in request.form:
         update_data["customer_reference"] = int(request.form.get("customer_reference"))
 
     db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
     flash("Customer updated successfully!", "success")
     return redirect(url_for("customers"))
+
 
 
 @app.route('/customer_survey', methods=["POST"])
@@ -744,8 +769,8 @@ def customer_approval():
         update_data = {
             "status": 'approved',
             "type": customer_type,
-            "connection_fee": connection_fee,
-            "amount_due": float(connection_fee)
+            "connection_fee": int(connection_fee),
+            "amount_due": int(connection_fee)
         }
     else:
         update_data = {
@@ -760,19 +785,20 @@ def customer_approval():
     return redirect(url_for("customers"))
 
 
-
 @app.route('/customer_payment', methods=["POST"])
 @login_required
 def customer_payment():
     customer_id = request.form.get("customer_id")
     amount_paid = request.form.get("amount_paid")
+    date_paid = request.form.get("date_paid")
     proof_of_payment = request.files.get("proof_of_payment")
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
 
     update_data = {
-        "amount_paid": float(amount_paid),
-        "amount_due": float(customer.get("amount_due", 0)) - float(amount_paid),
+        "amount_paid": int(amount_paid),
+        "date_paid": datetime.datetime.strptime(date_paid, "%Y-%m-%d"),
+        "amount_due": int(customer.get("amount_due", 0)) - int(amount_paid),
         "status": 'paid'
     }
 
@@ -793,19 +819,25 @@ def customer_payment():
 def customer_connection():
     customer_id = request.form.get("customer_id")
     connection_date = request.form.get("connection_date")
+    meter_serial = request.form.get("meter_serial")
+    first_meter_reading = request.form.get("first_meter_reading")
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
     if customer.get("customer_reference") is not None:
         update_data = {
             "status": "confirmed",
-            "connection_date": datetime.datetime.strptime(connection_date, "%Y-%m-%d")
+            "connection_date": datetime.datetime.strptime(connection_date, "%Y-%m-%d"),
+            "meter_serial": meter_serial,
+            "first_meter_reading": float(first_meter_reading) if first_meter_reading else 0
         }
         db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
         return redirect(url_for("customers"))
 
     update_data = {
         "status": "connected",
-        "connection_date": datetime.datetime.strptime(connection_date, "%Y-%m-%d")
+        "connection_date": datetime.datetime.strptime(connection_date, "%Y-%m-%d"),
+        "meter_serial": meter_serial,
+        "first_meter_reading": float(first_meter_reading) if first_meter_reading else 0
     }
 
     db.Customers.update_one(
