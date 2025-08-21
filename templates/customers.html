@@ -136,6 +136,7 @@
           <li class="list-group-item py-1"><strong>Scheme:</strong> <span class="text-primary">{{ customer.scheme or 'N/A' }}</span></li>
           <li class="list-group-item py-1"><strong>Village:</strong> <span class="text-primary">{{ customer.village or 'N/A' }}</span></li>
           <li class="list-group-item py-1"><strong>Status:</strong> <span class="text-primary">{{ customer.status or 'N/A' }}</span></li>
+          <li class="list-group-item py-1"><strong>Application ID:</strong> <span class="text-primary">{{ customer.application_id or 'N/A' }}</span></li>
           <li class="list-group-item py-1"><strong>Pipe Type:</strong> <span class="text-primary">{{ customer.pipe_type or 'N/A' }}</span></li>
           <li class="list-group-item py-1"><strong>Pipe Diameter:</strong> <span class="text-primary">{{ customer.pipe_diameter or 'N/A' }} mm</span></li>
           <li class="list-group-item py-1"><strong>Pipe Length:</strong> <span class="text-primary">{{ customer.pipe_length or 'N/A' }} M</span></li>
@@ -171,6 +172,22 @@
             <strong>Proof of Payment:</strong>
             {% if customer.proof_of_payment %}
               <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.proof_of_payment) }}" target="_blank">View Document</a>
+            {% else %}
+              <span class="text-primary">N/A</span>
+            {% endif %}
+          </li>
+          <li class="list-group-item py-1">
+            <strong>Connection Date:</strong>
+            {% if customer.connection_date %}
+              <span class="text-primary">{{ customer.connection_date.strftime('%d %B %Y') }}</span>
+            {% else %}
+              <span class="text-primary">N/A</span>
+            {% endif %}
+          </li>
+          <li class="list-group-item py-1">
+            <strong>Customer Reference:</strong>
+            {% if customer.customer_reference %}
+              <span class="text-primary">{{ customer.customer_reference }}</span>
             {% else %}
               <span class="text-primary">N/A</span>
             {% endif %}
@@ -247,7 +264,7 @@
                 </div>
               {% endif %}
             </div>
-            {% if customer.status in ["surveyed", "approved", "disapproved", 'paid'] %}
+            {% if customer.status in ["surveyed", "approved", "disapproved", 'paid', 'connected', 'confirmed'] %}
             <div class="col-12 col-md-6 mb-1">
               <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
               <input type="file" class="form-control form-control-sm" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form" accept="application/pdf,image/*">
@@ -275,7 +292,9 @@
               <input type="number" class="form-control form-control-sm" id="pipe_length_{{ customer._id }}" name="pipe_length" value="{{ customer.pipe_length or '' }}" min="0" step="0.01" required>
             </div>
             {% endif %}
-            {% if customer.status in ['approved', 'paid'] %}
+            {% if customer.status in ['approved', 'paid', 'connected', 'confirmed'] %}
+
+            {% if customer.status == 'approved' %}
             <div class="col-12 col-md-6 mb-1">
               <label for="approval_{{ customer._id }}" class="form-label">Approval</label>
               <select class="form-select form-select-sm" id="approval_{{ customer._id }}" name="approval" required>
@@ -283,6 +302,8 @@
                 <option value="disapproved" {% if customer.approval == "disapproved" %}selected{% endif %}>Disapproved</option>
               </select>
             </div>
+            {% endif %}
+            
             <div class="col-12 col-md-6 mb-1">
               <label for="customer_type_{{ customer._id }}" class="form-label">Customer Type</label>
               <select class="form-select form-select-sm" id="customer_type_{{ customer._id }}" name="customer_type" required>
@@ -295,7 +316,7 @@
               <input type="number" class="form-control form-control-sm" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" value="{{ customer.connection_fee or '' }}" required>
             </div>
             {% endif %}
-{% if customer.status == "paid" %}
+{% if customer.status in ["paid", "connected", 'not_confirmed', 'confirmed'] %}
 <div class="col-12 col-md-6 mb-1">
   <label for="amount_paid_{{ customer._id }}" class="form-label">Amount Paid</label>
   <input type="number" class="form-control form-control-sm" id="amount_paid_{{ customer._id }}" name="amount_paid" value="{{ customer.amount_paid or '' }}" min="0" step="0.01" required>
@@ -309,9 +330,32 @@
         <span class="text-primary">view current proof of payment</span>
       </a>
     </div>
-  {% endif %}
+  {% endif %}                                                                                                                                                                                                                                                     qa
 </div>
 {% endif %}
+{% if customer.status in ["connected", "confirmed"] %}
+<div class="col-12 col-md-6 mb-1">
+  <label for="connection_date_{{ customer._id }}" class="form-label">Connection Date</label>
+  <input type="date" class="form-control form-control-sm" id="connection_date_{{ customer._id }}" name="connection_date"
+    value="{{ customer.connection_date.strftime('%Y-%m-%d') if customer.connection_date else '' }}" required>
+</div>
+<div class="col-12 col-md-6 mb-1">
+  <label for="connection_status_{{ customer._id }}" class="form-label">Connection Status</label>
+<select class="form-select form-select-sm" id="connection_status_{{ customer._id }}" name="connection_status" required>
+  <option value="confirmed" {% if customer.status == "confirmed" %}selected{% endif %}>Confirmed</option>
+  <option value="connected" {% if customer.status == "connected" %}selected{% endif %}>Connected</option>
+  <option value="not_connected" {% if customer.status == "not_connected" %}selected{% endif %}>Not Connected</option>
+</select>
+</div>
+{% endif %}
+{% if customer.status == "confirmed" %}
+<div class="col-12 col-md-6 mb-1">
+  <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
+  <input type="text" class="form-control form-control-sm" id="customer_reference_{{ customer._id }}" name="customer_reference" value="{{ customer.customer_reference or '' }}" required>
+</div>
+{% endif %}
+
+
           </div>
         </div>
         <div class="modal-footer py-1">
@@ -459,11 +503,36 @@ document.addEventListener('DOMContentLoaded', function() {
     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
   </div>
 </form>
-{% else %}
-<p>Perform an action for <strong class="text-primary">{{ customer.name }}</strong>.</p>
-<div class="modal-footer py-1">
-  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-</div>
+{% elif customer.status == 'paid' %}
+<form method="POST" action="{{ url_for('customer_connection') }}">
+  <input type="hidden" name="customer_id" value="{{ customer._id }}">
+  <div class="mb-2">
+    <label for="connection_date_{{ customer._id }}" class="form-label">Connection Date</label>
+    <input type="date" class="form-control" id="connection_date_{{ customer._id }}" name="connection_date" value="{{ now().strftime('%Y-%m-%d') }}" required>
+  </div>
+  <div class="mb-2">
+    <p>Are you sure you want to confirm connection for <strong class="text-primary">{{ customer.name }}</strong>?</p>
+  </div>
+  <div class="modal-footer py-1">
+    <button type="submit" class="btn btn-primary btn-sm">Confirm Connection</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+  </div>
+</form>
+{% elif customer.status == 'connected' %}
+<form method="POST" action="{{ url_for('customer_confirmation') }}">
+  <input type="hidden" name="customer_id" value="{{ customer._id }}">
+  <div class="mb-2">
+    <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
+    <input type="text" class="form-control" id="customer_reference_{{ customer._id }}" name="customer_reference" required>
+  </div>
+  <div class="mb-2">
+    <p>Confirm customer <strong class="text-primary">{{ customer.name }}</strong> by entering the reference number.</p>
+  </div>
+  <div class="modal-footer py-1">
+    <button type="submit" class="btn btn-primary btn-sm">Confirm Customer</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+  </div>
+</form>
 {% endif %}
       </div>
     </div>

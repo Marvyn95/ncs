@@ -585,6 +585,7 @@ def customers():
                            user=user,
                            section="customers",
                            date=datetime.datetime.now().strftime("%d %B %Y"),
+                           now=datetime.datetime.now,
                            customers=customers,
                            schemes=schemes,
                            villages=villages)
@@ -630,6 +631,11 @@ def edit_customer():
     approval = request.form.get("approval")
     customer_type = request.form.get("customer_type")
     connection_fee = request.form.get("connection_fee")
+    amount_paid = request.form.get("amount_paid")
+    proof_of_payment = request.files.get("proof_of_payment")
+    connection_date = request.form.get("connection_date")
+    connection_status = request.form.get("connection_status")
+    customer_reference = request.form.get("customer_reference")
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
 
@@ -651,11 +657,15 @@ def edit_customer():
             delete_file(customer.get("recommendation_letter"))
         update_data["recommendation_letter"] = save_file(recommendation_letter)
 
-
     if wealth_assessment_form and wealth_assessment_form.filename:
         if customer.get("wealth_assessment_form"):
             delete_file(customer.get("wealth_assessment_form"))
         update_data["wealth_assessment_form"] = save_file(wealth_assessment_form)
+
+    if proof_of_payment and proof_of_payment.filename:
+        if customer.get("proof_of_payment"):
+            delete_file(customer.get("proof_of_payment"))
+        update_data["proof_of_payment"] = save_file(proof_of_payment)
 
     if "pipe_type" in request.form:
         update_data["pipe_type"] = request.form.get("pipe_type")
@@ -673,22 +683,25 @@ def edit_customer():
         update_data["type"] = request.form.get("customer_type")
     
     if "connection_fee" in request.form:
-        update_data["connection_fee"] = connection_fee
-        update_data["amount_due"] = connection_fee
+        update_data["connection_fee"] = float(connection_fee)
+
+    if "amount_paid" in request.form:
+        update_data["amount_paid"] = float(amount_paid)
+
+    if 'connection_fee' in request.form and 'amount_paid' in request.form:
+        update_data["amount_due"] = float(connection_fee) - float(amount_paid)
+
+    if 'connection_date' in request.form:
+        update_data["connection_date"] = datetime.datetime.strptime(request.form.get("connection_date"), "%Y-%m-%d")
+    
+    if 'connection_status' in request.form:
+        update_data["status"] = request.form.get("connection_status")
+
+    if 'customer_reference' in request.form:
+        update_data["customer_reference"] = int(request.form.get("customer_reference"))
 
     db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
     flash("Customer updated successfully!", "success")
-    return redirect(url_for("customers"))
-
-
-#come edit this later on for certain cases
-@app.route('/delete_customer', methods=["POST"])
-@login_required
-def delete_customer():
-    customer_id = request.form.get("customer_id")
-
-    db.Customers.delete_one({"_id": ObjectId(customer_id)})
-    flash("Customer deleted successfully!", "success")
     return redirect(url_for("customers"))
 
 
@@ -769,6 +782,50 @@ def customer_payment():
         {"$set": update_data}
     )
     flash("Payment recorded successfully!", "success")
+    return redirect(url_for("customers"))
+
+
+@app.route('/customer_connection', methods=["POST"])
+@login_required
+def customer_connection():
+    customer_id = request.form.get("customer_id")
+    connection_date = request.form.get("connection_date")
+
+    update_data = {
+        "status": "connected",
+        "connection_date": datetime.datetime.strptime(connection_date, "%Y-%m-%d")
+    }
+
+    db.Customers.update_one(
+        {"_id": ObjectId(customer_id)},
+        {"$set": update_data}
+    )
+    flash("Connection status updated!", "success")
+    return redirect(url_for("customers"))
+
+
+@app.route('/customer_confirmation', methods=["POST"])
+@login_required
+def customer_confirmation():
+    customer_id = request.form.get("customer_id")
+    customer_reference = request.form.get("customer_reference")
+
+    db.Customers.update_one(
+        {"_id": ObjectId(customer_id)},
+        {"$set": {"customer_reference": int(customer_reference), "status": "confirmed"}}
+    )
+    flash("Customer confirmed successfully!", "success")
+    return redirect(url_for("customers"))
+
+
+#come edit this later on for certain cases
+@app.route('/delete_customer', methods=["POST"])
+@login_required
+def delete_customer():
+    customer_id = request.form.get("customer_id")
+
+    db.Customers.delete_one({"_id": ObjectId(customer_id)})
+    flash("Customer deleted successfully!", "success")
     return redirect(url_for("customers"))
 
 
