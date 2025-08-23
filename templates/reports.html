@@ -1,5 +1,138 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Page-specific content goes here -->
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-end align-items-center mb-2">
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addPaymentReportModal">
+          <i class="bi bi-upload me-1"></i> Add Payment Report
+        </button>
+      </div>
+      <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
+          <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+            <tr class="table-primary">
+              <th>Customer</th>
+              <th>Reference No.</th>
+              <th>Type</th>
+              <th>Connection Date</th>
+              <th>Connection Fee</th>
+              <th>Connection Clearance</th>
+              <th>Connection Balance</th>
+              <th>Overall Balance Due</th>
+              <th>Last Paid Amount</th>
+              <th>Last Payment Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for customer in customers %}
+            <tr class="bg-dark-subtle my-1">
+              <td class="fw-semibold text-truncate" style="max-width: 120px;">{{ customer.name or '-' }}</td>
+              <td class="text-truncate" style="max-width: 120px;">{{ customer.reference_number or '-' }}</td>
+              <td class="text-truncate" style="max-width: 100px;">{{ customer.type or '-' }}</td>
+              <td class="text-truncate" style="max-width: 100px;">
+                {% if customer.connection_date %}
+                  {{ customer.connection_date }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td class="text-truncate" style="max-width: 100px;">
+                {% if customer.connection_fee %}
+                  {{ "{:,}".format(customer.connection_fee|int) }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td class="text-truncate" style="max-width: 120px;">{{ customer.total_connection_clearance or '-' }}</td>
+              <td class="text-truncate" style="max-width: 120px;">{{ customer.connection_balance or '-' }}</td>
+              <td class="text-truncate" style="max-width: 120px;">{{ customer.overall_balance_due or '-' }}</td>
+              <td class="text-truncate" style="max-width: 100px;">
+                {% if customer.last_paid_amount %}
+                  {{ "{:,}".format(customer.last_paid_amount|int) }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td class="text-truncate" style="max-width: 120px;">
+                {% if customer.last_payment_date %}
+                  {{ customer.last_payment_date }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+<td>
+  <form method="POST" action="{{ url_for('customer_history') }}" style="display:inline;">
+    <input type="hidden" name="customer_id" value="{{ customer._id }}">
+    <input type="hidden" name="customer_reference" value="{{ customer.customer_reference }}">
+    <button type="submit" class="btn btn-outline-info btn-sm" title="View History">
+      <i class="bi bi-clock-history "></i>
+    </button>
+  </form>
+  <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#submitPaymentReportModal-{{ customer._id }}" title="Submit Payment">
+    <i class="bi bi-upload"></i>
+  </button>
+</td>
+            </tr>
+
+<!-- Submit Customer Payment Report Modal -->
+<div class="modal fade" id="submitPaymentReportModal-{{ customer._id }}" tabindex="-1" aria-labelledby="submitPaymentReportLabel-{{ customer._id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('submit_customer_payment_report') }}" enctype="multipart/form-data">
+        <div class="modal-header py-2">
+          <h5 class="modal-title" id="submitPaymentReportLabel-{{ customer._id }}">Submit Payment Report for {{ customer.name }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="customer_id" value="{{ customer._id }}">
+          <input type="hidden" name="customer_reference" value="{{ customer.customer_reference }}">
+          <div class="mb-2">
+            <label for="payment_report_file_{{ customer._id }}" class="form-label">Payment Report File (CSV/Excel)</label>
+            <input type="file" class="form-control" id="payment_report_file_{{ customer._id }}" name="payment_report_file"
+              accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+          </div>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Payment Report Modal -->
+<div class="modal fade" id="addPaymentReportModal" tabindex="-1" aria-labelledby="addPaymentReportModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('add_payment_report') }}" enctype="multipart/form-data">
+        <div class="modal-header py-2">
+          <h5 class="modal-title" id="addPaymentReportModalLabel">Add Payment Report</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label for="payment_report_file" class="form-label">Payment Report File (CSV/Excel)</label>
+            <input type="file" class="form-control" id="payment_report_file" name="payment_report_file"
+              accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+          </div>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}

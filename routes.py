@@ -879,12 +879,44 @@ def delete_customer():
 
 
 
+
 @app.route('/reports', methods=["GET"])
 @login_required
 def reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    customers = list(db.Customers.find())
     return render_template("reports.html",
                            user=user,
                            section="reports",
-                           date=datetime.datetime.now().strftime("%d %B %Y"))
+                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           customers=customers)
+
+
+
+@app.route('/add_payment_report', methods=["POST"])
+@login_required
+def add_payment_report():
+    payment_report_file = request.files.get("payment_report_file")
+    pass
+    return redirect(url_for("reports"))
+
+
+@app.route('/submit_customer_payment_report', methods=["POST"])
+@login_required
+def submit_customer_payment_report():
+    customer_id = request.form.get("customer_id")
+    customer_reference = request.form.get("customer_reference")
+    payment_report_file = request.files.get("payment_report_file")
+    pass
+    return redirect(url_for("reports"))
+
+
+@app.route('/customer_history', methods=['POST'])
+def customer_history():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    customer_id = request.form.get('customer_id')
+    customer_reference = request.form.get('customer_reference')
+    pass
+    return render_template('customer_history.html', user=user)
