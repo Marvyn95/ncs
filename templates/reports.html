@@ -30,39 +30,57 @@
             {% for customer in customers %}
             <tr class="bg-dark-subtle my-1">
               <td class="fw-semibold text-truncate" style="max-width: 120px;">{{ customer.name or '-' }}</td>
-              <td class="text-truncate" style="max-width: 120px;">{{ customer.reference_number or '-' }}</td>
+              <td class="text-truncate" style="max-width: 120px;">{{ customer.customer_reference or '-' }}</td>
               <td class="text-truncate" style="max-width: 100px;">{{ customer.type or '-' }}</td>
-              <td class="text-truncate" style="max-width: 100px;">
-                {% if customer.connection_date %}
-                  {{ customer.connection_date }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-              <td class="text-truncate" style="max-width: 100px;">
-                {% if customer.connection_fee %}
-                  {{ "{:,}".format(customer.connection_fee|int) }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-              <td class="text-truncate" style="max-width: 120px;">{{ customer.total_connection_clearance or '-' }}</td>
-              <td class="text-truncate" style="max-width: 120px;">{{ customer.connection_balance or '-' }}</td>
-              <td class="text-truncate" style="max-width: 120px;">{{ customer.overall_balance_due or '-' }}</td>
-              <td class="text-truncate" style="max-width: 100px;">
-                {% if customer.last_paid_amount %}
-                  {{ "{:,}".format(customer.last_paid_amount|int) }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-              <td class="text-truncate" style="max-width: 120px;">
-                {% if customer.last_payment_date %}
-                  {{ customer.last_payment_date }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
+<td class="text-truncate" style="max-width: 100px;">
+  {% if customer.connection_date %}
+    {{ customer.connection_date.strftime('%d %b %Y') }}
+  {% else %}
+    -
+  {% endif %}
+</td>
+<td class="text-truncate" style="max-width: 100px;">
+  {% if customer.connection_fee %}
+    {{ "{:,}".format(customer.connection_fee|int) }}
+  {% else %}
+    -
+  {% endif %}
+</td>
+<td class="text-truncate" style="max-width: 120px;">
+  {% if customer.amount_paid %}
+    {{ "{:,}".format(customer.amount_paid|int) }}
+  {% else %}
+    -
+  {% endif %}
+</td>
+<td class="text-truncate" style="max-width: 120px;">
+  {% if customer.amount_due %}
+    {{ "{:,}".format(customer.amount_due|int) }}
+  {% else %}
+    -
+  {% endif %}
+</td>
+<td class="text-truncate" style="max-width: 120px;">
+  {% if customer.overall_balance_due %}
+    {{ "{:,}".format(customer.overall_balance_due|int) }}
+  {% else %}
+    -
+  {% endif %}
+</td>
+<td class="text-truncate" style="max-width: 100px;">
+  {% if customer.last_paid_amount %}
+    {{ "{:,}".format(customer.last_paid_amount|int) }}
+  {% else %}
+    -
+  {% endif %}
+</td>
+<td class="text-truncate" style="max-width: 120px;">
+  {% if customer.last_payment_date %}
+    {{ customer.last_payment_date }}
+  {% else %}
+    -
+  {% endif %}
+</td>
 <td>
   <form method="POST" action="{{ url_for('customer_history') }}" style="display:inline;">
     <input type="hidden" name="customer_id" value="{{ customer._id }}">

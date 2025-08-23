@@ -885,7 +885,7 @@ def delete_customer():
 def reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
-    customers = list(db.Customers.find())
+    customers = list(db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}}))
     return render_template("reports.html",
                            user=user,
                            section="reports",
