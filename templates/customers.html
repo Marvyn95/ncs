@@ -111,8 +111,8 @@ document.addEventListener('DOMContentLoaded', filterVillages);
           <th>Village</th>
           <th>Status</th>
           <th>Connection Fee</th>
-          <th>Amount Paid</th>
-          <th>Amount Due</th>
+          <th>Connection Clearance</th>
+          <th>Connection Balance</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', filterVillages);
                   </span>
                 </li>
                 <li class="list-group-item py-1">
-                  <strong>Amount Paid:</strong>
+                  <strong>Initial Connection Clearance:</strong>
                   <span class="text-primary">
                     {% if customer.amount_paid %}
                       {{ "{:,}".format(customer.amount_paid|int) }}
@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', filterVillages);
                   </span>
                 </li>
                 <li class="list-group-item py-1">
-                  <strong>Amount Due:</strong>
+                  <strong>Connection Balance:</strong>
                   <span class="text-primary">
                     {% if customer.amount_due %}
                       {{ "{:,}".format(customer.amount_due|int) }}
@@ -462,7 +462,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
 
 {% if customer.status in ["paid", "connected", 'not_connected', 'confirmed'] %}
 <div class="col-6 mb-1">
-  <label for="amount_paid_{{ customer._id }}" class="form-label">Amount Paid</label>
+  <label for="amount_paid_{{ customer._id }}" class="form-label">Initial connection deposit</label>
   <input type="number" class="form-control form-control-sm" id="amount_paid_{{ customer._id }}" name="amount_paid" value="{{ customer.amount_paid or '' }}" min="0" step="0.01" required>
 </div>
 <div class="col-6 mb-1">

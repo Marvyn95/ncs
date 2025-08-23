@@ -725,7 +725,7 @@ def edit_customer():
         update_data["meter_serial"] = request.form.get("meter_serial")
 
     if 'first_meter_reading' in request.form:
-        update_data["first_meter_reading"] = int(request.form.get("first_meter_reading"))
+        update_data["first_meter_reading"] = float(request.form.get("first_meter_reading"))
 
     if 'customer_reference' in request.form:
         update_data["customer_reference"] = int(request.form.get("customer_reference"))
@@ -873,10 +873,24 @@ def customer_confirmation():
 def delete_customer():
     customer_id = request.form.get("customer_id")
 
+    customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
+
+    if customer.get("customer_reference") not in [None, ""]:
+        flash("Cannot delete customer, customer was confirmed!", "danger")
+        return redirect(url_for("customers"))
+    
+    if customer.get("connection_status") == "connected":
+        flash("Cannot delete customer, customer is connected!", "danger")
+        return redirect(url_for("customers"))
+
+    if customer.get("amount_paid") not in [0, None]:
+        flash("Cannot delete customer, payments have been made by customer!", "danger")
+        return redirect(url_for("customers"))
+
+
     db.Customers.delete_one({"_id": ObjectId(customer_id)})
     flash("Customer deleted successfully!", "success")
     return redirect(url_for("customers"))
-
 
 
 
