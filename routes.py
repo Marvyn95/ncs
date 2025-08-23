@@ -880,6 +880,7 @@ def delete_customer():
 
 
 
+# reports
 @app.route('/reports', methods=["GET"])
 @login_required
 def reports():
