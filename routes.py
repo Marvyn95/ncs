@@ -90,7 +90,7 @@ def register():
 @login_required
 def profile():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella")
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     umbrellas = db.Umbrellas.find()
     return render_template("profile.html",
                            user=user,
@@ -204,9 +204,9 @@ def users():
 
     users = list(db.Users.find())
     for u in users:
-        u["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(u.get("umbrella_id"))})["umbrella"] if u.get("umbrella_id") else "N/A"
-        u["area"] = db.Areas.find_one({"_id": ObjectId(u.get("area_id"))})["area"] if u.get("area_id") else "N/A"
-        u["scheme"] = db.Schemes.find_one({"_id": ObjectId(u.get("scheme_id"))})["scheme"] if u.get("scheme_id") else "N/A"
+        u["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(u.get("umbrella_id"))}).get("umbrella") if u.get("umbrella_id") else None
+        u["area"] = db.Areas.find_one({"_id": ObjectId(u.get("area_id"))}).get("area") if u.get("area_id") else None
+        u["scheme"] = db.Schemes.find_one({"_id": ObjectId(u.get("scheme_id"))}).get("scheme") if u.get("scheme_id") else None
 
     umbrellas = list(db.Umbrellas.find())
     areas = list(db.Areas.find())
@@ -535,25 +535,25 @@ def villages():
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
 
     villages = list(db.Villages.find())
-    districts = list(db.Districts.find())
+    schemes = list(db.Schemes.find())
 
     for village in villages:
-        district = db.Districts.find_one({"_id": ObjectId(village["district_id"])})
-        village["district"] = district["district"] if district else 'N/A'
-    
+        scheme = db.Schemes.find_one({"_id": ObjectId(village["scheme_id"])})
+        village["scheme"] = scheme["scheme"] if scheme else 'N/A'
+
     return render_template("villages.html",
                            user=user,
                            section="villages",
                            date=datetime.datetime.now().strftime("%d %B %Y"),
                            villages=villages,
-                           districts=districts)
+                           schemes=schemes)
 
 @app.route('/add_village', methods=["POST"])
 def add_village():
     village_name = request.form.get("village")
-    district_id = request.form.get("district_id")
-    
-    db.Villages.insert_one({"village": village_name, "district_id": district_id})
+    scheme_id = request.form.get("scheme_id")
+
+    db.Villages.insert_one({"village": village_name, "scheme_id": scheme_id})
     flash("Village added successfully!", "success")
     return redirect(url_for("villages"))
 

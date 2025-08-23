@@ -28,15 +28,15 @@
               <label for="new_village" class="form-label">Village Name</label>
               <input type="text" class="form-control" id="new_village" name="village" required>
             </div>
-            <div class="mb-3">
-              <label for="district_id" class="form-label">District</label>
-              <select class="form-select" id="district_id" name="district_id" required>
-                <option value="" disabled selected>Select District</option>
-                {% for district in districts %}
-                  <option value="{{ district._id }}">{{ district.district }}</option>
-                {% endfor %}
-              </select>
-            </div>
+<div class="mb-3">
+  <label for="scheme_id" class="form-label">Scheme</label>
+  <select class="form-select" id="scheme_id" name="scheme_id" required>
+    <option value="" disabled selected>Select Scheme</option>
+    {% for scheme in schemes %}
+      <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
+    {% endfor %}
+  </select>
+</div>
           </div>
           <div class="modal-footer">
             <button type="submit" class="btn btn-success">Add Village</button>
@@ -52,7 +52,7 @@
       <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-primary">
           <th>Village Name</th>
-          <th>District</th>
+          <th>Scheme</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -60,7 +60,7 @@
         {% for village in villages %}
         <tr class="bg-dark-subtle my-1">
           <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.village }}</td>
-          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.district }}</td>
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.scheme }}</td>
           <td>
             <div class="d-flex gap-1">
               <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ village._id }}">
@@ -88,10 +88,10 @@
                     <input type="text" class="form-control" id="village_{{ village._id }}" name="village" value="{{ village.village }}">
                   </div>
 <div class="mb-3">
-  <label for="district_id_{{ village._id }}" class="form-label">District</label>
-  <select class="form-select" id="district_id_{{ village._id }}" name="district_id" required>
-    {% for district in districts %}
-      <option value="{{ district._id }}" {% if district._id|string == village.district_id|string %}selected{% endif %}>{{ district.district }}</option>
+  <label for="scheme_id_{{ village._id }}" class="form-label">Scheme</label>
+  <select class="form-select" id="scheme_id_{{ village._id }}" name="scheme_id" required>
+    {% for scheme in schemes %}
+      <option value="{{ scheme._id }}" {% if scheme._id|string == village.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
     {% endfor %}
   </select>
 </div>

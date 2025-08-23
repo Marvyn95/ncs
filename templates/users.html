@@ -62,33 +62,33 @@
               <label for="confirm_password" class="form-label">Confirm Password</label>
               <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
             </div>
-            <div class="col-md-6 mb-2">
-              <label for="umbrella_id" class="form-label">Umbrella</label>
-              <select name="umbrella_id" class="form-select" required>
-                <option value="" disabled selected>Select Umbrella</option>
-                {% for umbrella in umbrellas %}
-                  <option value="{{ umbrella._id }}">{{ umbrella.umbrella }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-md-6 mb-2">
-              <label for="area_id" class="form-label">Area (Optional)</label>
-              <select name="area_id" class="form-select">
-                <option value="" selected>None</option>
-                {% for area in areas %}
-                  <option value="{{ area._id }}">{{ area.area }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-md-6 mb-2">
-              <label for="scheme_id" class="form-label">Scheme (Optional)</label>
-              <select name="scheme_id" class="form-select">
-                <option value="" selected>None</option>
-                {% for scheme in schemes %}
-                  <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
-                {% endfor %}
-              </select>
-            </div>
+<div class="col-md-6 mb-2">
+  <label for="umbrella_id" class="form-label">Umbrella</label>
+  <select name="umbrella_id" class="form-select" id="umbrella_id" required onchange="filterAreas()">
+    <option value="" disabled selected>Select Umbrella</option>
+    {% for umbrella in umbrellas %}
+      <option value="{{ umbrella._id }}">{{ umbrella.umbrella }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="col-md-6 mb-2">
+  <label for="area_id" class="form-label">Area (Optional)</label>
+  <select name="area_id" class="form-select" id="area_id" onchange="filterSchemes()">
+    <option value="" selected>None</option>
+    {% for area in areas %}
+      <option value="{{ area._id }}" data-umbrella="{{ area.umbrella_id }}">{{ area.area }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="col-md-6 mb-2">
+  <label for="scheme_id" class="form-label">Scheme (Optional)</label>
+  <select name="scheme_id" class="form-select" id="scheme_id">
+    <option value="" selected>None</option>
+    {% for scheme in schemes %}
+      <option value="{{ scheme._id }}" data-area="{{ scheme.area_id }}">{{ scheme.scheme }}</option>
+    {% endfor %}
+  </select>
+</div>
           </div>
         </div>
         <div class="modal-footer py-2">
@@ -190,7 +190,7 @@
   <select name="area_id" class="form-select" id="area_id_{{ user._id }}">
     <option value="" {% if not user.area_id %}selected{% endif %}>None</option>
     {% for area in areas %}
-      <option value="{{ area._id }}" {% if area._id|string == user.area_id|string %}selected{% endif %}>{{ area.area }}</option>
+      <option value="{{ area._id }}" data-umbrella="{{ area.umbrella_id }}" {% if area._id|string == user.area_id|string %}selected{% endif %}>{{ area.area }}</option>
     {% endfor %}
   </select>
 </div>
@@ -199,7 +199,7 @@
   <select name="scheme_id" class="form-select" id="scheme_id_{{ user._id }}">
     <option value="" {% if not user.scheme_id %}selected{% endif %}>None</option>
     {% for scheme in schemes %}
-      <option value="{{ scheme._id }}" {% if scheme._id|string == user.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
+      <option value="{{ scheme._id }}" data-area="{{ scheme.area_id }}" {% if scheme._id|string == user.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
     {% endfor %}
   </select>
 </div>
@@ -282,4 +282,79 @@
   </div>
 
 </div>
+
+
+<script>
+function filterAreas() {
+  var umbrellaSelect = document.getElementById('umbrella_id');
+  var areaSelect = document.getElementById('area_id');
+  var selectedUmbrella = umbrellaSelect.value;
+  Array.from(areaSelect.options).forEach(function(option) {
+    if (!option.value) return; // Skip 'None'
+    // Compare as strings
+    option.style.display = (option.getAttribute('data-umbrella') === selectedUmbrella) ? '' : 'none';
+  });
+  // Reset area selection if not matching
+  if (areaSelect.selectedOptions[0] && areaSelect.selectedOptions[0].style.display === 'none') {
+    areaSelect.value = '';
+  }
+}
+document.addEventListener('DOMContentLoaded', filterAreas);
+</script>
+
+<script>
+function filterSchemes() {
+  var areaSelect = document.getElementById('area_id');
+  var schemeSelect = document.getElementById('scheme_id');
+  var selectedArea = areaSelect.value;
+  Array.from(schemeSelect.options).forEach(function(option) {
+    if (!option.value) return; // Skip 'None'
+    option.style.display = (option.getAttribute('data-area') === selectedArea) ? '' : 'none';
+  });
+  // Reset scheme selection if not matching
+  if (schemeSelect.selectedOptions[0] && schemeSelect.selectedOptions[0].style.display === 'none') {
+    schemeSelect.value = '';
+  }
+}
+document.getElementById('area_id').addEventListener('change', filterSchemes);
+document.addEventListener('DOMContentLoaded', filterSchemes);
+</script>
+
+<script>
+function filterAreas_{{ user._id }}() {
+  var umbrellaSelect = document.getElementById('umbrella_id_{{ user._id }}');
+  var areaSelect = document.getElementById('area_id_{{ user._id }}');
+  var selectedUmbrella = umbrellaSelect.value;
+  Array.from(areaSelect.options).forEach(function(option) {
+    if (!option.value) return; // Skip 'None'
+    option.style.display = (option.getAttribute('data-umbrella') === selectedUmbrella) ? '' : 'none';
+  });
+  // Reset area selection if not matching
+  if (areaSelect.selectedOptions[0] && areaSelect.selectedOptions[0].style.display === 'none') {
+    areaSelect.value = '';
+  }
+}
+function filterSchemes_{{ user._id }}() {
+  var areaSelect = document.getElementById('area_id_{{ user._id }}');
+  var schemeSelect = document.getElementById('scheme_id_{{ user._id }}');
+  var selectedArea = areaSelect.value;
+  Array.from(schemeSelect.options).forEach(function(option) {
+    if (!option.value) return; // Skip 'None'
+    option.style.display = (option.getAttribute('data-area') === selectedArea) ? '' : 'none';
+  });
+  // Reset scheme selection if not matching
+  if (schemeSelect.selectedOptions[0] && schemeSelect.selectedOptions[0].style.display === 'none') {
+    schemeSelect.value = '';
+  }
+}
+document.getElementById('umbrella_id_{{ user._id }}').addEventListener('change', filterAreas_{{ user._id }});
+document.getElementById('area_id_{{ user._id }}').addEventListener('change', filterSchemes_{{ user._id }});
+document.addEventListener('DOMContentLoaded', function() {
+  filterAreas_{{ user._id }}();
+  filterSchemes_{{ user._id }}();
+});
+</script>
+
+
+
 {% endblock %}

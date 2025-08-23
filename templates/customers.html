@@ -33,24 +33,43 @@
               <label for="contact" class="form-label">Contact</label>
               <input type="text" class="form-control" id="contact" name="contact" required>
             </div>
-            <div class="col-md-6 mb-2">
-              <label for="scheme_id" class="form-label">Scheme</label>
-              <select name="scheme_id" class="form-select" required>
-                <option value="" disabled selected>Select Scheme</option>
-                {% for scheme in schemes %}
-                  <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-md-6 mb-2">
-              <label for="village_id" class="form-label">Village</label>
-              <select name="village_id" class="form-select" required>
-                <option value="" disabled selected>Select Village</option>
-                {% for village in villages %}
-                  <option value="{{ village._id }}">{{ village.village }}</option>
-                {% endfor %}
-              </select>
-            </div>
+<div class="col-md-6 mb-2">
+  <label for="scheme_id" class="form-label">Scheme</label>
+  <select name="scheme_id" class="form-select" id="scheme_id" required onchange="filterVillages()">
+    <option value="" disabled selected>Select Scheme</option>
+    {% for scheme in schemes %}
+      <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="col-md-6 mb-2">
+  <label for="village_id" class="form-label">Village</label>
+  <select name="village_id" class="form-select" id="village_id" required>
+    <option value="" disabled selected>Select Village</option>
+    {% for village in villages %}
+      <option value="{{ village._id }}" data-scheme="{{ village.scheme_id }}">{{ village.village }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<script>
+function filterVillages() {
+  var schemeSelect = document.getElementById('scheme_id');
+  var villageSelect = document.getElementById('village_id');
+  var selectedScheme = schemeSelect.value;
+  Array.from(villageSelect.options).forEach(function(option) {
+    if (!option.value) return; // Skip 'Select Village'
+    option.style.display = (option.getAttribute('data-scheme') === selectedScheme) ? '' : 'none';
+  });
+  // Reset village selection if not matching
+  if (villageSelect.selectedOptions[0] && villageSelect.selectedOptions[0].style.display === 'none') {
+    villageSelect.value = '';
+  }
+}
+document.getElementById('scheme_id').addEventListener('change', filterVillages);
+document.addEventListener('DOMContentLoaded', filterVillages);
+</script>
+
             <div class="col-md-6 mb-2">
               <label for="application_id" class="form-label">Application ID</label>
               <input type="text" class="form-control" id="application_id" name="application_id" required>
@@ -313,22 +332,42 @@
               <label for="contact_{{ customer._id }}" class="form-label">Contact</label>
               <input type="text" class="form-control form-control-sm" id="contact_{{ customer._id }}" name="contact" value="{{ customer.contact }}" required>
             </div>
-            <div class="col-6 mb-1">
-              <label for="scheme_id_{{ customer._id }}" class="form-label">Scheme</label>
-              <select name="scheme_id" class="form-select form-select-sm" id="scheme_id_{{ customer._id }}" required>
-                {% for scheme in schemes %}
-                  <option value="{{ scheme._id }}" {% if scheme._id|string == customer.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-6 mb-1">
-              <label for="village_id_{{ customer._id }}" class="form-label">Village</label>
-              <select name="village_id" class="form-select form-select-sm" id="village_id_{{ customer._id }}" required>
-                {% for village in villages %}
-                  <option value="{{ village._id }}" {% if village._id|string == customer.village_id|string %}selected{% endif %}>{{ village.village }}</option>
-                {% endfor %}
-              </select>
-            </div>
+
+<div class="col-6 mb-1">
+  <label for="scheme_id_{{ customer._id }}" class="form-label">Scheme</label>
+  <select name="scheme_id" class="form-select form-select-sm" id="scheme_id_{{ customer._id }}" required onchange="filterVillages_{{ customer._id }}()">
+    {% for scheme in schemes %}
+      <option value="{{ scheme._id }}" {% if scheme._id|string == customer.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="col-6 mb-1">
+  <label for="village_id_{{ customer._id }}" class="form-label">Village</label>
+  <select name="village_id" class="form-select form-select-sm" id="village_id_{{ customer._id }}" required>
+    {% for village in villages %}
+      <option value="{{ village._id }}" data-scheme="{{ village.scheme_id }}" {% if village._id|string == customer.village_id|string %}selected{% endif %}>{{ village.village }}</option>
+    {% endfor %}
+  </select>
+</div>
+<script>
+function filterVillages_{{ customer._id }}() {
+  var schemeSelect = document.getElementById('scheme_id_{{ customer._id }}');
+  var villageSelect = document.getElementById('village_id_{{ customer._id }}');
+  var selectedScheme = schemeSelect.value;
+  Array.from(villageSelect.options).forEach(function(option) {
+    if (!option.value) return; // Skip 'Select Village'
+    option.style.display = (option.getAttribute('data-scheme') === selectedScheme) ? '' : 'none';
+  });
+  // Reset village selection if not matching
+  if (villageSelect.selectedOptions[0] && villageSelect.selectedOptions[0].style.display === 'none') {
+    villageSelect.value = '';
+  }
+}
+document.getElementById('scheme_id_{{ customer._id }}').addEventListener('change', filterVillages_{{ customer._id }});
+document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }});
+</script>
+
+
 <div class="col-6 mb-1">
   <label for="date_applied_{{ customer._id }}" class="form-label">Date Applied</label>
   <input type="date"
