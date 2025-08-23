@@ -682,6 +682,9 @@ def edit_customer():
     if "date_applied" in request.form:
         update_data["date_applied"] = datetime.datetime.strptime(request.form.get("date_applied"), "%Y-%m-%d")
 
+    if "survey_date" in request.form:
+        update_data["survey_date"] = datetime.datetime.strptime(request.form.get("survey_date"), "%Y-%m-%d")
+
     if "pipe_type" in request.form:
         update_data["pipe_type"] = request.form.get("pipe_type")
 
@@ -722,7 +725,7 @@ def edit_customer():
         update_data["meter_serial"] = request.form.get("meter_serial")
 
     if 'first_meter_reading' in request.form:
-        update_data["first_meter_reading"] = float(request.form.get("first_meter_reading"))
+        update_data["first_meter_reading"] = int(request.form.get("first_meter_reading"))
 
     if 'customer_reference' in request.form:
         update_data["customer_reference"] = int(request.form.get("customer_reference"))
@@ -741,12 +744,14 @@ def customer_survey():
     pipe_diameter = request.form.get("pipe_diameter")
     pipe_length = request.form.get("pipe_length")
     wealth_assessment_form = request.files.get("wealth_assessment_form")
+    survey_date = request.form.get("survey_date")
 
     update_data = {
         "pipe_type": pipe_type,
-        "pipe_diameter": pipe_diameter,
-        "pipe_length": pipe_length,
-        "status": "surveyed"
+        "pipe_diameter": int(pipe_diameter),
+        "pipe_length": float(pipe_length),
+        "status": "surveyed",
+        "survey_date": datetime.datetime.strptime(survey_date, "%Y-%m-%d") if survey_date else None
     }
 
     if wealth_assessment_form and wealth_assessment_form.filename:

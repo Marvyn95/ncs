@@ -171,6 +171,7 @@
                 <li class="list-group-item py-1"><strong>Pipe Diameter:</strong> <span class="text-primary">{{ customer.pipe_diameter or 'N/A' }} mm</span></li>
                 <li class="list-group-item py-1"><strong>Pipe Length:</strong> <span class="text-primary">{{ customer.pipe_length or 'N/A' }} M</span></li>
                 <li class="list-group-item py-1"><strong>Date Applied:</strong> <span class="text-primary">{{ customer.date_applied.strftime('%d %B %Y') if customer.date_applied else 'N/A' }}</span></li>
+                <li class="list-group-item py-1"><strong>Date Surveyed:</strong> <span class="text-primary">{{ customer.survey_date.strftime('%d %B %Y') if customer.survey_date else 'N/A' }}</span></li>
               </ul>
             </div>
             <div class="col-12 col-md-6">
@@ -225,7 +226,7 @@
                   <strong>First Meter Reading:</strong>
                   <span class="text-primary">
                     {% if customer.first_meter_reading is not none and customer.first_meter_reading != '' %}
-                      {{ customer.first_meter_reading }}
+                      {{ customer.first_meter_reading or 'N/A' }}
                     {% else %}
                       N/A
                     {% endif %}
@@ -356,30 +357,46 @@
               {% endif %}
             </div>
 
-            {% if customer.status in ["surveyed", "approved", "disapproved", 'paid', 'connected', 'confirmed', 'not_connected'] %}
-            <div class="col-6 mb-1">
-              <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
-              <input type="file" class="form-control form-control-sm" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form" accept="application/pdf,image/*">
-              {% if customer.wealth_assessment_form %}
-                <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">View</a>
-              {% endif %}
-            </div>
-            <div class="col-6 mb-1">
-              <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
-              <select class="form-select form-select-sm" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
-                <option value="PE" {% if customer.pipe_type == "PE" %}selected{% endif %}>PE</option>
-                <option value="PVC" {% if customer.pipe_type == "PVC" %}selected{% endif %}>PVC</option>
-              </select>
-            </div>
-            <div class="col-6 mb-1">
-              <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
-              <input type="number" class="form-control form-control-sm" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" value="{{ customer.pipe_diameter or 20 }}" min="1" step="1" required>
-            </div>
-            <div class="col-6 mb-1">
-              <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (m)</label>
-              <input type="number" class="form-control form-control-sm" id="pipe_length_{{ customer._id }}" name="pipe_length" value="{{ customer.pipe_length or '' }}" min="0" step="0.01" required>
-            </div>
-            {% endif %}
+{% if customer.status in ["surveyed", "approved", "disapproved", 'paid', 'connected', 'confirmed', 'not_connected'] %}
+<div class="col-6 mb-1">
+  <label for="survey_date_{{ customer._id }}" class="form-label">Survey Date</label>
+  <input type="date" class="form-control form-control-sm" id="survey_date_{{ customer._id }}" name="survey_date"
+    value="{{ customer.survey_date.strftime('%Y-%m-%d') if customer.survey_date else now().strftime('%Y-%m-%d') }}" required>
+</div>
+<div class="col-6 mb-1">
+  <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
+  <input type="file" class="form-control form-control-sm" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form"
+    accept="application/pdf,image/*,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+  {% if customer.wealth_assessment_form %}
+    <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">View</a>
+  {% endif %}
+</div>
+<div class="col-6 mb-1">
+  <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
+  <select class="form-select form-select-sm" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
+    <option value="HDPE" {% if customer.pipe_type == "HDPE" or not customer.pipe_type %}selected{% endif %}>HDPE</option>
+    <option value="PVC" {% if customer.pipe_type == "PVC" %}selected{% endif %}>PVC</option>
+    <option value="GI" {% if customer.pipe_type == "GI" %}selected{% endif %}>GI</option>
+  </select>
+</div>
+<div class="col-6 mb-1">
+  <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
+  <select class="form-select form-select-sm" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" required>
+    <option value="15" {% if customer.pipe_diameter|string == "15" %}selected{% endif %}>15</option>
+    <option value="20" {% if customer.pipe_diameter|string == "20" or customer.pipe_diameter is none or customer.pipe_diameter == "" %}selected{% endif %}>20</option>
+    <option value="25" {% if customer.pipe_diameter|string == "25" %}selected{% endif %}>25</option>
+    <option value="32" {% if customer.pipe_diameter|string == "32" %}selected{% endif %}>32</option>
+    <option value="40" {% if customer.pipe_diameter|string == "40" %}selected{% endif %}>40</option>
+    <option value="50" {% if customer.pipe_diameter|string == "50" %}selected{% endif %}>50</option>
+    <option value="65" {% if customer.pipe_diameter|string == "65" %}selected{% endif %}>65</option>
+    <option value="80" {% if customer.pipe_diameter|string == "80" %}selected{% endif %}>80</option>
+  </select>
+</div>
+<div class="col-6 mb-1">
+  <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (m)</label>
+  <input type="number" class="form-control form-control-sm" id="pipe_length_{{ customer._id }}" name="pipe_length" value="{{ customer.pipe_length or '' }}" min="0" step="0.01" required>
+</div>
+{% endif %}
 
             {% if customer.status in ['approved', 'paid', 'connected', 'confirmed', 'not_connected'] %}
             {% if customer.status == 'approved' %}
@@ -445,7 +462,7 @@
 <div class="col-6 mb-1">
   <label for="first_meter_reading_{{ customer._id }}" class="form-label">First Meter Reading</label>
   <input type="number" class="form-control form-control-sm" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
-    value="{{ customer.first_meter_reading or '' }}" min="0" step="0.01" required>
+    value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
 </div>
 {% endif %}
 
@@ -513,40 +530,57 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body py-1">
-        {% if customer.status == 'applied' %}
-        <form method="POST" action="{{ url_for('customer_survey') }}" enctype="multipart/form-data">
-          <input type="hidden" name="customer_id" value="{{ customer._id }}">
-          <div class="mb-2">
-            <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
-            <select class="form-select" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
-              <option value="PE">PE</option>
-              <option value="PVC">PVC</option>
-            </select>
-          </div>
-          <div class="mb-2">
-            <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
-            <input type="number" class="form-control" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" value="20" min="1" step="1" required>
-          </div>
-          <div class="mb-2">
-            <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (meters)</label>
-            <input type="number" class="form-control" id="pipe_length_{{ customer._id }}" name="pipe_length" min="0" step="0.01" required>
-          </div>
-          <div class="mb-2">
-            <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
-            <input type="file" class="form-control" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form" accept="application/pdf,image/*">
-            {% if customer.wealth_assessment_form %}
-              <div class="mt-1">
-                <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">
-                  <span class="text-primary">{{ customer.wealth_assessment_form }}</span>
-                </a>
-              </div>
-            {% endif %}
-          </div>
-          <div class="modal-footer py-1">
-            <button type="submit" class="btn btn-primary btn-sm">Submit</button>
-            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          </div>
-        </form>
+{% if customer.status == 'applied' %}
+<form method="POST" action="{{ url_for('customer_survey') }}" enctype="multipart/form-data">
+  <input type="hidden" name="customer_id" value="{{ customer._id }}">
+  <div class="mb-2">
+    <label for="survey_date_{{ customer._id }}" class="form-label">Survey Date</label>
+    <input type="date" class="form-control" id="survey_date_{{ customer._id }}" name="survey_date"
+      value="{{ now().strftime('%Y-%m-%d') }}" required>
+  </div>
+  <div class="mb-2">
+    <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
+    <select class="form-select" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
+      <option value="HDPE" selected>HDPE</option>
+      <option value="PVC">PVC</option>
+      <option value="GI">GI</option>
+    </select>
+  </div>
+<div class="mb-2">
+  <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
+  <select class="form-select" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" required>
+    <option value="15">15</option>
+    <option value="20" selected>20</option>
+    <option value="25">25</option>
+    <option value="32">32</option>
+    <option value="40">40</option>
+    <option value="50">50</option>
+    <option value="65">65</option>
+    <option value="80">80</option>
+  </select>
+</div>
+  <div class="mb-2">
+    <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (meters)</label>
+    <input type="number" class="form-control" id="pipe_length_{{ customer._id }}" name="pipe_length" min="0" step="0.01" required>
+  </div>
+<div class="mb-2">
+  <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
+  <input type="file" class="form-control" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form"
+    accept="application/pdf,image/*,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+  {% if customer.wealth_assessment_form %}
+    <div class="mt-1">
+      <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">
+        <span class="text-primary">{{ customer.wealth_assessment_form }}</span>
+      </a>
+    </div>
+  {% endif %}
+</div>
+  <div class="modal-footer py-1">
+    <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+  </div>
+</form>
+
 {% elif customer.status == 'surveyed' or customer.status == 'disapproved' %}
 <form method="POST" action="{{ url_for('customer_approval') }}">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
@@ -634,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="mb-2">
     <label for="first_meter_reading_{{ customer._id }}" class="form-label">First Meter Reading</label>
     <input type="number" class="form-control" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
-      value="{{ customer.first_meter_reading or '' }}" min="0" step="0.01" required>
+      value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
   </div>
   <div class="mb-2">
     <p>Are you sure you want to confirm connection for <strong class="text-primary">{{ customer.name }}</strong>?</p>
