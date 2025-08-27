@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="w-100 h-100">
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h5 class="fw-bold mb-1">Umbrellas</h5>
+      <p class="mb-0">Manage umbrella authorities</p>
+    </div>
+    <div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUmbrellaModal">
+        <i class="bi bi-plus-lg me-1"></i> Add Umbrella
+      </button>
+    </div>
+  </div>
+
+  <!-- Add Umbrella Modal -->
+  <div class="modal fade" id="addUmbrellaModal" tabindex="-1" aria-labelledby="addUmbrellaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="POST" action="{{ url_for('add_umbrella') }}">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addUmbrellaModalLabel">Add New Umbrella</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="new_umbrella" class="form-label">Umbrella Name</label>
+              <input type="text" class="form-control" id="new_umbrella" name="umbrella" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Add Umbrella</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+        <tr class="table-primary">
+          <th>Umbrella Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for umbrella in umbrellas %}
+        <tr class="bg-dark-subtle my-1">
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ umbrella.umbrella }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ umbrella._id }}">
+                <i class="bi bi-pencil fs-6"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-sm p-1" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ umbrella._id }}">
+                <i class="bi bi-trash fs-6"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal-{{ umbrella._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ umbrella._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('edit_umbrella') }}">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="editModalLabel-{{ umbrella._id }}">Edit Umbrella</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="umbrella_id" value="{{ umbrella._id }}">
+                  <div class="mb-3">
+                    <label for="umbrella_{{ umbrella._id }}" class="form-label">Umbrella Name</label>
+                    <input type="text" class="form-control" id="umbrella_{{ umbrella._id }}" name="umbrella" value="{{ umbrella.umbrella }}">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal-{{ umbrella._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ umbrella._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('delete_umbrella') }}">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="deleteModalLabel-{{ umbrella._id }}">Delete Umbrella</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="umbrella_id" value="{{ umbrella._id }}">
+                  <p>Are you sure you want to delete <strong>{{ umbrella.umbrella }}</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-danger">Delete</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

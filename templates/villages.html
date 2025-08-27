@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="w-100 h-100">
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h5 class="fw-bold mb-1">Villages</h5>
+      <p class="mb-0">Manage villages</p>
+    </div>
+    <div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVillageModal">
+        <i class="bi bi-plus-lg me-1"></i> Add Village
+      </button>
+    </div>
+  </div>
+
+  <!-- Add Village Modal -->
+  <div class="modal fade" id="addVillageModal" tabindex="-1" aria-labelledby="addVillageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="POST" action="{{ url_for('add_village') }}">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addVillageModalLabel">Add New Village</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="new_village" class="form-label">Village Name</label>
+              <input type="text" class="form-control" id="new_village" name="village" required>
+            </div>
+<div class="mb-3">
+  <label for="scheme_id" class="form-label">Scheme</label>
+  <select class="form-select" id="scheme_id" name="scheme_id" required>
+    <option value="" disabled selected>Select Scheme</option>
+    {% for scheme in schemes %}
+      <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
+    {% endfor %}
+  </select>
+</div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Add Village</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+        <tr class="table-primary">
+          <th>Village Name</th>
+          <th>Scheme</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for village in villages %}
+        <tr class="bg-dark-subtle my-1">
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.village }}</td>
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.scheme }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ village._id }}">
+                <i class="bi bi-pencil fs-6"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-sm p-1" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ village._id }}">
+                <i class="bi bi-trash fs-6"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal-{{ village._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ village._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('edit_village') }}">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="editModalLabel-{{ village._id }}">Edit Village</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="village_id" value="{{ village._id }}">
+                  <div class="mb-3">
+                    <label for="village_{{ village._id }}" class="form-label">Village Name</label>
+                    <input type="text" class="form-control" id="village_{{ village._id }}" name="village" value="{{ village.village }}">
+                  </div>
+<div class="mb-3">
+  <label for="scheme_id_{{ village._id }}" class="form-label">Scheme</label>
+  <select class="form-select" id="scheme_id_{{ village._id }}" name="scheme_id" required>
+    {% for scheme in schemes %}
+      <option value="{{ scheme._id }}" {% if scheme._id|string == village.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
+    {% endfor %}
+  </select>
+</div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal-{{ village._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ village._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('delete_village') }}">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="deleteModalLabel-{{ village._id }}">Delete Village</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="village_id" value="{{ village._id }}">
+                  <p>Are you sure you want to delete <strong>{{ village.village }}</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-danger">Delete</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

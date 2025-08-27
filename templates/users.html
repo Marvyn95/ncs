@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="w-100 h-100">
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h5 class="fw-bold mb-1">Users</h5>
+      <p class="mb-0">Manage users</p>
+    </div>
+    <div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+        <i class="bi bi-plus-lg me-1"></i> Add User
+      </button>
+    </div>
+  </div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('add_user') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-md-6 mb-2">
+              <label for="first_name" class="form-label">First Name</label>
+              <input type="text" class="form-control" id="first_name" name="first_name" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="last_name" class="form-label">Last Name</label>
+              <input type="text" class="form-control" id="last_name" name="last_name" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="role" class="form-label">Role</label>
+              <select name="role" class="form-select" required>
+                <option value="" disabled selected>Select Role</option>
+                <option value="accountant">Accountant</option>
+                <option value="administrator">Administrator</option>
+                <option value="area_manager">Area Manager</option>
+                <option value="billing_officer">Billing Officer</option>
+                <option value="cluster_manager">Cluster Manager</option>
+                <option value="commercial_officer">Commercial Officer</option>
+                <option value="deputy_manager">Deputy Manager</option>
+                <option value="manager">Manager</option>
+                <option value="me_officer">M&E Officer</option>
+                <option value="project_officer">Project Officer</option>
+                <option value="scheme_manager">Scheme Manager</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="confirm_password" class="form-label">Confirm Password</label>
+              <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+            </div>
+<div class="col-md-6 mb-2">
+  <label for="umbrella_id" class="form-label">Umbrella</label>
+  <select name="umbrella_id" class="form-select" id="umbrella_id" required onchange="filterAreas()">
+    <option value="" disabled selected>Select Umbrella</option>
+    {% for umbrella in umbrellas %}
+      <option value="{{ umbrella._id }}">{{ umbrella.umbrella }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="col-md-6 mb-2">
+  <label for="area_id" class="form-label">Area (Optional)</label>
+  <select name="area_id" class="form-select" id="area_id" onchange="filterSchemes()">
+    <option value="" selected>None</option>
+    {% for area in areas %}
+      <option value="{{ area._id }}" data-umbrella="{{ area.umbrella_id }}">{{ area.area }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="col-md-6 mb-2">
+  <label for="scheme_id" class="form-label">Scheme (Optional)</label>
+  <select name="scheme_id" class="form-select" id="scheme_id">
+    <option value="" selected>None</option>
+    {% for scheme in schemes %}
+      <option value="{{ scheme._id }}" data-area="{{ scheme.area_id }}">{{ scheme.scheme }}</option>
+    {% endfor %}
+  </select>
+</div>
+          </div>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="submit" class="btn btn-success btn-sm">Add User</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+        <tr class="table-primary">
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Umbrella</th>
+          <th>Area</th>
+          <th>Scheme</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr class="bg-dark-subtle my-1">
+          <td class="fw-semibold text-truncate" style="max-width: 150px;">{{ user.first_name }} {{ user.last_name }}</td>
+          <td class="text-truncate" style="max-width: 150px;">{{ user.email }}</td>
+          <td class="text-truncate" style="max-width: 120px;">{{ user.role }}</td>
+          <td class="text-truncate" style="max-width: 120px;">{{ user.umbrella }}</td>
+          <td class="text-truncate" style="max-width: 120px;">{{ user.area }}</td>
+          <td class="text-truncate" style="max-width: 120px;">{{ user.scheme }}</td>
+<td>
+  <div class="d-flex gap-1">
+    <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ user._id }}">
+      <i class="bi bi-pencil fs-6"></i>
+    </button>
+    <button class="btn btn-outline-warning btn-sm p-1" data-bs-toggle="modal" data-bs-target="#passwordModal-{{ user._id }}">
+      <i class="bi bi-key fs-6"></i>
+    </button>
+    <button class="btn btn-outline-danger btn-sm p-1" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ user._id }}">
+      <i class="bi bi-trash fs-6"></i>
+    </button>
+  </div>
+</td>
+        </tr>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editModal-{{ user._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ user._id }}" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('edit_user') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel-{{ user._id }}">Edit User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2">
+            <input type="hidden" name="user_id" value="{{ user._id }}">
+            <div class="col-md-6 mb-2">
+              <label for="first_name_{{ user._id }}" class="form-label">First Name</label>
+              <input type="text" class="form-control" id="first_name_{{ user._id }}" name="first_name" value="{{ user.first_name }}" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="last_name_{{ user._id }}" class="form-label">Last Name</label>
+              <input type="text" class="form-control" id="last_name_{{ user._id }}" name="last_name" value="{{ user.last_name }}" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="email_{{ user._id }}" class="form-label">Email</label>
+              <input type="email" class="form-control" id="email_{{ user._id }}" name="email" value="{{ user.email }}" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label for="role_{{ user._id }}" class="form-label">Role</label>
+              <select name="role" class="form-select" id="role_{{ user._id }}" required>
+                <option value="accountant" {% if user.role == 'accountant' %}selected{% endif %}>Accountant</option>
+                <option value="administrator" {% if user.role == 'administrator' %}selected{% endif %}>Administrator</option>
+                <option value="area_manager" {% if user.role == 'area_manager' %}selected{% endif %}>Area Manager</option>
+                <option value="billing_officer" {% if user.role == 'billing_officer' %}selected{% endif %}>Billing Officer</option>
+                <option value="cluster_manager" {% if user.role == 'cluster_manager' %}selected{% endif %}>Cluster Manager</option>
+                <option value="commercial_officer" {% if user.role == 'commercial_officer' %}selected{% endif %}>Commercial Officer</option>
+                <option value="deputy_manager" {% if user.role == 'deputy_manager' %}selected{% endif %}>Deputy Manager</option>
+                <option value="manager" {% if user.role == 'manager' %}selected{% endif %}>Manager</option>
+                <option value="me_officer" {% if user.role == 'me_officer' %}selected{% endif %}>M&E Officer</option>
+                <option value="project_officer" {% if user.role == 'project_officer' %}selected{% endif %}>Project Officer</option>
+                <option value="scheme_manager" {% if user.role == 'scheme_manager' %}selected{% endif %}>Scheme Manager</option>
+              </select>
+            </div>
+<div class="col-md-6 mb-2">
+  <label for="umbrella_id_{{ user._id }}" class="form-label">Umbrella</label>
+  <select name="umbrella_id" class="form-select" id="umbrella_id_{{ user._id }}" required>
+    {% for umbrella in umbrellas %}
+      <option value="{{ umbrella._id }}" {% if umbrella._id|string == user.umbrella_id|string %}selected{% endif %}>{{ umbrella.umbrella }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="col-md-6 mb-2">
+  <label for="area_id_{{ user._id }}" class="form-label">Area (Optional)</label>
+  <select name="area_id" class="form-select" id="area_id_{{ user._id }}">
+    <option value="" {% if not user.area_id %}selected{% endif %}>None</option>
+    {% for area in areas %}
+      <option value="{{ area._id }}" data-umbrella="{{ area.umbrella_id }}" {% if area._id|string == user.area_id|string %}selected{% endif %}>{{ area.area }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="col-md-6 mb-2">
+  <label for="scheme_id_{{ user._id }}" class="form-label">Scheme (Optional)</label>
+  <select name="scheme_id" class="form-select" id="scheme_id_{{ user._id }}">
+    <option value="" {% if not user.scheme_id %}selected{% endif %}>None</option>
+    {% for scheme in schemes %}
+      <option value="{{ scheme._id }}" data-area="{{ scheme.area_id }}" {% if scheme._id|string == user.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
+    {% endfor %}
+  </select>
+</div>
+          </div>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Update Password Modal -->
+<div class="modal fade" id="passwordModal-{{ user._id }}" tabindex="-1" aria-labelledby="passwordModalLabel-{{ user._id }}" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content border-0 shadow-sm" style="font-size:0.95rem;">
+      <form method="POST" action="{{ url_for('update_user_password') }}">
+        <div class="modal-header bg-light py-2">
+          <h6 class="modal-title fw-bold" id="passwordModalLabel-{{ user._id }}">
+            <i class="bi bi-key me-2"></i>
+            Update Password for <span class="text-primary">{{ user.first_name }} {{ user.last_name }}</span>
+          </h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body py-2">
+          <input type="hidden" name="user_id" value="{{ user._id }}">
+          <div class="mb-2">
+            <label for="new_password_{{ user._id }}" class="form-label">New Password</label>
+            <input type="password" class="form-control form-control-sm" id="new_password_{{ user._id }}" name="new_password" required>
+          </div>
+          <div class="mb-2">
+            <label for="confirm_password_{{ user._id }}" class="form-label">Confirm Password</label>
+            <input type="password" class="form-control form-control-sm" id="confirm_password_{{ user._id }}" name="confirm_password" required>
+          </div>
+        </div>
+        <div class="modal-footer bg-light py-2">
+          <button type="submit" class="btn btn-warning btn-sm">
+            <i class="bi bi-key me-1"></i>Update Password
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteModal-{{ user._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ user._id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('delete_user') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel-{{ user._id }}">Delete User</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="user_id" value="{{ user._id }}">
+          <p>Are you sure you want to delete <strong>{{ user.first_name }} {{ user.last_name }}</strong>?</p>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+
+<script>
+function filterAreas() {
+  var umbrellaSelect = document.getElementById('umbrella_id');
+  var areaSelect = document.getElementById('area_id');
+  var selectedUmbrella = umbrellaSelect.value;
+  Array.from(areaSelect.options).forEach(function(option) {
+    if (!option.value) return; // Skip 'None'
+    // Compare as strings
+    option.style.display = (option.getAttribute('data-umbrella') === selectedUmbrella) ? '' : 'none';
+  });
+  // Reset area selection if not matching
+  if (areaSelect.selectedOptions[0] && areaSelect.selectedOptions[0].style.display === 'none') {
+    areaSelect.value = '';
+  }
+}
+document.addEventListener('DOMContentLoaded', filterAreas);
+</script>
+
+<script>
+function filterSchemes() {
+  var areaSelect = document.getElementById('area_id');
+  var schemeSelect = document.getElementById('scheme_id');
+  var selectedArea = areaSelect.value;
+  Array.from(schemeSelect.options).forEach(function(option) {
+    if (!option.value) return; // Skip 'None'
+    option.style.display = (option.getAttribute('data-area') === selectedArea) ? '' : 'none';
+  });
+  // Reset scheme selection if not matching
+  if (schemeSelect.selectedOptions[0] && schemeSelect.selectedOptions[0].style.display === 'none') {
+    schemeSelect.value = '';
+  }
+}
+document.getElementById('area_id').addEventListener('change', filterSchemes);
+document.addEventListener('DOMContentLoaded', filterSchemes);
+</script>
+
+<script>
+function filterAreas_{{ user._id }}() {
+  var umbrellaSelect = document.getElementById('umbrella_id_{{ user._id }}');
+  var areaSelect = document.getElementById('area_id_{{ user._id }}');
+  var selectedUmbrella = umbrellaSelect.value;
+  Array.from(areaSelect.options).forEach(function(option) {
+    if (!option.value) return; // Skip 'None'
+    option.style.display = (option.getAttribute('data-umbrella') === selectedUmbrella) ? '' : 'none';
+  });
+  // Reset area selection if not matching
+  if (areaSelect.selectedOptions[0] && areaSelect.selectedOptions[0].style.display === 'none') {
+    areaSelect.value = '';
+  }
+}
+function filterSchemes_{{ user._id }}() {
+  var areaSelect = document.getElementById('area_id_{{ user._id }}');
+  var schemeSelect = document.getElementById('scheme_id_{{ user._id }}');
+  var selectedArea = areaSelect.value;
+  Array.from(schemeSelect.options).forEach(function(option) {
+    if (!option.value) return; // Skip 'None'
+    option.style.display = (option.getAttribute('data-area') === selectedArea) ? '' : 'none';
+  });
+  // Reset scheme selection if not matching
+  if (schemeSelect.selectedOptions[0] && schemeSelect.selectedOptions[0].style.display === 'none') {
+    schemeSelect.value = '';
+  }
+}
+document.getElementById('umbrella_id_{{ user._id }}').addEventListener('change', filterAreas_{{ user._id }});
+document.getElementById('area_id_{{ user._id }}').addEventListener('change', filterSchemes_{{ user._id }});
+document.addEventListener('DOMContentLoaded', function() {
+  filterAreas_{{ user._id }}();
+  filterSchemes_{{ user._id }}();
+});
+</script>
+
+
+
+{% endblock %}

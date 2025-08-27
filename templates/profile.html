@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Action Buttons -->
+<div class="d-flex justify-content-end gap-2 mb-3">
+  <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+    Edit Profile
+  </button>
+  <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+    Change Password
+  </button>
+</div>
+
+<!-- User Details Card -->
+<div class="container-fluid px-0 h-100">
+  <div class="card shadow-lg border border-secondary rounded-4 bg-secondary-subtle mb-4 w-100">
+    <div class="card-body py-3 px-4">
+      <div class="d-flex align-items-center mb-3">
+        <i class="bi bi-person-circle text-primary me-3" style="font-size: 2rem;"></i>
+        <div>
+          <div class="fw-bold fs-5 mb-0">{{ user.first_name }} {{ user.last_name }}</div>
+          <div class="text-muted small">{{ user.role }}</div>
+        </div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-5 fw-semibold text-dark">Email:</div>
+        <div class="col-7 text-primary text-truncate">{{ user.email }}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-5 fw-semibold text-dark">Umbrella:</div>
+        <div class="col-7 text-primary text-truncate">{{ user.umbrella if user.umbrella else 'None' }}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-5 fw-semibold text-dark">Scheme:</div>
+        <div class="col-7 text-primary text-truncate">{{ user.scheme if user.scheme else 'None' }}</div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-5 fw-semibold text-dark">Area:</div>
+        <div class="col-7 text-primary text-truncate">{{ user.area if user.area else 'None' }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('update_profile') }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Profile</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Hidden user ID -->
+          <input type="hidden" name="user_id" value="{{ user._id }}">
+
+          <div class="mb-2">
+            <label class="form-label">First Name</label>
+            <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Last Name</label>
+            <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+          </div>
+
+<div class="mb-2">
+  {% if user.role == 'admin' %}
+    <label class="form-label">Role</label>
+    <select name="role" class="form-select" {% if user.role == 'admin' %}disabled{% endif %} required>
+      <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+      <option value="manager" {% if user.role == 'manager' %}selected{% endif %}>Manager</option>
+      <option value="cluster_manager" {% if user.role == 'cluster_manager' %}selected{% endif %}>Cluster Manager</option>
+      <option value="commercial_officer" {% if user.role == 'commercial_officer' %}selected{% endif %}>Commercial Officer</option>
+      <option value="billing_officer" {% if user.role == 'billing_officer' %}selected{% endif %}>Billing Officer</option>
+      <option value="project_officer" {% if user.role == 'project_officer' %}selected{% endif %}>Project Officer</option>
+      <option value="area_manager" {% if user.role == 'area_manager' %}selected{% endif %}>Area Manager</option>
+      <option value="scheme_manager" {% if user.role == 'scheme_manager' %}selected{% endif %}>Scheme Manager</option>
+      <option value="plumber" {% if user.role == 'plumber' %}selected{% endif %}>Plumber</option>
+      <option value="me_officer" {% if user.role == 'me_officer' %}selected{% endif %}>M&E Officer</option>
+    </select>
+    <input type="hidden" name="role" value="{{ user.role }}">
+  {% else %}
+    <input type="hidden" name="role" value="{{ user.role }}">
+  {% endif %}
+</div>
+
+<div class="mb-2">
+  {% if user.role|string == 'admin' %}
+    <label class="form-label">Umbrella Authority</label>
+    <select name="umbrella_id" class="form-select" required>
+      <option value="" {% if not user.umbrella_id|string %}selected{% endif %}>Select Umbrella</option>
+      {% for umbrella in umbrellas %}
+        <option value="{{ umbrella._id }}" {% if user.umbrella_id|string == umbrella._id|string %}selected{% endif %}>
+          {{ umbrella.umbrella }}
+        </option>
+      {% endfor %}
+    </select>
+  {% else %}
+    <input type="hidden" name="umbrella_id" value="{{ user.umbrella_id }}">
+  {% endif %}
+</div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('change_password') }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Change Password</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Hidden user ID -->
+          <input type="hidden" name="user_id" value="{{ user._id }}">
+          <input type="password" name="new_password" class="form-control mb-2" placeholder="New Password" required>
+          <input type="password" name="confirm_password" class="form-control" placeholder="Confirm New Password" required>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-warning">Update Password</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
