@@ -1,5 +1,170 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h4>Customer Payment History</h4>
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col-12">
+    <h4 class="mb-4"><span class="mb-1 text-primary fw-semibold">{{ customer.name }}</span> <span class="text-muted small">Payment History</span></h4>
+    <div class="card border-0 shadow-sm bg-secondary bg-opacity-10">
+      <div class="card-body py-2 px-3">
+        <div class="row small g-2 align-items-center">
+          <div class="col-6 col-md-3">
+            <span class="fw-semibold text-dark">Reference:</span>
+            <span class="text-primary">{{ customer.customer_reference or '-' }}</span>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="fw-semibold text-dark">Connection Date:</span>
+            <span class="text-primary">
+              {% if customer.connection_date %}
+                {{ customer.connection_date.strftime('%d %b %Y') }}
+              {% else %}
+                -
+              {% endif %}
+            </span>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="fw-semibold text-dark">Payment Period:</span>
+            <span class="text-primary">{{ customer.payment_period or '-' }}</span> months
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="fw-semibold text-dark">Monthly Installment:</span>
+            <span class="text-primary">
+              {% if customer.connection_fee and customer.payment_period %}
+                {{ "{:,}".format((customer.amount_due|int // customer.payment_period|int)) }} ugx
+              {% else %}
+                -
+              {% endif %}
+            </span>
+          </div>
+        </div>
+        <div class="row small g-2 align-items-center mt-1">
+          <div class="col-6 col-md-3">
+            <span class="fw-semibold text-dark">Connection Fee:</span>
+            <span class="text-primary">
+              {% if customer.connection_fee %}
+                {{ "{:,}".format(customer.connection_fee|int) }} ugx
+              {% else %}
+                -
+              {% endif %}
+            </span>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="fw-semibold text-dark">Initial Clearance:</span>
+            <span class="text-primary">
+              {% if customer.amount_paid %}
+                {{ "{:,}".format(customer.amount_paid|int) }} ugx
+              {% else %}
+                -
+              {% endif %}
+            </span>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="fw-semibold text-dark">Initial Deficit:</span>
+            <span class="text-primary">
+              {% if customer.connection_fee and customer.amount_paid %}
+                {{ "{:,}".format(customer.connection_fee|int - customer.amount_paid|int) }} ugx
+              {% else %}
+                -
+              {% endif %}
+            </span>
+          </div>
+          <div class="col-6 col-md-3">
+            <span class="fw-semibold text-dark">Overall Balance:</span>
+            <span class="text-primary">
+              {% if customer.bpb %}
+                {{ "{:,}".format(customer.bpb[-1].get('balance_on_connection', 0)|int + customer.bpb[-1].get('balance_on_bill', 0)|int) }} ugx
+              {% else %}
+                {{ "{:,}".format(customer.amount_due|int) }} ugx
+              {% endif %}
+            </span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col text-end">
+            <span class="small text-muted">As of {{ now().strftime('%d %b %Y') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+      </div>
+    </div>
+  </div>
+
+<!-- customer table -->
+<div class="row justify-content-center">
+    <div class="col-12 col-md-12">
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+                <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+                    <tr class="table-primary">
+                        <th>Month</th>
+                        <th>Bill</th>
+                        <th>Payment</th>
+                        <th>Balance on Connection</th>
+                        <th>Balance on Bill</th>
+                        <th>Prepayment Balance</th>
+                        <th>Overall Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if customer.bpb %}
+                    {% for bpb in customer.bpb %}
+                    <tr class="bg-dark-subtle my-1">
+                        <td class="fw-semibold text-truncate" style="max-width: 120px;">
+                            {% if bpb.period %}
+                                {{ bpb.period.strftime('%b %Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-truncate" style="max-width: 100px;">
+                            {% if bpb.bill %}
+                                {{ "{:,}".format(bpb.bill|int) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-truncate" style="max-width: 120px;">
+                            {% if bpb.payment %}
+                                {{ "{:,}".format(bpb.payment|int) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-truncate" style="max-width: 120px;">
+                            {% if bpb.balance_on_connection %}
+                                {{ "{:,}".format(bpb.balance_on_connection|int) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-truncate" style="max-width: 100px;">
+                            {% if bpb.balance_on_bill %}
+                                {{ "{:,}".format(bpb.balance_on_bill|int) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-truncate" style="max-width: 100px;">
+                        {% if bpb.prepayment_balance %}
+                            {{ "{:,}".format((bpb.prepayment_balance|int)) }}
+                        {% else %}
+                            -
+                        {% endif %}
+                        </td>
+                        <td class="text-truncate" style="max-width: 100px;">
+                            {{ "{:,}".format((bpb.balance_on_connection|int) + (bpb.balance_on_bill|int)) or "-"}}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">No payment history found.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}
