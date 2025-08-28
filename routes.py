@@ -1127,4 +1127,4 @@ def customer_history():
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
 
-    return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now)
+    return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now().strftime("%d %B %Y"))
