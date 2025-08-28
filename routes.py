@@ -652,6 +652,9 @@ def edit_customer():
     wealth_assessment_form = request.files.get("wealth_assessment_form")
     proof_of_payment = request.files.get("proof_of_payment")
 
+    if abs(int(request.form.get("customer_reference", 0))) > 2**63 - 1:
+        flash("Customer reference is too large!", "danger")
+        return redirect(url_for("customers"))
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
 
@@ -869,6 +872,10 @@ def customer_connection():
 def customer_confirmation():
     customer_id = request.form.get("customer_id")
     customer_reference = request.form.get("customer_reference")
+
+    if abs(int(customer_reference)) > 2**63 - 1:
+        flash("Customer reference is too large!", "danger")
+        return redirect(url_for("customers"))
 
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
