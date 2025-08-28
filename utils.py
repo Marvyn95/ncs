@@ -30,3 +30,46 @@ def login_required(f):
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated_function
+
+
+
+def roll_down_balances(customer, bpb_object):
+    if bpb_object:
+        bpb = sorted(bpb_object, key=lambda x: x["period"])
+    if customer:
+        monthly_connection_deduction = customer.get("amount_due", 0)/customer.get("payment_period", 6)
+
+    # populating the payment flow data
+    for i in range(len(bpb)):
+        if i == 0:
+            if bpb[0].get("payment", 0) < monthly_connection_deduction:
+                bpb[0]["balance_on_connection"] = customer.get("amount_due", 0) - bpb[0].get("payment", 0)
+                bpb[0]["balance_on_bill"] = bpb[0].get("bill", 0)
+                bpb[0]["prepayment_balance"] = 0
+            if bpb[0].get("payment", 0) >= monthly_connection_deduction:
+                bpb[0]["balance_on_connection"] = customer.get("amount_due", 0) - monthly_connection_deduction
+                bpb[0]["balance_on_bill"] = bpb[0].get("bill", 0) - (customer.get("payment", 0) - monthly_connection_deduction)
+                if bpb[0]["payment"] > (monthly_connection_deduction + bpb[0].get("bill", 0)):
+                    bpb[0]["prepayment_balance"] = bpb[0]["payment"] - (monthly_connection_deduction + bpb[0].get("bill", 0))
+                else:
+                    bpb[0]["prepayment_balance"] = 0
+        if i != 0:
+            if bpb[i-1].get("balance_on_connection", 0) < monthly_connection_deduction:
+                monthly_connection_deduction = bpb[i-1].get("balance_on_connection", 0)
+
+            if bpb[i].get("payment", 0) < monthly_connection_deduction:
+                bpb[i]["balance_on_connection"] = bpb[i-1].get("balance_on_connection", 0) - bpb[i].get("payment", 0)
+                bpb[i]["balance_on_bill"] = bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) - bpb[i-1].get("prepayment_balance", 0)
+                if bpb[i].get("payment", 0) + bpb[i-1].get("prepayment_balance", 0) > bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) + monthly_connection_deduction:
+                    bpb[i]["prepayment_balance"] = bpb[i]["payment"] + bpb[i-1].get("prepayment_balance", 0) - (bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) + monthly_connection_deduction)
+                else:
+                    bpb[i]["prepayment_balance"] = 0
+            if bpb[i]["payment"] > monthly_connection_deduction:
+                bpb[i]["balance_on_connection"] = bpb[i-1].get("balance_on_connection", 0) - monthly_connection_deduction
+                bpb[i]["balance_on_bill"] = bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) - (bpb[i]["payment"] - monthly_connection_deduction) - bpb[i-1].get("prepayment_balance", 0)
+                if bpb[i].get("payment", 0) + bpb[i-1].get("prepayment_balance", 0) > (monthly_connection_deduction + bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0)):
+                    bpb[i]["prepayment_balance"] = bpb[i]["payment"] + bpb[i-1].get("prepayment_balance", 0) - (monthly_connection_deduction + bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0))
+                else:
+                    bpb[i]["prepayment_balance"] = 0
+
+    return bpb

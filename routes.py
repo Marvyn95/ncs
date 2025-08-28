@@ -4,7 +4,7 @@ from flask import render_template, flash, request, url_for, session, redirect, s
 import json
 from bson.objectid import ObjectId
 import datetime
-from utils import save_file, login_required, delete_file
+from utils import save_file, login_required, delete_file, roll_down_balances
 import pandas as pd
 import io
 from dateutil.relativedelta import relativedelta
@@ -931,6 +931,10 @@ def add_monthly_billing_sheet():
         flash("No file selected!", "danger")
         return redirect(url_for("reports"))
     
+    if file.filename.endswith(".xls"):
+        flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
+        return redirect(url_for("reports"))
+    
     if file.filename.endswith(".csv"):
         df = pd.read_csv(file)
     elif file.filename.endswith((".xls", ".xlsx")):
@@ -945,6 +949,11 @@ def add_monthly_billing_sheet():
     if df.columns[1] != "MeterRef" or df.columns[9] != "Period" or df.columns[19] != "TotalCharges":
         flash("Monthly billing sheet must have 'MeterRef', 'Period', and 'TotalCharges' as the second, tenth, and twentieth columns respectively!", "danger")
         return redirect(url_for("reports"))
+    
+    year_months = df["Period"].astype(str).str[:6]
+    if len(year_months.unique()) != 1:
+        flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
+        return redirect(url_for("reports"))
 
     # Extract billing data and updating for each ES customer
     es_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})
@@ -954,8 +963,7 @@ def add_monthly_billing_sheet():
         if customer_billing_data.empty:
             flash("No billing data found for: {}".format(customer.get("name")), "warning")
             continue
-
-        
+ 
         bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
         # first time entry
         if bpb == []:
@@ -994,53 +1002,16 @@ def add_monthly_billing_sheet():
                     "payment": month_entry.get("payment", 0),
                 })
 
+            new_bpb = roll_down_balances(customer, bpb)
 
-            bpb = sorted(bpb, key=lambda x: x["period"])
-            monthly_connection_deduction = customer.get("amount_due", 0)/customer.get("payment_period", 6)
-
-            # populating the payment flow data
-            for i in range(len(bpb)):
-                if i == 0:
-                    if bpb[0].get("payment", 0) < monthly_connection_deduction:
-                        bpb[0]["balance_on_connection"] = customer.get("amount_due", 0) - bpb[0].get("payment", 0)
-                        bpb[0]["balance_on_bill"] = bpb[0].get("bill", 0)
-                        bpb[0]["prepayment_balance"] = 0
-                    if bpb[0].get("payment", 0) >= monthly_connection_deduction:
-                        bpb[0]["balance_on_connection"] = customer.get("amount_due", 0) - monthly_connection_deduction
-                        bpb[0]["balance_on_bill"] = bpb[0].get("bill", 0) - (customer.get("payment", 0) - monthly_connection_deduction)
-                        if bpb[0]["payment"] > (monthly_connection_deduction + bpb[0].get("bill", 0)):
-                            bpb[0]["prepayment_balance"] = bpb[0]["payment"] - (monthly_connection_deduction + bpb[0].get("bill", 0))
-                        else:
-                            bpb[0]["prepayment_balance"] = 0
-                if i != 0:
-                    if bpb[i-1].get("balance_on_connection", 0) < monthly_connection_deduction:
-                        monthly_connection_deduction = bpb[i-1].get("balance_on_connection", 0)
-
-                    if bpb[i].get("payment", 0) < monthly_connection_deduction:
-                        bpb[i]["balance_on_connection"] = bpb[i-1].get("balance_on_connection", 0) - bpb[i].get("payment", 0)
-                        bpb[i]["balance_on_bill"] = bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) - bpb[i-1].get("prepayment_balance", 0)
-                        if bpb[i].get("payment", 0) + bpb[i-1].get("prepayment_balance", 0) > bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) + monthly_connection_deduction:
-                            bpb[i]["prepayment_balance"] = bpb[i]["payment"] + bpb[i-1].get("prepayment_balance", 0) - (bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) + monthly_connection_deduction)
-                        else:
-                            bpb[i]["prepayment_balance"] = 0
-                    if bpb[i]["payment"] > monthly_connection_deduction:
-                        bpb[i]["balance_on_connection"] = bpb[i-1].get("balance_on_connection", 0) - monthly_connection_deduction
-                        bpb[i]["balance_on_bill"] = bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) - (bpb[i]["payment"] - monthly_connection_deduction) - bpb[i-1].get("prepayment_balance", 0)
-                        if bpb[i].get("payment", 0) + bpb[i-1].get("prepayment_balance", 0) > (monthly_connection_deduction + bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0)):
-                            bpb[i]["prepayment_balance"] = bpb[i]["payment"] + bpb[i-1].get("prepayment_balance", 0) - (monthly_connection_deduction + bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0))
-                        else:
-                            bpb[i]["prepayment_balance"] = 0
-
-            # finally updating the database
             db.Customers.update_one({"_id": customer.get("_id")}, {
                 "$set": {
-                    "bpb": bpb
+                    "bpb": new_bpb
                 }
             })
 
     flash("Monthly billing sheet processed successfully!", "success")
     return redirect(url_for("reports"))
-
 
 
 
@@ -1053,7 +1024,11 @@ def add_monthly_payment_sheet():
     if not file or file.filename == "":
         flash("No file selected!", "danger")
         return redirect(url_for("reports"))
-    
+
+    if file.filename.endswith(".xls"):
+        flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
+        return redirect(url_for("reports"))
+
     if file.filename.endswith(".csv"):
         df = pd.read_csv(file)
     elif file.filename.endswith(".xlsx"):
@@ -1069,8 +1044,11 @@ def add_monthly_payment_sheet():
     if df.columns[1] != "CustomerRef" or df.columns[4] != "TranAmount" or df.columns[9] != "PaymentDate":
         flash("Monthly payment sheet must have 'CustomerRef', 'TranAmount', and 'PaymentDate' as the second, fifth, and tenth columns respectively!", "danger")
         return redirect(url_for("reports"))
-    
-    #add checks for all entries to be in the same month
+
+    year_months = df["PaymentDate"].str[:7]
+    if len(year_months.unique()) != 1:
+        flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
+        return redirect(url_for("reports"))
 
     # Extract payment data and updating for each ES customer
     es_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})
@@ -1078,8 +1056,9 @@ def add_monthly_payment_sheet():
         customer_payment_data = df[df["CustomerRef"] == customer.get("customer_reference")]
 
         if customer_payment_data.empty:
-            flash("No billing data found for: {}".format(customer.get("name")), "warning")
+            flash("No Payment data found for: {}".format(customer.get("name")), "warning")
             continue
+
         amount_paid = int(customer_payment_data["TranAmount"].sum())
         payment_date = datetime.datetime.strptime(customer_payment_data["PaymentDate"].values[0].split("T")[0][:7], "%Y-%m")
 
@@ -1098,7 +1077,6 @@ def add_monthly_payment_sheet():
                     }]
                 }
             })
-
 
         # non first time entry
         elif bpb != []:
@@ -1121,49 +1099,16 @@ def add_monthly_payment_sheet():
                     "payment": amount_paid,
                 })
 
-            bpb = sorted(bpb, key=lambda x: x["period"])
-            monthly_connection_deduction = customer.get("amount_due", 0)/customer.get("payment_period", 6)
-
-            # populating the payment flow data
-            for i in range(len(bpb)):
-                if i == 0:
-                    if bpb[0].get("payment", 0) < monthly_connection_deduction:
-                        bpb[0]["balance_on_connection"] = monthly_connection_deduction - bpb[0].get("payment", 0)
-                        bpb[0]["balance_on_bill"] = bpb[0].get("bill", 0)
-                        bpb[0]["prepayment_balance"] = 0
-                    if bpb[0].get("payment", 0) >= monthly_connection_deduction:
-                        bpb[0]["balance_on_connection"] = customer.get("amount_due", 0) - monthly_connection_deduction
-                        bpb[0]["balance_on_bill"] = bpb[0].get("bill", 0) - (customer.get("payment", 0) - monthly_connection_deduction)
-                        if bpb[0]["payment"] > (monthly_connection_deduction + bpb[0].get("bill", 0)):
-                            bpb[0]["prepayment_balance"] = bpb[0]["payment"] - (monthly_connection_deduction + bpb[0].get("bill", 0))
-                        else:
-                            bpb[0]["prepayment_balance"] = 0
-                if i != 0:
-                    if bpb[i-1].get("balance_on_connection", 0) < monthly_connection_deduction:
-                        monthly_connection_deduction = bpb[i-1].get("balance_on_connection", 0)
-
-                    if bpb[i].get("payment", 0) < monthly_connection_deduction:
-                        bpb[i]["balance_on_connection"] = bpb[i-1].get("balance_on_connection", 0) - bpb[i].get("payment", 0)
-                        bpb[i]["balance_on_bill"] = bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) - bpb[i-1].get("prepayment_balance", 0)
-                        if bpb[i].get("payment", 0) + bpb[i-1].get("prepayment_balance", 0) > bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) + monthly_connection_deduction:
-                            bpb[i]["prepayment_balance"] = bpb[i]["payment"] + bpb[i-1].get("prepayment_balance", 0) - (bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) + monthly_connection_deduction)
-                        else:
-                            bpb[i]["prepayment_balance"] = 0
-                    if bpb[i]["payment"] > monthly_connection_deduction:
-                        bpb[i]["balance_on_connection"] = bpb[i-1].get("balance_on_connection", 0) - monthly_connection_deduction
-                        bpb[i]["balance_on_bill"] = bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0) - (bpb[i]["payment"] - monthly_connection_deduction) - bpb[i-1].get("prepayment_balance", 0)
-                        if bpb[i].get("payment", 0) + bpb[i-1].get("prepayment_balance", 0) > (monthly_connection_deduction + bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0)):
-                            bpb[i]["prepayment_balance"] = bpb[i]["payment"] + bpb[i-1].get("prepayment_balance", 0) - (monthly_connection_deduction + bpb[i-1].get("balance_on_bill", 0) + bpb[i].get("bill", 0))
-                        else:
-                            bpb[i]["prepayment_balance"] = 0
+            new_bpb = roll_down_balances(customer, bpb)
 
             # finally updating the database
             db.Customers.update_one({"_id": customer.get("_id")}, {
                 "$set": {
-                    "bpb": bpb
+                    "bpb": new_bpb
                 }
             })
-
+    
+    flash("Monthly payment sheet processed successfully!", "success")
     return redirect(url_for("reports"))
 
 

@@ -77,11 +77,9 @@
               <th>Type</th>
               <th>Connection Date</th>
               <th>Connection Fee</th>
-              <th>Connection Clearance</th>
-              <th>Connection Balance</th>
-              <th>Overall Balance Due</th>
-              <th>Last Paid Amount</th>
-              <th>Last Payment Date</th>
+              <th>Initial Connection Clearance</th>
+              <th> Current Connection Balance</th>
+              <th>Current Bill Balance</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -113,29 +111,15 @@
                 {% endif %}
               </td>
               <td class="text-truncate" style="max-width: 120px;">
-                {% if customer.amount_due %}
-                  {{ "{:,}".format(customer.amount_due|int) }}
+                {% if customer.bpb %}
+                  {{ "{:,}".format(customer.bpb[-1].get('balance_on_connection', 0)|int) }}
                 {% else %}
                   -
                 {% endif %}
               </td>
               <td class="text-truncate" style="max-width: 120px;">
-                {% if customer.overall_balance_due %}
-                  {{ "{:,}".format(customer.overall_balance_due|int) }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-              <td class="text-truncate" style="max-width: 100px;">
-                {% if customer.last_paid_amount %}
-                  {{ "{:,}".format(customer.last_paid_amount|int) }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-              <td class="text-truncate" style="max-width: 120px;">
-                {% if customer.last_payment_date %}
-                  {{ customer.last_payment_date }}
+                {% if customer.bpb %}
+                  {{ "{:,}".format(customer.bpb[-1].get('balance_on_bill', 0)|int) }}
                 {% else %}
                   -
                 {% endif %}
