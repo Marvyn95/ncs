@@ -10,15 +10,38 @@ import io
 from dateutil.relativedelta import relativedelta
 
 
-
 @app.route('/home', methods=["GET", "POST"])
 @login_required
 def home():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    
+    customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
+    customers_count = len(customers)
+
+    schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+    scheme_count = len(schemes)
+
+    villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
+    villages_count = len(villages)
+
+    application_count = len([a for a in customers if a.get("status") == "applied"])
+    survey_count = len([s for s in customers if s.get("status") == "surveyed"])
+    approval_count = len([a for a in customers if a.get("status") == "approved"])
+    pending_connection_count = len([c for c in customers if c.get("status") == "paid"])
+    es_customers = len([e for e in customers if e.get("type") == "ES"])  
+
     return render_template("home.html",
                            section="home",
                            user=user,
+                           customers_count=customers_count,
+                           schemes_count=scheme_count,
+                           villages_count=villages_count,
+                           application_count=application_count,
+                           survey_count=survey_count,
+                           approval_count=approval_count,
+                           pending_connection_count=pending_connection_count,
+                           es_customers=es_customers,
                            date = datetime.datetime.now().strftime("%d %B %Y"))
 
 
@@ -35,7 +58,7 @@ def login():
         if bcrypt.check_password_hash(user["password"], form_info["password"]) is False:
             flash('incorrect password', 'danger')
             return redirect(url_for('login'))
-        if user['active_status'] == False:
+        if user.get("active_status") == False:
             flash('your account is deactivated, contact your admin!', 'danger')
             return redirect(url_for('login'))
         if bcrypt.check_password_hash(user["password"], form_info["password"]) is True:
@@ -146,7 +169,7 @@ def change_password():
 def umbrellas():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
-    umbrellas = db.Umbrellas.find()
+    umbrellas = list(db.Umbrellas.find())
     return render_template("umbrellas.html",
                            user=user,
                            section="umbrellas",
@@ -191,11 +214,20 @@ def delete_umbrella():
     if len(list(users)) > 0:
         flash("Cannot delete umbrella, it is assigned to users!", "danger")
         return redirect(url_for("umbrellas"))
+    
+    schemes = db.Schemes.find({"umbrella_id": str(umbrella_id)})
+    if len(list(schemes)) > 0:
+        flash("Cannot delete umbrella, it is assigned to schemes!", "danger")
+        return redirect(url_for("umbrellas"))
+
+    customers = db.Customers.find({"umbrella_id": str(umbrella_id)})
+    if len(list(customers)) > 0:
+        flash("Cannot delete umbrella, it is assigned to customers!", "danger")
+        return redirect(url_for("umbrellas"))
 
     db.Umbrellas.delete_one({"_id": ObjectId(umbrella_id)})
     flash("Umbrella deleted successfully!", "success")
     return redirect(url_for("umbrellas"))
-
 
 
 
@@ -205,12 +237,15 @@ def delete_umbrella():
 def users():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    umbrellas = list(db.Umbrellas.find())
+    areas = list(db.Areas.find())
+    schemes = list(db.Schemes.find())
 
     users = list(db.Users.find())
     for u in users:
-        u["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(u.get("umbrella_id"))}).get("umbrella") if u.get("umbrella_id") else None
-        u["area"] = db.Areas.find_one({"_id": ObjectId(u.get("area_id"))}).get("area") if u.get("area_id") else None
-        u["scheme"] = db.Schemes.find_one({"_id": ObjectId(u.get("scheme_id"))}).get("scheme") if u.get("scheme_id") else None
+        u["umbrella"] = next((item["umbrella"] for item in umbrellas if str(item["_id"]) == u.get("umbrella_id")), None)
+        u["area"] = next((item["area"] for item in areas if str(item["_id"]) == u.get("area_id")), None)
+        u["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == u.get("scheme_id")), None)
 
     umbrellas = list(db.Umbrellas.find())
     areas = list(db.Areas.find())
@@ -336,12 +371,11 @@ def areas():
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     
     areas = list(db.Areas.find())
+    umbrellas = list(db.Umbrellas.find())
 
     for a in areas:
-        umbrella = db.Umbrellas.find_one({"_id": ObjectId(a.get("umbrella_id"))})
-        a["umbrella"] = umbrella["umbrella"] if umbrella else "N/A"
+        a["umbrella"] = next((item["umbrella"] for item in umbrellas if str(item["_id"]) == a.get("umbrella_id")), None)
 
-    umbrellas = list(db.Umbrellas.find())
     return render_template("areas.html",
                            user=user,
                            section="areas",
@@ -370,7 +404,6 @@ def edit_area():
     new_umbrella_id = request.form.get("umbrella_id")
 
     area_info = db.Areas.find_one({"_id": ObjectId(area_id)})
-    print(new_area_name, area_info.get("area"), new_umbrella_id, area_info.get("umbrella_id"))
 
     if new_area_name != area_info.get("area") or new_umbrella_id != area_info.get("umbrella_id"):
         if db.Areas.find_one({"area": new_area_name, "umbrella_id": new_umbrella_id}) is not None:
@@ -405,16 +438,20 @@ def schemes():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
 
-    schemes = list(db.Schemes.find())
+    if session.get("selected_umbrella_id"):
+        schemes = list(db.Schemes.find({"umbrella_id": session.get("selected_umbrella_id")}))
+    else:
+        schemes = list(db.Schemes.find())
+
     areas = list(db.Areas.find())
     districts = list(db.Districts.find())
+    umbrellas = list(db.Umbrellas.find())
 
     # Attach area and district names for display if needed
     for scheme in schemes:
-        area = db.Areas.find_one({"_id": ObjectId(scheme["area_id"])}) if scheme.get("area_id") else None
-        district = db.Districts.find_one({"_id": ObjectId(scheme["district_id"])}) if scheme.get("district_id") else None
-        scheme["area"] = area["area"] if area else "N/A"
-        scheme["district"] = district["district"] if district else "N/A"
+        scheme["area"] = next((area.get("area") for area in areas if str(area["_id"]) == scheme["area_id"]), None)
+        scheme["district"] = next((district.get("district") for district in districts if str(district["_id"]) == scheme["district_id"]), None)
+        scheme["umbrella"] = next((umbrella.get("umbrella") for umbrella in umbrellas if str(umbrella["_id"]) == scheme["umbrella_id"]), None)
 
     return render_template("schemes.html",
                            user=user,
@@ -422,20 +459,36 @@ def schemes():
                            date=datetime.datetime.now().strftime("%d %B %Y"),
                            schemes=schemes,
                            areas=areas,
-                           districts=districts)
+                           districts=districts,
+                           umbrellas=umbrellas)
+
+
+@app.route('/umbrella_selection', methods=["GET"])
+@login_required
+def umbrella_selection():
+    selected_umbrella_id = request.args.get("umbrella_id")
+    session["selected_umbrella_id"] = str(selected_umbrella_id)
+    return redirect(request.referrer)
 
 @app.route('/add_scheme', methods=["POST"])
 @login_required
 def add_scheme():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     scheme_name = request.form.get("scheme")
     area_id = request.form.get("area_id")
     district_id = request.form.get("district_id")
+    umbrella_id = request.form.get("umbrella_id")
 
-    if db.Schemes.find_one({"scheme": scheme_name, "area_id": area_id, "district_id": district_id}) is not None:
+    if db.Schemes.find_one({"scheme": scheme_name, "area_id": area_id, "district_id": district_id, "umbrella_id": umbrella_id}) is not None:
         flash("Scheme already exists for this area and district!", "danger")
         return redirect(url_for("schemes"))
     
-    db.Schemes.insert_one({"scheme": scheme_name, "area_id": area_id, "district_id": district_id})
+    db.Schemes.insert_one({
+        "scheme": scheme_name,
+        "area_id": area_id,
+        "district_id": district_id,
+        "umbrella_id": umbrella_id
+    })
     flash("Scheme added successfully!", "success")
     return redirect(url_for("schemes"))
 
@@ -447,15 +500,16 @@ def edit_scheme():
     new_scheme_name = request.form.get("scheme")
     new_area_id = request.form.get("area_id")
     new_district_id = request.form.get("district_id")
+    new_umbrella_id = request.form.get("umbrella_id")
 
     scheme_info = db.Schemes.find_one({"_id": ObjectId(scheme_id)})
 
-    if (new_scheme_name != scheme_info['scheme'] or new_area_id != scheme_info['area_id'] or new_district_id != scheme_info['district_id']):
-        if db.Schemes.find_one({"scheme": new_scheme_name, "area_id": new_area_id, "district_id": new_district_id}) is not None:
+    if (new_scheme_name != scheme_info['scheme'] or new_area_id != scheme_info['area_id'] or new_district_id != scheme_info['district_id'] or new_umbrella_id != scheme_info['umbrella_id']):
+        if db.Schemes.find_one({"scheme": new_scheme_name, "area_id": new_area_id, "district_id": new_district_id, "umbrella_id": new_umbrella_id}) is not None:
             flash("Scheme already exists for this area and district!", "danger")
             return redirect(url_for("schemes"))
-        
-    db.Schemes.update_one({"_id": ObjectId(scheme_id)}, {"$set": {"scheme": new_scheme_name, "area_id": new_area_id, "district_id": new_district_id}})
+
+    db.Schemes.update_one({"_id": ObjectId(scheme_id)}, {"$set": {"scheme": new_scheme_name, "area_id": new_area_id, "district_id": new_district_id, "umbrella_id": new_umbrella_id}})
     flash("Scheme updated successfully!", "success")
     return redirect(url_for("schemes"))
 
@@ -554,10 +608,11 @@ def villages():
 
 @app.route('/add_village', methods=["POST"])
 def add_village():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     village_name = request.form.get("village")
     scheme_id = request.form.get("scheme_id")
 
-    db.Villages.insert_one({"village": village_name, "scheme_id": scheme_id})
+    db.Villages.insert_one({"village": village_name, "scheme_id": scheme_id, "umbrella_id": user.get("umbrella_id")})
     flash("Village added successfully!", "success")
     return redirect(url_for("villages"))
 
@@ -596,15 +651,31 @@ def customers():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
 
-    customers = list(db.Customers.find())
-    for customer in customers:
-        scheme = db.Schemes.find_one({"_id": ObjectId(customer["scheme_id"])})
-        village = db.Villages.find_one({"_id": ObjectId(customer["village_id"])})
-        customer["scheme"] = scheme["scheme"] if scheme else 'N/A'
-        customer["village"] = village["village"] if village else 'N/A'
+    selected_scheme_id = session.get("selected_scheme_id")
+    area_id = user.get("area_id")
+    scheme_id = user.get("scheme_id")
 
-    schemes = list(db.Schemes.find())
+    if area_id:
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id}))
+        if selected_scheme_id:
+            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id, "scheme_id": selected_scheme_id}))
+        elif not selected_scheme_id:
+            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id}))
+    elif area_id is None:
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+        if selected_scheme_id:
+            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id}))
+        elif not selected_scheme_id:
+            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
+
+    if scheme_id:
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id}))
+
     villages = list(db.Villages.find())
+
+    for customer in customers:
+        customer["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == customer.get("scheme_id")), None)
+        customer["village"] = next((item["village"] for item in villages if str(item["_id"]) == customer.get("village_id")), None)
 
     return render_template("customers.html",
                            user=user,
@@ -616,12 +687,24 @@ def customers():
                            villages=villages)
 
 
+
+@app.route('/set_scheme', methods=['POST'])
+@login_required
+def set_scheme():
+    scheme_id = request.form.get('scheme_id')
+    session['selected_scheme_id'] = str(scheme_id)
+    flash("Scheme set.", "success")
+    return redirect(request.referrer)
+
+
 @app.route('/add_customer', methods=["POST"])
 @login_required
 def add_customer():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     name = request.form.get("name")
     contact = request.form.get("contact")
     scheme_id = request.form.get("scheme_id")
+    area_id = db.Schemes.find_one({"_id": ObjectId(scheme_id)}).get("area_id") if scheme_id else None
     village_id = request.form.get("village_id")
     application_id = request.form.get("application_id")
     id_document = request.files.get("id_document")
@@ -632,12 +715,14 @@ def add_customer():
         "name": name,
         "contact": contact,
         "scheme_id": scheme_id,
+        "area_id": area_id,
         "village_id": village_id,
         "application_id": application_id,
         "id_document": save_file(id_document),
         "recommendation_letter": save_file(recommendation_letter),
         "status": "applied",
         "date_applied": datetime.datetime.strptime(date_applied, "%Y-%m-%d"),
+        "umbrella_id": user.get("umbrella_id")
     })
     flash("Customer added successfully!", "success")
     return redirect(url_for("customers"))
@@ -662,6 +747,7 @@ def edit_customer():
         "name": request.form.get("name"),
         "contact": request.form.get("contact"),
         "scheme_id": request.form.get("scheme_id"),
+        "area_id": db.Schemes.find_one({"_id": ObjectId(request.form.get("scheme_id"))}).get("area_id") if request.form.get("scheme_id") else None,
         "village_id": request.form.get("village_id"),
         "application_id": request.form.get("application_id")
     }
@@ -707,10 +793,10 @@ def edit_customer():
     if "customer_type" in request.form:
         update_data["type"] = request.form.get("customer_type")
         if request.form.get("customer_type") == "MS":
-            update_data["payment_period"] = None
+            update_data["payment_period"] = 1
 
     if "payment_period" in request.form:
-        update_data["payment_period"] = int(request.form.get("payment_period")) if request.form.get("payment_period") else None
+        update_data["payment_period"] = int(request.form.get("payment_period")) if request.form.get("payment_period") else 1
 
     if "connection_fee" in request.form:
         update_data["connection_fee"] = int(request.form.get("connection_fee"))
@@ -743,6 +829,12 @@ def edit_customer():
         update_data["customer_reference"] = int(request.form.get("customer_reference"))
 
     db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
+
+    updated_customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
+
+    if updated_customer.get("bpb"):
+        db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": {"bpb": roll_down_balances(updated_customer, updated_customer.get("bpb"))}})
+
     flash("Customer updated successfully!", "success")
     return redirect(url_for("customers"))
 
@@ -918,12 +1010,26 @@ def delete_customer():
 def reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
-    customers = list(db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"}))
+    
+    if not user.get("area_id"):
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+        if not session.get("selected_scheme_id"):
+            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"}))
+        elif session.get("selected_scheme_id"):
+            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id")}))
+    elif user.get("area_id"):
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
+        if not session.get("selected_scheme_id"):
+            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "area_id": user.get("area_id")}))
+        elif session.get("selected_scheme_id"):
+            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id"), "area_id": user.get("area_id")}))
+    
     return render_template("reports.html",
                            user=user,
                            section="reports",
                            date=datetime.datetime.now().strftime("%d %B %Y"),
-                           customers=customers)
+                           customers=customers,
+                           schemes=schemes)
 
 
 
@@ -968,7 +1074,7 @@ def add_monthly_billing_sheet():
         customer_billing_data = df[df["MeterRef"] == customer.get("customer_reference")]
 
         if customer_billing_data.empty:
-            flash("No billing data found for: {}".format(customer.get("name")), "warning")
+            # flash("No billing data found for: {}".format(customer.get("name")), "warning")
             continue
  
         bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
@@ -1063,7 +1169,7 @@ def add_monthly_payment_sheet():
         customer_payment_data = df[df["CustomerRef"] == customer.get("customer_reference")]
 
         if customer_payment_data.empty:
-            flash("No Payment data found for: {}".format(customer.get("name")), "warning")
+            # flash("No Payment data found for: {}".format(customer.get("name")), "warning")
             continue
 
         amount_paid = int(customer_payment_data["TranAmount"].sum())
@@ -1124,7 +1230,5 @@ def customer_history():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     customer_id = request.form.get('customer_id')
-
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
-
     return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now().strftime("%d %B %Y"))

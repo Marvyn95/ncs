@@ -1,80 +1,94 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Home Tab -->
-<div class="w-100 h-100">
-  <h5 class="fw-bold mb-2">Home</h5>
-  <p class="mb-2 small">Welcome to the SCF System Dashboard. Below are some key metrics:</p>
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="mb-4">
+    <h4 class="fw-bold">Dashboard</h4>
+    <p class="text-muted small"></p>
+  </div>
+  <!-- Top Summary Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-lg-3">
+      <a href="{{ url_for('customers') }}" class="text-decoration-none">
+        <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
+          <div class="d-flex align-items-center">
+            <div class="me-3 fs-2 text-primary"><i class="bi bi-people-fill"></i></div>
+            <div>
+              <div class="fw-bold fs-4 text-primary">{{ customers_count }}</div>
+              <div class="small ">Total Customers</div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
 
-  <div class="row g-2 mb-3">
-    <div class="col-6 col-md-2">
-      <div class="card shadow-sm border-0 bg-primary-subtle text-primary text-center py-2 h-100">
-        <div class="fw-bold fs-5">1,250</div>
-        <div class="small">Total Customers</div>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="me-3 fs-2 text-success"><i class="bi bi-diagram-3-fill"></i></div>
+          <div>
+            <div class="fw-bold fs-4 text-success">{{ schemes_count }}</div>
+            <div class="small ">Total schemes</div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="col-6 col-md-2">
-      <div class="card shadow-sm border-0 bg-success-subtle text-success text-center py-2 h-100">
-        <div class="fw-bold fs-5">980</div>
-        <div class="small">Connected</div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="me-3 fs-2 text-warning"><i class="bi bi-person-lines-fill"></i></div>
+          <div>
+            <div class="fw-bold fs-4 text-warning">{{ application_count }}</div>
+            <div class="small ">Applicants pending surveys</div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="col-6 col-md-2">
-      <div class="card shadow-sm border-0 bg-warning-subtle text-warning text-center py-2 h-100">
-        <div class="fw-bold fs-5">210</div>
-        <div class="small">Paid, Pending</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-2">
-      <div class="card shadow-sm border-0 bg-info-subtle text-info text-center py-2 h-100">
-        <div class="fw-bold fs-5">15</div>
-        <div class="small">Schemes</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-2">
-      <div class="card shadow-sm border-0 bg-secondary-subtle text-secondary text-center py-2 h-100">
-        <div class="fw-bold fs-5">8</div>
-        <div class="small">Areas</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-2">
-      <div class="card shadow-sm border-0 bg-dark-subtle text-dark text-center py-2 h-100">
-        <div class="fw-bold fs-5">22</div>
-        <div class="small">Umbrellas</div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
+        <div class="d-flex align-items-center">
+          <div class="me-3 fs-2 text-info"><i class="bi bi-clipboard-data-fill"></i></div>
+          <div>
+            <div class="fw-bold fs-4 text-info">{{ survey_count }}</div>
+            <div class="small ">Surveys pending approvals</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Compact Bar Graphs -->
-  <div class="row g-2">
-    <div class="col-12 col-md-6">
-      <div class="card border-0 shadow-sm p-2 h-100">
-        <div class="fw-bold mb-1 small">Connection Progress</div>
-        <div class="mb-1 small">Connected: 78%</div>
-        <div class="progress mb-2" style="height: 1rem;">
-          <div class="progress-bar bg-success" style="width: 78%;">78%</div>
-        </div>
-        <div class="mb-1 small">Paid, Pending: 17%</div>
-        <div class="progress mb-2" style="height: 1rem;">
-          <div class="progress-bar bg-warning" style="width: 17%;">17%</div>
-        </div>
-        <div class="mb-1 small">Others: 5%</div>
-        <div class="progress" style="height: 1rem;">
-          <div class="progress-bar bg-secondary" style="width: 5%;">5%</div>
-        </div>
+  <!-- Secondary Metrics -->
+  <div class="row g-3">
+    <div class="col-12 col-md-4 col-lg-3">
+      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
+        <div class="fw-bold fs-4 text-success">{{ approval_count }}</div>
+        <div class="small">Approvals pending payments</div>
       </div>
     </div>
-    <div class="col-12 col-md-6">
-      <div class="card border-0 shadow-sm p-2 h-100">
-        <div class="fw-bold mb-1 small">Schemes Distribution</div>
-        <div class="mb-1 small">Urban: 40%</div>
-        <div class="progress mb-2" style="height: 1rem;">
-          <div class="progress-bar bg-info" style="width: 40%;">40%</div>
-        </div>
-        <div class="mb-1 small">Rural: 60%</div>
-        <div class="progress" style="height: 1rem;">
-          <div class="progress-bar bg-primary" style="width: 60%;">60%</div>
-        </div>
+
+    <div class="col-12 col-md-4 col-lg-3">
+      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
+        <div class="fw-bold fs-4 text-warning">{{ pending_connection_count }}</div>
+        <div class="small">Pending Connections</div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-4 col-lg-3">
+      <a href="{{ url_for('reports') }}" class="text-decoration-none">
+      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
+        <div class="fw-bold fs-4 text-secondary">{{ es_customers }}</div>
+        <div class="small">Total ES Customers</div>
+      </div>
+      </a>
+    </div>
+
+    <div class="col-12 col-md-4 col-lg-3">
+      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
+        <div class="fw-bold fs-4 text-dark">{{ villages_count }}</div>
+        <div class="small">Villages</div>
       </div>
     </div>
   </div>

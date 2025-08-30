@@ -7,12 +7,38 @@
       <!-- Header and Action Buttons -->
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h4 class="fw-bold mb-0">Customer Reports</h4>
-        <div>
-          <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addMonthlyBillingSheetModal">
-            <i class="bi bi-file-earmark-excel me-1"></i> Add Monthly Billing Sheet
+        <div class="d-flex align-items-center">
+          <form method="POST" action="{{ url_for('set_scheme') }}" class="mt-2 me-2"
+            {% for scheme in schemes %}
+              {% if user.scheme_id|string == scheme._id|string %}
+          style="pointer-events: none; opacity: 0.7;"
+              {% endif %}
+            {% endfor %}
+          >
+            <div class="input-group input-group-sm">
+              <label class="input-group-text" for="scheme_select">Scheme</label>
+              <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
+          {% for scheme in schemes %}
+            {% if user.scheme_id|string == scheme._id|string %}
+              disabled
+            {% endif %}
+          {% endfor %}
+              >
+          <option value="" selected>All Schemes</option>
+          {% for scheme in schemes %}
+            <option value="{{ scheme._id }}"
+              {% if session.get("selected_scheme_id")|string == scheme._id|string or user.scheme_id|string == scheme._id|string %}selected{% endif %}>
+              {{ scheme.scheme }}
+            </option>
+          {% endfor %}
+              </select>
+            </div>
+          </form>
+          <button class="btn btn-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#addMonthlyBillingSheetModal">
+        <i class="bi bi-file-earmark-excel me-1"></i> Add Monthly Billing Sheet
           </button>
-          <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#addMonthlyPaymentSheetModal">
-            <i class="bi bi-upload me-1"></i> Add Monthly Payment Sheet
+          <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addMonthlyPaymentSheetModal">
+        <i class="bi bi-upload me-1"></i> Add Monthly Payment Sheet
           </button>
         </div>
       </div>

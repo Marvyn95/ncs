@@ -37,7 +37,7 @@ def roll_down_balances(customer, bpb_object):
     if bpb_object:
         bpb = sorted(bpb_object, key=lambda x: x["period"])
     if customer:
-        monthly_connection_deduction = customer.get("amount_due", 0)/customer.get("payment_period", 6)
+        monthly_connection_deduction = customer.get("amount_due", 0)/int(customer.get("payment_period", 6))
 
     # populating the payment flow data
     ## MARVINS MWUMBRELLA ES CUSTOMER PAYMENT TRACKING ALGORITHM
