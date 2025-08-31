@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="w-100 h-100">
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h5 class="fw-bold mb-1">Parishes</h5>
+      <p class="mb-0">Manage parishes</p>
+    </div>
+    <div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addParishModal">
+        <i class="bi bi-plus-lg me-1"></i> Add Parish
+      </button>
+    </div>
+  </div>
+
+<!-- Add Parish Modal -->
+<div class="modal fade" id="addParishModal" tabindex="-1" aria-labelledby="addParishModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_parish') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addParishModalLabel">Add New Parish</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="new_parish" class="form-label">Parish Name</label>
+                        <input type="text" class="form-control" id="new_parish" name="parish" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="district_select" class="form-label">District</label>
+                        <select class="form-select" id="district_select" name="district_id" required>
+                            <option value="" disabled selected>Select District</option>
+                            {% for district in districts %}
+                                <option value="{{ district._id }}">{{ district.district }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subcounty_select" class="form-label">Subcounty</label>
+                        <select class="form-select" id="subcounty_select" name="subcounty_id" required>
+                            <option value="" disabled selected>Select Subcounty</option>
+                            {% for subcounty in subcounties %}
+                                <option value="{{ subcounty._id }}" data-district="{{ subcounty.district_id }}">{{ subcounty.subcounty }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Add Parish</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const districtSelect = document.getElementById('district_select');
+        const subcountySelect = document.getElementById('subcounty_select');
+        const allOptions = Array.from(subcountySelect.querySelectorAll('option[data-district]'));
+
+        districtSelect.addEventListener('change', function() {
+            const selectedDistrict = this.value;
+            subcountySelect.innerHTML = '<option value="" disabled selected>Select Subcounty</option>';
+            allOptions.forEach(option => {
+                if (option.getAttribute('data-district') === selectedDistrict) {
+                    subcountySelect.appendChild(option.cloneNode(true));
+                }
+            });
+        });
+    });
+</script>
+
+  <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+        <tr class="table-primary">
+          <th>Parish Name</th>
+          <th>Subcounty</th>
+          <th>District</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for parish in parishes %}
+        <tr class="bg-dark-subtle my-1">
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ parish.parish }}</td>
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ parish.subcounty }}</td>
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ parish.district }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ parish._id }}">
+                <i class="bi bi-pencil fs-6"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-sm p-1" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ parish._id }}">
+                <i class="bi bi-trash fs-6"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal-{{ parish._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ parish._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('edit_parish') }}">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editModalLabel-{{ parish._id }}">Edit Parish</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" name="parish_id" value="{{ parish._id }}">
+            <div class="mb-3">
+              <label for="parish_{{ parish._id }}" class="form-label">Parish Name</label>
+              <input type="text" class="form-control" id="parish_{{ parish._id }}" name="parish" value="{{ parish.parish }}">
+            </div>
+            <div class="mb-3">
+              <label for="district_edit_{{ parish._id }}" class="form-label">District</label>
+              <select class="form-select district-edit-select" id="district_edit_{{ parish._id }}" name="district_id" data-parish="{{ parish._id }}" required>
+                <option value="" disabled>Select District</option>
+                {% for district in districts %}
+            <option value="{{ district._id }}" {% if district._id|string == parish.district_id|string %}selected{% endif %}>{{ district.district }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="subcounty_edit_{{ parish._id }}" class="form-label">Subcounty</label>
+              <select class="form-select subcounty-edit-select" id="subcounty_edit_{{ parish._id }}" name="subcounty_id" required>
+                <option value="" disabled>Select Subcounty</option>
+                {% for subcounty in subcounties %}
+            <option value="{{ subcounty._id }}" data-district="{{ subcounty.district_id }}"
+              {% if subcounty._id|string == parish.subcounty_id|string %}selected{% endif %}
+              {% if subcounty.district_id|string != parish.district_id|string %}style="display:none;"{% endif %}
+            >{{ subcounty.subcounty }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            // For each edit modal, filter subcounties based on selected district
+            document.querySelectorAll('.district-edit-select').forEach(function(districtSelect) {
+              const parishId = districtSelect.getAttribute('data-parish');
+              const subcountySelect = document.getElementById('subcounty_edit_' + parishId);
+              const allOptions = Array.from(subcountySelect.querySelectorAll('option[data-district]'));
+
+              function filterSubcounties() {
+          const selectedDistrict = districtSelect.value;
+          subcountySelect.innerHTML = '<option value="" disabled>Select Subcounty</option>';
+          allOptions.forEach(option => {
+            if (option.getAttribute('data-district') === selectedDistrict) {
+              subcountySelect.appendChild(option.cloneNode(true));
+            }
+          });
+              }
+
+              // Initial filter on modal open
+              districtSelect.addEventListener('change', filterSubcounties);
+
+              // If modal is opened, filter subcounties to match current district
+              document.getElementById('editModal-' + parishId).addEventListener('show.bs.modal', function() {
+          filterSubcounties();
+          // Set selected subcounty if exists
+          const selectedSubcounty = "{{ parish.subcounty_id }}";
+          Array.from(subcountySelect.options).forEach(opt => {
+            if (opt.value === selectedSubcounty) {
+              opt.selected = true;
+            }
+          });
+              });
+            });
+          });
+        </script>
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal-{{ parish._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ parish._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('delete_parish') }}">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="deleteModalLabel-{{ parish._id }}">Delete Parish</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="parish_id" value="{{ parish._id }}">
+                  <p>Are you sure you want to delete <strong>{{ parish.parish }}</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-danger">Delete</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -591,28 +591,65 @@ def delete_district():
 def villages():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    page = int(request.args.get('page', 1))
 
     villages = list(db.Villages.find())
     schemes = list(db.Schemes.find())
+    districts = list(db.Districts.find())
+    subcounties = list(db.Subcounties.find())
+    parishes = list(db.Parishes.find())
 
     for village in villages:
-        scheme = db.Schemes.find_one({"_id": ObjectId(village["scheme_id"])})
-        village["scheme"] = scheme["scheme"] if scheme else 'N/A'
+        village["parish"] = next((item["parish"] for item in parishes if str(item["_id"]) == village.get("parish_id")), None)
+        village["subcounty"] = next((item["subcounty"] for item in subcounties if str(item["_id"]) == village.get("subcounty_id")), None)
+        village["district"] = next((item["district"] for item in districts if str(item["_id"]) == village.get("district_id")), None)
+        village["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == village.get("scheme_id")), None)
+
+    # Pagination
+    per_page = 500
+    total = len(villages)
+    start = (page - 1) * per_page
+    end = start + per_page
+    villages = villages[start:end]
+    total_pages = (total + per_page - 1) // per_page
 
     return render_template("villages.html",
                            user=user,
                            section="villages",
                            date=datetime.datetime.now().strftime("%d %B %Y"),
                            villages=villages,
-                           schemes=schemes)
+                           schemes=schemes,
+                           subcounties=subcounties,
+                           parishes=parishes,
+                           districts=districts,
+                           page=page,
+                           total_pages=total_pages,
+                           per_page=per_page)
 
 @app.route('/add_village', methods=["POST"])
 def add_village():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    village_name = request.form.get("village")
+    village = request.form.get("village")
+    district_id = request.form.get("district_id")
+    subcounty_id = request.form.get("subcounty_id")
+    parish_id = request.form.get("parish_id")
     scheme_id = request.form.get("scheme_id")
 
-    db.Villages.insert_one({"village": village_name, "scheme_id": scheme_id, "umbrella_id": user.get("umbrella_id")})
+    existing_village = db.Villages.find_one({"village": village, "district_id": district_id, "subcounty_id": subcounty_id, "parish_id": parish_id})
+
+    if existing_village:
+        flash("Village already exists!", "danger")
+        return redirect(url_for("villages"))
+
+    db.Villages.insert_one({
+        "village": village,
+        "district_id": district_id,
+        "subcounty_id": subcounty_id,
+        "parish_id": parish_id,
+        "scheme_id": scheme_id,
+        "umbrella_id": user.get("umbrella_id")
+    })
+
     flash("Village added successfully!", "success")
     return redirect(url_for("villages"))
 
@@ -622,8 +659,24 @@ def edit_village():
     village_id = request.form.get("village_id")
     new_village_name = request.form.get("village")
     new_district_id = request.form.get("district_id")
-    
-    db.Villages.update_one({"_id": ObjectId(village_id)}, {"$set": {"village": new_village_name, "district_id": new_district_id}})
+    new_subcounty_id = request.form.get("subcounty_id")
+    new_parish_id = request.form.get("parish_id")
+    new_scheme_id = request.form.get("scheme_id")
+
+    village_info = db.Villages.find_one({"_id": ObjectId(village_id)})
+    if village_info.get("village") != new_village_name or village_info.get("district_id") != new_district_id or village_info.get("subcounty_id") != new_subcounty_id or village_info.get("parish_id") != new_parish_id or village_info.get("scheme_id") != new_scheme_id:
+        existing_village = db.Villages.find_one({"village": new_village_name, "district_id": new_district_id, "subcounty_id": new_subcounty_id, "parish_id": new_parish_id, "scheme_id": new_scheme_id})
+        if existing_village:
+            flash("Village with similar details already exists!", "danger")
+            return redirect(url_for("villages"))
+
+    db.Villages.update_one({"_id": ObjectId(village_id)}, {"$set": {
+        "village": new_village_name,
+        "district_id": new_district_id,
+        "subcounty_id": new_subcounty_id,
+        "parish_id": new_parish_id,
+        "scheme_id": new_scheme_id
+    }})
     flash("Village updated successfully!", "success")
     return redirect(url_for("villages"))
 
@@ -631,11 +684,10 @@ def edit_village():
 @app.route('/delete_village', methods=["POST"])
 def delete_village():
     village_id = request.form.get("village_id")
-
     customers = db.Customers.find({"village_id": str(village_id)})
 
     if len(list(customers)) > 0:
-        flash("Cannot delete village, it is assigned to customers!", "danger")
+        flash("Cannot delete village with registered customers!", "danger")
         return redirect(url_for("villages"))
     
     db.Villages.delete_one({"_id": ObjectId(village_id)})
@@ -650,6 +702,7 @@ def delete_village():
 def customers():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    page = int(request.args.get('page', 1))
 
     selected_scheme_id = session.get("selected_scheme_id")
     area_id = user.get("area_id")
@@ -669,13 +722,20 @@ def customers():
             customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
 
     if scheme_id:
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id}))
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
 
     villages = list(db.Villages.find())
 
     for customer in customers:
         customer["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == customer.get("scheme_id")), None)
         customer["village"] = next((item["village"] for item in villages if str(item["_id"]) == customer.get("village_id")), None)
+
+    per_page = 500
+    total = len(customers)
+    start = (page - 1) * per_page
+    end = start + per_page
+    customers = customers[start:end]
+    total_pages = (total + per_page - 1) // per_page
 
     return render_template("customers.html",
                            user=user,
@@ -684,7 +744,11 @@ def customers():
                            now=datetime.datetime.now,
                            customers=customers,
                            schemes=schemes,
-                           villages=villages)
+                           villages=villages,
+                           page=page,
+                           total_pages=total_pages,
+                           per_page=per_page
+                           )
 
 
 
@@ -710,6 +774,11 @@ def add_customer():
     id_document = request.files.get("id_document")
     recommendation_letter = request.files.get("recommendation_letter")
     date_applied = request.form.get("date_applied")
+
+    customers = list(db.Customers.find())
+    if next((x for x in customers if x.get("application_id") == request.form.get("application_id")), None):
+        flash("Application ID already exists!", "danger")
+        return redirect(url_for("customers"))
 
     db.Customers.insert_one({
         "name": name,
@@ -742,6 +811,8 @@ def edit_customer():
         return redirect(url_for("customers"))
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
+    customers = list(db.Customers.find())
+
 
     update_data = {
         "name": request.form.get("name"),
@@ -751,6 +822,13 @@ def edit_customer():
         "village_id": request.form.get("village_id"),
         "application_id": request.form.get("application_id")
     }
+
+    if customer.get("application_id") != request.form.get("application_id"):
+        if next((x for x in customers if x.get("application_id") == request.form.get("application_id")), None):
+            flash("Application ID already exists!", "danger")
+            return redirect(url_for("customers"))
+        else:
+            update_data["application_id"] = request.form.get("application_id")
 
     if id_document and id_document.filename:
         if customer.get("id_document"):
@@ -827,11 +905,18 @@ def edit_customer():
 
     if 'customer_reference' in request.form:
         update_data["customer_reference"] = int(request.form.get("customer_reference"))
+    
+    if 'transaction_id' in request.form:
+        if request.form.get("transaction_id") != customer.get("transaction_id"):
+            if next((x for x in customers if x.get("transaction_id") == request.form.get("transaction_id")), None):
+                flash("Transaction ID already exists!", "danger")
+                return redirect(url_for("customers"))
+            else:
+                update_data["transaction_id"] = request.form.get("transaction_id")
 
     db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
 
     updated_customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
-
     if updated_customer.get("bpb"):
         db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": {"bpb": roll_down_balances(updated_customer, updated_customer.get("bpb"))}})
 
@@ -902,14 +987,26 @@ def customer_payment():
     customer_id = request.form.get("customer_id")
     amount_paid = request.form.get("amount_paid")
     date_paid = request.form.get("date_paid")
+    transaction_id = request.form.get("transaction_id")
     proof_of_payment = request.files.get("proof_of_payment")
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
 
+    customers = list(db.Customers.find())
+
+    if next((x for x in customers if x.get("transaction_id") == transaction_id), None):
+        flash("Payment with this transaction ID already exists!", "danger")
+        return redirect(url_for("customers"))
+
+    if int(amount_paid) > 2**63 - 1:
+        flash("Payment amount is too large!", "danger")
+        return redirect(url_for("customers"))
+
     update_data = {
         "amount_paid": int(amount_paid),
         "date_paid": datetime.datetime.strptime(date_paid, "%Y-%m-%d"),
-        "amount_due": int(customer.get("amount_due", 0)) - int(amount_paid),
+        "amount_due": int(customer.get("amount_due", customer.get("connection_fee", 0))) - int(amount_paid),
+        "transaction_id": transaction_id,
         "status": 'paid'
     }
 
@@ -932,6 +1029,10 @@ def customer_connection():
     connection_date = request.form.get("connection_date")
     meter_serial = request.form.get("meter_serial")
     first_meter_reading = request.form.get("first_meter_reading")
+
+    if int(first_meter_reading) > 2**63 - 1:
+        flash("First meter reading is too large!", "danger")
+        return redirect(url_for("customers"))
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
     if customer.get("customer_reference") is not None:
@@ -988,8 +1089,8 @@ def delete_customer():
     if customer.get("customer_reference") not in [None, ""]:
         flash("Cannot delete customer, customer was confirmed!", "danger")
         return redirect(url_for("customers"))
-    
-    if customer.get("connection_status") == "connected":
+
+    if customer.get("status") in ["approved", "connected", "confirmed"]:
         flash("Cannot delete customer, customer is connected!", "danger")
         return redirect(url_for("customers"))
 
@@ -1010,7 +1111,9 @@ def delete_customer():
 def reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
-    
+
+    page = int(request.args.get('page', 1))    
+
     if not user.get("area_id"):
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
         if not session.get("selected_scheme_id"):
@@ -1023,13 +1126,25 @@ def reports():
             customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "area_id": user.get("area_id")}))
         elif session.get("selected_scheme_id"):
             customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id"), "area_id": user.get("area_id")}))
+
     
+    per_page = 500
+    total = len(customers)
+    start = (page - 1) * per_page
+    end = start + per_page
+    customers = customers[start:end]
+    total_pages = (total + per_page - 1) // per_page
+
     return render_template("reports.html",
                            user=user,
                            section="reports",
                            date=datetime.datetime.now().strftime("%d %B %Y"),
                            customers=customers,
-                           schemes=schemes)
+                           schemes=schemes,
+                           page=page,
+                           total_pages=total_pages,
+                           per_page=per_page
+                           )
 
 
 
@@ -1232,3 +1347,151 @@ def customer_history():
     customer_id = request.form.get('customer_id')
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
     return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now().strftime("%d %B %Y"))
+
+
+@app.route("/subcounties")
+def subcounties():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    districts = list(db.Districts.find())
+    subcounties = list(db.Subcounties.find())
+    for s in subcounties:
+        s["district"] = next((d.get("district") for d in districts if str(d.get("_id")) == s.get("district_id")), 'N/A')
+
+    return render_template('subcounties.html',
+                           user=user,
+                           districts=districts,
+                           subcounties=subcounties,
+                           date=datetime.datetime.now().strftime("%d %B %Y"))
+
+@app.route('/add_subcounty', methods=['POST'])
+def add_subcounty():
+    subcounty = request.form.get('subcounty').strip()
+    district_id = request.form.get('district_id')
+    existing_subcounty = db.Subcounties.find_one({"subcounty": subcounty, "district_id": district_id})
+
+    if existing_subcounty:
+        flash("Subcounty already exists in the selected district.", "warning")
+        return redirect(url_for("subcounties"))
+
+    db.Subcounties.insert_one({
+        "subcounty": subcounty,
+        "district_id": district_id
+    })
+    flash("Subcounty added successfully!", "success")
+    return redirect(url_for("subcounties"))
+
+
+
+@app.route('/edit_subcounty', methods=['POST'])
+def edit_subcounty():
+    subcounty_id = request.form.get('subcounty_id')
+    new_name = request.form.get('subcounty').strip()
+    district_id = request.form.get('district_id')
+
+    old_subcounty = db.Subcounties.find_one({"_id": ObjectId(subcounty_id)})
+
+    if old_subcounty.get("subcounty") != new_name or old_subcounty.get("district_id") != district_id:
+        existing_subcounty = db.Subcounties.find_one({"subcounty": new_name, "district_id": district_id})
+        if existing_subcounty:
+            flash("Subcounty already exists in the selected district.", "danger")
+            return redirect(url_for("subcounties"))
+
+    db.Subcounties.update_one({"_id": ObjectId(subcounty_id)}, {"$set": {"subcounty": new_name, "district_id": district_id}})
+    flash("Subcounty updated successfully!", "success")
+    return redirect(url_for("subcounties"))
+
+
+
+@app.route('/delete_subcounty', methods=['POST'])
+def delete_subcounty():
+    subcounty_id = request.form.get('subcounty_id')
+
+    parishes = db.Parishes.find({"subcounty_id": str(subcounty_id)})
+    villages = db.Villages.find({"subcounty_id": str(subcounty_id)})
+
+    if len(list(parishes)) > 0 or len(list(villages)) > 0:
+        flash("Cannot delete subcounty with existing parishes or villages.", "danger")
+        return redirect(url_for("subcounties"))
+
+    db.Subcounties.delete_one({"_id": ObjectId(subcounty_id)})
+    flash("Subcounty deleted successfully!", "success")
+    return redirect(url_for("subcounties"))
+
+
+
+
+@app.route("/parishes")
+def parishes():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    subcounties = list(db.Subcounties.find())
+    parishes = list(db.Parishes.find())
+    districts = list(db.Districts.find())
+    
+    for p in parishes:
+        p["subcounty"] = next((s.get("subcounty") for s in subcounties if str(s["_id"]) == p.get("subcounty_id")), 'N/A')
+        p["district"] = next((d.get("district") for d in districts if str(d["_id"]) == p.get("district_id")), 'N/A')
+
+    return render_template('parishes.html',
+                           user=user,
+                           subcounties=subcounties,
+                           parishes=parishes,
+                           districts=districts,
+                           date=datetime.datetime.now().strftime("%d %B %Y"))
+
+
+
+
+@app.route('/add_parish', methods=['POST'])
+def add_parish():
+    parish = request.form.get('parish').strip()
+    subcounty_id = request.form.get('subcounty_id')
+    district_id = request.form.get('district_id')
+
+    existing_parish = db.Parishes.find_one({"name": parish, "subcounty_id": subcounty_id, "district_id": district_id})
+    if existing_parish:
+        flash("Parish already exists in the selected subcounty.", "warning")
+        return redirect(url_for("parishes"))
+
+    db.Parishes.insert_one({
+        "parish": parish,
+        "subcounty_id": subcounty_id,
+        "district_id": district_id
+    })
+    flash("Parish added successfully!", "success")
+    return redirect(url_for("parishes"))
+
+
+@app.route('/edit_parish', methods=['POST'])
+def edit_parish():
+    parish_id = request.form.get('parish_id')
+    new_name = request.form.get('parish').strip()
+    subcounty_id = request.form.get('subcounty_id')
+    district_id = request.form.get('district_id')
+
+    old_parish = db.Parishes.find_one({"_id": ObjectId(parish_id)})
+
+    if old_parish.get("parish") != new_name or old_parish.get("subcounty_id") != subcounty_id or old_parish.get("district_id") != district_id:
+        existing_parish = db.Parishes.find_one({"parish": new_name, "subcounty_id": subcounty_id, "district_id": district_id})
+        if existing_parish:
+            flash("Parish already exists in the selected subcounty.", "danger")
+            return redirect(url_for("parishes"))
+
+    db.Parishes.update_one({"_id": ObjectId(parish_id)}, {"$set": {"parish": new_name, "subcounty_id": subcounty_id, "district_id": district_id}})
+    flash("Parish updated successfully!", "success")
+    return redirect(url_for("parishes"))
+
+
+@app.route('/delete_parish', methods=['POST'])
+def delete_parish():
+    parish_id = request.form.get('parish_id')
+
+    if len(list(db.Villages.find({"parish_id": parish_id}))) > 0:
+        flash("Cannot delete parish with existing villages.", "danger")
+        return redirect(url_for("parishes"))
+
+    db.Parishes.delete_one({"_id": ObjectId(parish_id)})
+    flash("Parish deleted successfully!", "success")
+    return redirect(url_for("parishes"))    
+

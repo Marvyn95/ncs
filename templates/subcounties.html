@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="w-100 h-100">
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h5 class="fw-bold mb-1">Subcounties</h5>
+      <p class="mb-0">Manage subcounties</p>
+    </div>
+    <div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSubcountyModal">
+        <i class="bi bi-plus-lg me-1"></i> Add Subcounty
+      </button>
+    </div>
+  </div>
+
+  <!-- Add Subcounty Modal -->
+  <div class="modal fade" id="addSubcountyModal" tabindex="-1" aria-labelledby="addSubcountyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="POST" action="{{ url_for('add_subcounty') }}">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addSubcountyModalLabel">Add New Subcounty</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="new_subcounty" class="form-label">Subcounty Name</label>
+              <input type="text" class="form-control" id="new_subcounty" name="subcounty" required>
+            </div>
+            <div class="mb-3">
+              <label for="district_select" class="form-label">District</label>
+              <select class="form-select" id="district_select" name="district_id" required>
+                <option value="" disabled selected>Select District</option>
+                {% for district in districts %}
+                  <option value="{{ district._id }}">{{ district.district }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Add Subcounty</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+        <tr class="table-primary">
+          <th>Subcounty Name</th>
+          <th>District</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for subcounty in subcounties %}
+        <tr class="bg-dark-subtle my-1">
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ subcounty.subcounty }}</td>
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ subcounty.district }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ subcounty._id }}">
+                <i class="bi bi-pencil fs-6"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-sm p-1" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ subcounty._id }}">
+                <i class="bi bi-trash fs-6"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal-{{ subcounty._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ subcounty._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('edit_subcounty') }}">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="editModalLabel-{{ subcounty._id }}">Edit Subcounty</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="subcounty_id" value="{{ subcounty._id }}">
+                  <div class="mb-3">
+                    <label for="subcounty_{{ subcounty._id }}" class="form-label">Subcounty Name</label>
+                    <input type="text" class="form-control" id="subcounty_{{ subcounty._id }}" name="subcounty" value="{{ subcounty.subcounty }}">
+                  </div>
+                  <div class="mb-3">
+                    <label for="district_edit_{{ subcounty._id }}" class="form-label">District</label>
+                    <select class="form-select" id="district_edit_{{ subcounty._id }}" name="district_id" required>
+                      <option value="" disabled>Select District</option>
+                      {% for district in districts %}
+                        <option value="{{ district._id }}" {% if district._id|string == subcounty.district_id|string %}selected{% endif %}>{{ district.district }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal-{{ subcounty._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ subcounty._id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('delete_subcounty') }}">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="deleteModalLabel-{{ subcounty._id }}">Delete Subcounty</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="subcounty_id" value="{{ subcounty._id }}">
+                  <p>Are you sure you want to delete <strong>{{ subcounty.subcounty }}</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-danger">Delete</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

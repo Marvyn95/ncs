@@ -6,34 +6,34 @@
     <div class="col-auto">
       <h5 class="fw-bold mb-0">Customers</h5>
     </div>
-    <div class="col-auto">
-      <form method="POST" action="{{ url_for('set_scheme') }}">
+    <div class="col d-flex justify-content-end align-items-center">
+      <form method="POST" action="{{ url_for('set_scheme') }}" class="me-2">
         <div class="input-group input-group-sm">
           <label class="input-group-text" for="scheme_select">Scheme</label>
           <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
-        {% if user.scheme_id %}
-          {% for scheme in schemes %}
-            {% if user.scheme_id|string == scheme._id|string %}
+          {% if user.scheme_id %}
+            {% for scheme in schemes %}
+              {% if user.scheme_id|string == scheme._id|string %}
           disabled
-            {% endif %}
-          {% endfor %}
-        {% endif %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
           >
-        <option value="" {% if not session.get("selected_scheme_id") %}selected{% endif %}>All Schemes</option>
-        {% for scheme in schemes %}
-          <option value="{{ scheme._id }}"
-            {% if session.get("selected_scheme_id")|string == scheme._id|string or (user.scheme_id|string == scheme._id|string) %}selected{% endif %}>
-            {{ scheme.scheme }}
-          </option>
-        {% endfor %}
+          <option value="" {% if not session.get("selected_scheme_id") %}selected{% endif %}>All Schemes</option>
+          {% for scheme in schemes %}
+            <option value="{{ scheme._id }}"
+              {% if session.get("selected_scheme_id")|string == scheme._id|string or (user.scheme_id|string == scheme._id|string) %}selected{% endif %}>
+              {{ scheme.scheme }}
+            </option>
+          {% endfor %}
           </select>
         </div>
       </form>
-    </div>
-    <div class="col-auto ms-auto">
+      {% if user.role in ['administrator', 'scheme_manager', 'commercial_officer', 'billing_officer'] %}
       <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
         <i class="bi bi-plus-lg me-1"></i> Add Customer
       </button>
+      {% endif %}
     </div>
   </div>
 
@@ -121,9 +121,7 @@ document.addEventListener('DOMContentLoaded', filterVillages);
 </div>
 
 
-
-
-  <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+  <div class="table-responsive" style="max-height: 355px; overflow-y: auto;">
     <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
       <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-primary">
@@ -173,10 +171,12 @@ document.addEventListener('DOMContentLoaded', filterVillages);
             <div class="d-flex gap-1">
               <button class="btn btn-outline-info btn-sm p-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ customer._id }}">
                 <i class="bi bi-eye"></i>
-              </button>
-              <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">
-                <i class="bi bi-pencil"></i>
-              </button>
+                </button>
+                {% if user.role == "administrator" %}
+                <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                {% endif %}
               <button class="btn btn-outline-danger btn-sm p-1" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ customer._id }}">
                 <i class="bi bi-trash"></i>
               </button>
@@ -214,6 +214,7 @@ document.addEventListener('DOMContentLoaded', filterVillages);
                 <li class="list-group-item py-1"><strong>Pipe Length:</strong> <span class="text-primary">{{ customer.pipe_length or 'N/A' }} M</span></li>
                 <li class="list-group-item py-1"><strong>Date Applied:</strong> <span class="text-primary">{{ customer.date_applied.strftime('%d %B %Y') if customer.date_applied else 'N/A' }}</span></li>
                 <li class="list-group-item py-1"><strong>Date Surveyed:</strong> <span class="text-primary">{{ customer.survey_date.strftime('%d %B %Y') if customer.survey_date else 'N/A' }}</span></li>
+                <li class="list-group-item py-1"><strong>Transaction ID:</strong> <span class="text-primary">{{ customer.transaction_id or 'N/A' }}</span></li>
               </ul>
             </div>
             <div class="col-12 col-md-6">
@@ -265,7 +266,7 @@ document.addEventListener('DOMContentLoaded', filterVillages);
                   </span>
                 </li>
                 <li class="list-group-item py-1">
-                  <strong>First Meter Reading:</strong>
+                  <strong>Initial Meter Reading:</strong>
                   <span class="text-primary">
                     {% if customer.first_meter_reading is not none and customer.first_meter_reading != '' %}
                       {{ customer.first_meter_reading or 'N/A' }}
@@ -518,6 +519,10 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
     value="{{ customer.date_paid.strftime('%Y-%m-%d') if customer.date_paid else now().strftime('%Y-%m-%d') }}" required>
 </div>
 <div class="col-6 mb-1">
+  <label for="transaction_id_{{ customer._id }}" class="form-label">Transaction ID</label>
+  <input type="text" class="form-control form-control-sm" id="transaction_id_{{ customer._id }}" name="transaction_id" value="{{ customer.transaction_id or '' }}" required>
+</div>
+<div class="col-6 mb-1">
   <label for="proof_of_payment_{{ customer._id }}" class="form-label">Proof of Payment</label>
   <input type="file" class="form-control form-control-sm" id="proof_of_payment_{{ customer._id }}" name="proof_of_payment" accept="application/pdf,image/*">
   {% if customer.proof_of_payment %}
@@ -546,7 +551,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
     value="{{ customer.meter_serial or '' }}" required>
 </div>
 <div class="col-6 mb-1">
-  <label for="first_meter_reading_{{ customer._id }}" class="form-label">First Meter Reading</label>
+  <label for="first_meter_reading_{{ customer._id }}" class="form-label">Initial Meter Reading</label>
   <input type="number" class="form-control form-control-sm" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
     value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
 </div>
@@ -593,6 +598,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
         </div>
 
 
+
 <!-- Action Modal -->
 <div class="modal fade" id="actionModal-{{ customer._id }}" tabindex="-1" aria-labelledby="actionModalLabel-{{ customer._id }}" aria-hidden="true">
   <div class="modal-dialog">
@@ -616,7 +622,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body py-1">
-{% if customer.status == 'applied' %}
+{% if customer.status == 'applied' and user.role in ['administrator', 'scheme_manager'] %}
 <form method="POST" action="{{ url_for('customer_survey') }}" enctype="multipart/form-data">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <div class="mb-2">
@@ -667,7 +673,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
   </div>
 </form>
 
-{% elif customer.status == 'surveyed' or customer.status == 'disapproved' %}
+{% elif customer.status == 'surveyed' and user.role in ['administrator', 'area_manager'] or customer.status == 'disapproved'  and user.role in ['administrator', 'area_manager'] %}
 <form method="POST" action="{{ url_for('customer_approval') }}">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <div class="mb-2">
@@ -739,8 +745,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-
-{% elif customer.status == 'approved' %}
+{% elif customer.status == 'approved' and user.role in ['administrator', 'area_manager'] %}
 <form method="POST" action="{{ url_for('customer_payment') }}" enctype="multipart/form-data">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <div class="mb-2">
@@ -750,6 +755,10 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="mb-2">
     <label for="date_paid_{{ customer._id }}" class="form-label">Date Paid</label>
     <input type="date" class="form-control" id="date_paid_{{ customer._id }}" name="date_paid" value="{{ now().strftime('%Y-%m-%d') }}" required>
+  </div>
+  <div class="mb-2">
+    <label for="transaction_id_{{ customer._id }}" class="form-label">Transaction ID</label>
+    <input type="text" class="form-control" id="transaction_id_{{ customer._id }}" name="transaction_id" required>
   </div>
   <div class="mb-2">
     <label for="proof_of_payment_{{ customer._id }}" class="form-label">Proof of Payment</label>
@@ -762,7 +771,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </form>
 
 
-{% elif customer.status == 'paid' or customer.status == 'not_connected' %}
+{% elif customer.status == 'paid' and user.role in ['administrator', 'area_manager'] or customer.status == 'not_connected' and user.role in ['administrator', 'area_manager']   %}
 <form method="POST" action="{{ url_for('customer_connection') }}">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <div class="mb-2">
@@ -776,7 +785,7 @@ document.addEventListener('DOMContentLoaded', function() {
       value="{{ customer.meter_serial or '' }}" required>
   </div>
   <div class="mb-2">
-    <label for="first_meter_reading_{{ customer._id }}" class="form-label">First Meter Reading</label>
+    <label for="first_meter_reading_{{ customer._id }}" class="form-label">Initial Meter Reading</label>
     <input type="number" class="form-control" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
       value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
   </div>
@@ -789,12 +798,12 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </form>
 
-{% elif customer.status == 'connected' %}
+{% elif customer.status == 'connected' and user.role in ['administrator', 'billing_officer'] %}
 <form method="POST" action="{{ url_for('customer_confirmation') }}">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <div class="mb-2">
     <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
-    <input type="text" class="form-control" id="customer_reference_{{ customer._id }}" name="customer_reference" required>
+    <input type="number" class="form-control" id="customer_reference_{{ customer._id }}" name="customer_reference" required>
   </div>
   <div class="mb-2">
     <p>Confirm customer <strong class="text-primary">{{ customer.name }}</strong> by entering the reference number.</p>
@@ -825,5 +834,24 @@ document.addEventListener('DOMContentLoaded', function() {
       </tbody>
     </table>
   </div>
+
+<div class="d-flex justify-content-end my-3">
+  <nav>
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+        <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+      </li>
+      {% for p in range(1, total_pages + 1) %}
+      <li class="page-item {% if p == page %}active{% endif %}">
+        <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+      </li>
+      {% endfor %}
+      <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+        <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
 </div>
 {% endblock %}

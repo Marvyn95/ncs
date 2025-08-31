@@ -28,15 +28,42 @@
               <label for="new_village" class="form-label">Village Name</label>
               <input type="text" class="form-control" id="new_village" name="village" required>
             </div>
-<div class="mb-3">
-  <label for="scheme_id" class="form-label">Scheme</label>
-  <select class="form-select" id="scheme_id" name="scheme_id" required>
-    <option value="" disabled selected>Select Scheme</option>
-    {% for scheme in schemes %}
-      <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
-    {% endfor %}
-  </select>
-</div>
+            <div class="mb-3">
+              <label for="district_id" class="form-label">District</label>
+              <select class="form-select" id="district_id" name="district_id" required>
+                <option value="" disabled selected>Select District</option>
+                {% for district in districts %}
+                  <option value="{{ district._id }}">{{ district.district }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="subcounty_id" class="form-label">Subcounty</label>
+              <select class="form-select" id="subcounty_id" name="subcounty_id" required>
+                <option value="" disabled selected>Select Subcounty</option>
+                {% for subcounty in subcounties %}
+                  <option value="{{ subcounty._id }}" data-district="{{ subcounty.district_id }}">{{ subcounty.subcounty }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="parish_id" class="form-label">Parish</label>
+              <select class="form-select" id="parish_id" name="parish_id" required>
+                <option value="" disabled selected>Select Parish</option>
+                {% for parish in parishes %}
+                  <option value="{{ parish._id }}" data-subcounty="{{ parish.subcounty_id }}">{{ parish.parish }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="scheme_id" class="form-label">Scheme</label>
+              <select class="form-select" id="scheme_id" name="scheme_id" required>
+                <option value="" disabled selected>Select Scheme</option>
+                {% for scheme in schemes %}
+                  <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
           <div class="modal-footer">
             <button type="submit" class="btn btn-success">Add Village</button>
@@ -46,12 +73,50 @@
       </div>
     </div>
   </div>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const districtSelect = document.getElementById('district_id');
+    const subcountySelect = document.getElementById('subcounty_id');
+    const parishSelect = document.getElementById('parish_id');
 
-  <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+    function filterSubcounties() {
+      const selectedDistrict = districtSelect.value;
+      Array.from(subcountySelect.options).forEach(option => {
+        if (!option.value) return;
+        option.style.display = option.getAttribute('data-district') === selectedDistrict ? '' : 'none';
+      });
+      subcountySelect.value = '';
+      filterParishes();
+    }
+
+    function filterParishes() {
+      const selectedSubcounty = subcountySelect.value;
+      Array.from(parishSelect.options).forEach(option => {
+        if (!option.value) return;
+        option.style.display = option.getAttribute('data-subcounty') === selectedSubcounty ? '' : 'none';
+      });
+      parishSelect.value = '';
+    }
+
+    districtSelect.addEventListener('change', filterSubcounties);
+    subcountySelect.addEventListener('change', filterParishes);
+
+    // Initial filter on modal open
+    document.getElementById('addVillageModal').addEventListener('shown.bs.modal', function () {
+      filterSubcounties();
+      filterParishes();
+    });
+  });
+  </script>
+
+  <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
     <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
       <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-primary">
           <th>Village Name</th>
+          <th>District</th>
+          <th>Subcounty</th>
+          <th>Parish</th>
           <th>Scheme</th>
           <th>Actions</th>
         </tr>
@@ -60,6 +125,9 @@
         {% for village in villages %}
         <tr class="bg-dark-subtle my-1">
           <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.village }}</td>
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.district }}</td>
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.subcounty }}</td>
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.parish }}</td>
           <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.scheme }}</td>
           <td>
             <div class="d-flex gap-1">
@@ -77,33 +145,109 @@
           <div class="modal-dialog">
             <div class="modal-content">
               <form method="POST" action="{{ url_for('edit_village') }}">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="editModalLabel-{{ village._id }}">Edit Village</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                  <input type="hidden" name="village_id" value="{{ village._id }}">
-                  <div class="mb-3">
-                    <label for="village_{{ village._id }}" class="form-label">Village Name</label>
-                    <input type="text" class="form-control" id="village_{{ village._id }}" name="village" value="{{ village.village }}">
-                  </div>
-<div class="mb-3">
-  <label for="scheme_id_{{ village._id }}" class="form-label">Scheme</label>
-  <select class="form-select" id="scheme_id_{{ village._id }}" name="scheme_id" required>
-    {% for scheme in schemes %}
-      <option value="{{ scheme._id }}" {% if scheme._id|string == village.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
-    {% endfor %}
-  </select>
-</div>
-                </div>
-                <div class="modal-footer">
-                  <button type="submit" class="btn btn-primary">Save Changes</button>
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                </div>
+          <div class="modal-header">
+            <h5 class="modal-title" id="editModalLabel-{{ village._id }}">Edit Village</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" name="village_id" value="{{ village._id }}">
+            <div class="mb-3">
+              <label for="village_{{ village._id }}" class="form-label">Village Name</label>
+              <input type="text" class="form-control" id="village_{{ village._id }}" name="village" value="{{ village.village }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="district_id_{{ village._id }}" class="form-label">District</label>
+              <select class="form-select edit-district" id="district_id_{{ village._id }}" name="district_id" required>
+                <option value="" disabled>Select District</option>
+                {% for district in districts %}
+            <option value="{{ district._id }}" {% if district._id|string == village.district_id|string %}selected{% endif %}>{{ district.district }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="subcounty_id_{{ village._id }}" class="form-label">Subcounty</label>
+              <select class="form-select edit-subcounty" id="subcounty_id_{{ village._id }}" name="subcounty_id" required>
+                <option value="" disabled>Select Subcounty</option>
+                {% for subcounty in subcounties %}
+            <option value="{{ subcounty._id }}" data-district="{{ subcounty.district_id }}" {% if subcounty._id|string == village.subcounty_id|string %}selected{% endif %}>{{ subcounty.subcounty }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="parish_id_{{ village._id }}" class="form-label">Parish</label>
+              <select class="form-select edit-parish" id="parish_id_{{ village._id }}" name="parish_id" required>
+                <option value="" disabled>Select Parish</option>
+                {% for parish in parishes %}
+            <option value="{{ parish._id }}" data-subcounty="{{ parish.subcounty_id }}" {% if parish._id|string == village.parish_id|string %}selected{% endif %}>{{ parish.parish }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="scheme_id_{{ village._id }}" class="form-label">Scheme</label>
+              <select class="form-select" id="scheme_id_{{ village._id }}" name="scheme_id" required>
+                <option value="" disabled>Select Scheme</option>
+                {% for scheme in schemes %}
+            <option value="{{ scheme._id }}" {% if scheme._id|string == village.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
               </form>
             </div>
           </div>
         </div>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          // For each edit modal, set up filtering logic
+          document.querySelectorAll('[id^="editModal-"]').forEach(function(modal) {
+            const villageId = modal.id.replace('editModal-', '');
+            const districtSelect = modal.querySelector('.edit-district');
+            const subcountySelect = modal.querySelector('.edit-subcounty');
+            const parishSelect = modal.querySelector('.edit-parish');
+
+            function filterSubcountiesEdit() {
+              const selectedDistrict = districtSelect.value;
+              Array.from(subcountySelect.options).forEach(option => {
+          if (!option.value) return;
+          option.style.display = option.getAttribute('data-district') === selectedDistrict ? '' : 'none';
+              });
+              // If current selected subcounty is not visible, reset
+              if (subcountySelect.selectedOptions.length && subcountySelect.selectedOptions[0].style.display === 'none') {
+          subcountySelect.value = '';
+              }
+              filterParishesEdit();
+            }
+
+            function filterParishesEdit() {
+              const selectedSubcounty = subcountySelect.value;
+              Array.from(parishSelect.options).forEach(option => {
+          if (!option.value) return;
+          option.style.display = option.getAttribute('data-subcounty') === selectedSubcounty ? '' : 'none';
+              });
+              // If current selected parish is not visible, reset
+              if (parishSelect.selectedOptions.length && parishSelect.selectedOptions[0].style.display === 'none') {
+          parishSelect.value = '';
+              }
+            }
+
+            districtSelect.addEventListener('change', filterSubcountiesEdit);
+            subcountySelect.addEventListener('change', filterParishesEdit);
+
+            modal.addEventListener('shown.bs.modal', function () {
+              filterSubcountiesEdit();
+              filterParishesEdit();
+            });
+
+            // Initial filter when DOM loads (for pre-selected values)
+            filterSubcountiesEdit();
+            filterParishesEdit();
+          });
+        });
+        </script>
         <!-- Delete Modal -->
         <div class="modal fade" id="deleteModal-{{ village._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ village._id }}" aria-hidden="true">
           <div class="modal-dialog">
@@ -129,5 +273,24 @@
       </tbody>
     </table>
   </div>
+
+<div class="d-flex justify-content-end my-3">
+  <nav>
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+        <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+      </li>
+      {% for p in range(1, total_pages + 1) %}
+      <li class="page-item {% if p == page %}active{% endif %}">
+        <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+      </li>
+      {% endfor %}
+      <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+        <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
 </div>
 {% endblock %}
