@@ -1184,17 +1184,14 @@ def add_monthly_billing_sheet():
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
         return redirect(url_for("reports"))
 
-    # Extract billing data and updating for each ES customer
     es_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})
     for customer in es_customers:
         customer_billing_data = df[df["MeterRef"] == customer.get("customer_reference")]
 
         if customer_billing_data.empty:
-            # flash("No billing data found for: {}".format(customer.get("name")), "warning")
             continue
  
         bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
-        # first time entry
         if bpb == []:
             db.Customers.update_one({"_id": customer.get("_id")}, {
                 "$set": {
@@ -1209,20 +1206,14 @@ def add_monthly_billing_sheet():
                 }
             })
 
-
-        # non first time entry
         elif bpb != []:
             month_entry = next((entry for entry in bpb if entry["period"] == datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m")), None)
-
-            # if month entry doesn't exist
             if not month_entry:
                 bpb.append({
                     "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
                     "bill": int(customer_billing_data["TotalCharges"].values[0]),
                     "payment": 0,
                 })
-
-            # if month entry exists
             elif month_entry:
                 bpb.remove(month_entry)
                 bpb.append({
@@ -1279,20 +1270,17 @@ def add_monthly_payment_sheet():
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
         return redirect(url_for("reports"))
 
-    # Extract payment data and updating for each ES customer
     es_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})
     for customer in es_customers:
         customer_payment_data = df[df["CustomerRef"] == customer.get("customer_reference")]
 
         if customer_payment_data.empty:
-            # flash("No Payment data found for: {}".format(customer.get("name")), "warning")
             continue
 
         amount_paid = int(customer_payment_data["TranAmount"].sum())
         payment_date = datetime.datetime.strptime(customer_payment_data["PaymentDate"].values[0].split("T")[0][:7], "%Y-%m")
 
         bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
-        # first time entry
         if bpb == []:
             db.Customers.update_one({"_id": customer.get("_id")}, {
                 "$set": {
@@ -1306,20 +1294,14 @@ def add_monthly_payment_sheet():
                     }]
                 }
             })
-
-        # non first time entry
         elif bpb != []:
             month_entry = next((entry for entry in bpb if entry["period"] == payment_date), None)
-
-            # if month entry doesn't exist
             if not month_entry:
                 bpb.append({
                         "period": payment_date,
                         "bill": 0,
                         "payment": amount_paid,
                 })
-
-            # if month entry exists
             elif month_entry:
                 bpb.remove(month_entry)
                 bpb.append({
@@ -1330,7 +1312,6 @@ def add_monthly_payment_sheet():
 
             new_bpb = roll_down_balances(customer, bpb)
 
-            # finally updating the database
             db.Customers.update_one({"_id": customer.get("_id")}, {
                 "$set": {
                     "bpb": new_bpb
