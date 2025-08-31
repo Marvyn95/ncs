@@ -33,9 +33,11 @@
       <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
         <i class="bi bi-plus-lg me-1"></i> Add Customer
       </button>
-      <a href="{{ url_for('download_customers') }}" class="btn btn-outline-secondary ms-2" title="Download Records">
-        <i class="bi bi-download"></i>
-      </a>
+      {% if user.role not in ["scheme_manager", "area_manager"] %}
+        <a href="{{ url_for('download_customers') }}" class="btn btn-outline-secondary ms-2" title="Download Records">
+          <i class="bi bi-download"></i>
+        </a>
+      {% endif %}
       {% endif %}
     </div>
   </div>
