@@ -175,7 +175,7 @@ def umbrellas():
                            user=user,
                            section="umbrellas",
                            date=datetime.datetime.now().strftime("%d %B %Y"),
-                           umbrellas=umbrellas)
+                           umbrellas=sorted(umbrellas, key=lambda x: x["umbrella"].lower()))
 
 @app.route('/add_umbrella', methods=["POST"])
 def add_umbrella():
@@ -242,7 +242,7 @@ def users():
     areas = list(db.Areas.find())
     schemes = list(db.Schemes.find())
 
-    users = list(db.Users.find())
+    users = sorted(list(db.Users.find()), key=lambda x: (x["first_name"].lower(), x["last_name"].lower()))
     for u in users:
         u["umbrella"] = next((item["umbrella"] for item in umbrellas if str(item["_id"]) == u.get("umbrella_id")), None)
         u["area"] = next((item["area"] for item in areas if str(item["_id"]) == u.get("area_id")), None)
@@ -370,9 +370,9 @@ def delete_user():
 def areas():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
-    
-    areas = list(db.Areas.find())
-    umbrellas = list(db.Umbrellas.find())
+
+    areas = sorted((list(db.Areas.find())), key=lambda x: x["area"].lower())
+    umbrellas = sorted((list(db.Umbrellas.find())), key=lambda x: x["umbrella"].lower())
 
     for a in areas:
         a["umbrella"] = next((item["umbrella"] for item in umbrellas if str(item["_id"]) == a.get("umbrella_id")), None)
@@ -458,10 +458,10 @@ def schemes():
                            user=user,
                            section="schemes",
                            date=datetime.datetime.now().strftime("%d %B %Y"),
-                           schemes=schemes,
-                           areas=areas,
-                           districts=districts,
-                           umbrellas=umbrellas)
+                           schemes=sorted(schemes, key=lambda x: x["scheme"].lower()),
+                           areas=sorted(areas, key=lambda x: x["area"].lower()),
+                           districts=sorted(districts, key=lambda x: x["district"].lower()),
+                           umbrellas=sorted(umbrellas, key=lambda x: x["umbrella"].lower()))
 
 
 @app.route('/umbrella_selection', methods=["GET"])
@@ -537,7 +537,7 @@ def delete_scheme():
 def districts():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
-    districts = db.Districts.find()
+    districts = sorted(list(db.Districts.find()), key=lambda x: x["district"].lower())
     return render_template("districts.html",
                            user=user,
                            section="districts",
@@ -618,11 +618,11 @@ def villages():
                            user=user,
                            section="villages",
                            date=datetime.datetime.now().strftime("%d %B %Y"),
-                           villages=villages,
-                           schemes=schemes,
-                           subcounties=subcounties,
-                           parishes=parishes,
-                           districts=districts,
+                           villages=sorted(villages, key=lambda x: x["village"].lower()),
+                           schemes=sorted(schemes, key=lambda x: x["scheme"].lower()),
+                           subcounties=sorted(subcounties, key=lambda x: x["subcounty"].lower()),
+                           parishes=sorted(parishes, key=lambda x: x["parish"].lower()),
+                           districts=sorted(districts, key=lambda x: x["district"].lower()),
                            page=page,
                            total_pages=total_pages,
                            per_page=per_page)
@@ -712,20 +712,20 @@ def customers():
     if area_id:
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id}))
         if selected_scheme_id:
-            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id, "scheme_id": selected_scheme_id}))
+            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id, "scheme_id": selected_scheme_id})), key=lambda x: x["name"].lower())
         elif not selected_scheme_id:
-            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id}))
+            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["name"].lower())
     elif area_id is None:
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
         if selected_scheme_id:
-            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id}))
+            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})), key=lambda x: x["name"].lower())
         elif not selected_scheme_id:
-            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
+            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["name"].lower())
 
     if scheme_id:
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
+        customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}), key=lambda x: x["name"].lower()))
 
-    villages = list(db.Villages.find())
+    villages = sorted(list(db.Villages.find()), key=lambda x: x["village"].lower())
 
     for customer in customers:
         customer["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == customer.get("scheme_id")), None)
@@ -1118,15 +1118,15 @@ def reports():
     if not user.get("area_id"):
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
         if not session.get("selected_scheme_id"):
-            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"}))
+            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})), key=lambda x: x["name"].lower())
         elif session.get("selected_scheme_id"):
-            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id")}))
+            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id")})), key=lambda x: x["name"].lower())
     elif user.get("area_id"):
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
         if not session.get("selected_scheme_id"):
-            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "area_id": user.get("area_id")}))
+            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "area_id": user.get("area_id")}), key=lambda x: x["name"].lower()))
         elif session.get("selected_scheme_id"):
-            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id"), "area_id": user.get("area_id")}))
+            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id"), "area_id": user.get("area_id")}), key=lambda x: x["name"].lower()))
 
     
     per_page = 500
@@ -1336,7 +1336,7 @@ def subcounties():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     districts = list(db.Districts.find())
-    subcounties = list(db.Subcounties.find())
+    subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"].lower())
     for s in subcounties:
         s["district"] = next((d.get("district") for d in districts if str(d.get("_id")) == s.get("district_id")), 'N/A')
 
@@ -1407,10 +1407,10 @@ def delete_subcounty():
 def parishes():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
-    subcounties = list(db.Subcounties.find())
-    parishes = list(db.Parishes.find())
-    districts = list(db.Districts.find())
-    
+    subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"].lower())
+    parishes = sorted(list(db.Parishes.find()), key=lambda x: x["parish"].lower())
+    districts = sorted(list(db.Districts.find()), key=lambda x: x["district"].lower())
+
     for p in parishes:
         p["subcounty"] = next((s.get("subcounty") for s in subcounties if str(s["_id"]) == p.get("subcounty_id")), 'N/A')
         p["district"] = next((d.get("district") for d in districts if str(d["_id"]) == p.get("district_id")), 'N/A')
