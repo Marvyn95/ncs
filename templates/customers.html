@@ -130,42 +130,42 @@ document.addEventListener('DOMContentLoaded', filterVillages);
     <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
       <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-primary">
-          <th>Name</th>
-          <th>Type</th>
-          <th>Contact</th>
-          <th>Scheme</th>
-          <th>Village</th>
-          <th>Status</th>
-          <th>Connection Fee</th>
-          <th>Connection Clearance</th>
-          <th>Connection Balance</th>
-          <th>Actions</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th class="d-none d-sm-table-cell">Contact</th>
+            <th class="d-none d-sm-table-cell">Scheme</th>
+            <th class="d-none d-sm-table-cell">Village</th>
+            <th>Status</th>
+            <th>Connection Fee</th>
+            <th>Connection Clearance</th>
+            <th class="d-none d-sm-table-cell">Connection Balance</th>
+            <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for customer in customers %}
         <tr class="bg-dark-subtle my-1">
-          <td class="fw-semibold text-truncate" style="max-width: 120px;">{{ customer.name or '-' }}</td>
-          <td class="text-truncate" style="max-width: 100px;">{{ customer.type or '-' }}</td>
-          <td class="text-truncate" style="max-width: 120px;">{{ customer.contact or '-' }}</td>
-          <td class="text-truncate" style="max-width: 120px;">{{ customer.scheme or '-' }}</td>
-          <td class="text-truncate" style="max-width: 120px;">{{ customer.village or '-' }}</td>
-          <td class="text-truncate" style="max-width: 80px;">{{ customer.status or '-' }}</td>
-<td class="text-truncate" style="max-width: 100px;">
+          <td class="fw-semibold text-truncate">{{ customer.name or '-' }}</td>
+          <td class="text-truncate">{{ customer.type or '-' }}</td>
+          <td class="text-truncate d-none d-sm-table-cell">{{ customer.contact or '-' }}</td>
+          <td class="text-truncate d-none d-sm-table-cell">{{ customer.scheme or '-' }}</td>
+          <td class="text-truncate d-none d-sm-table-cell">{{ customer.village or '-' }}</td>
+          <td class="text-truncate">{{ customer.status or '-' }}</td>
+<td class="text-truncate">
   {% if customer.connection_fee %}
     {{ "{:,}".format(customer.connection_fee|int) }}
   {% else %}
     -
   {% endif %}
 </td>
-<td class="text-truncate" style="max-width: 100px;">
+<td class="text-truncate">
   {% if customer.amount_paid %}
     {{ "{:,}".format(customer.amount_paid|int) }}
   {% else %}
     -
   {% endif %}
 </td>
-<td class="text-truncate" style="max-width: 100px;">
+<td class="text-truncate d-none d-sm-table-cell">
   {% if customer.amount_due %}
     {{ "{:,}".format(customer.amount_due|int) }}
   {% else %}
@@ -178,12 +178,12 @@ document.addEventListener('DOMContentLoaded', filterVillages);
                 <i class="bi bi-eye"></i>
                 </button>
                 {% if user.role in ["administrator"] or user.role in ["area_manager"] and customer.status == "applied" %}
-                <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">
+                <button class="btn btn-outline-primary btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">
                   <i class="bi bi-pencil"></i>
                 </button>
                 {% endif %}
                 {% if user.role in ["administrator"] %}
-              <button class="btn btn-outline-danger btn-sm p-1" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ customer._id }}">
+              <button class="btn btn-outline-danger btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ customer._id }}">
                 <i class="bi bi-trash"></i>
               </button>
                 {% endif %}
