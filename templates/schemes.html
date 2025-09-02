@@ -98,7 +98,7 @@
   </div>
 
   <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
-    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
       <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-primary">
           <th>Scheme Name</th>
@@ -111,10 +111,10 @@
       <tbody>
         {% for scheme in schemes %}
         <tr class="bg-dark-subtle my-1">
-          <td class="fw-semibold text-truncate" style="max-width: 200px;">{{ scheme.scheme }}</td>
-          <td class="fw-semibold text-truncate" style="max-width: 200px;">{{ scheme.area }}</td>
-          <td class="fw-semibold text-truncate" style="max-width: 200px;">{{ scheme.umbrella }}</td>
-          <td class="fw-semibold text-truncate" style="max-width: 200px;">{{ scheme.district }}</td>
+          <td class="fw-normal text-truncate" style="max-width: 200px;">{{ scheme.scheme }}</td>
+          <td class="fw-normal text-truncate" style="max-width: 200px;">{{ scheme.area }}</td>
+          <td class="fw-normal text-truncate" style="max-width: 200px;">{{ scheme.umbrella }}</td>
+          <td class="fw-normal text-truncate" style="max-width: 200px;">{{ scheme.district }}</td>
           <td>
             <div class="d-flex gap-1">
               <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ scheme._id }}">

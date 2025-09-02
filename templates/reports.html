@@ -142,7 +142,7 @@
                 {% if customer.bpb %}
                   {{ "{:,}".format(customer.bpb[-1].get('balance_on_connection', 0)|int) }}
                 {% else %}
-                  -
+                  {{"{:,}".format(customer.amount_due)}}
                 {% endif %}
               </td>
               <td class="text-truncate" style="max-width: 120px;">

@@ -110,7 +110,7 @@
   </script>
 
   <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
-    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
       <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-primary">
           <th>Village Name</th>
@@ -124,11 +124,11 @@
       <tbody>
         {% for village in villages %}
         <tr class="bg-dark-subtle my-1">
-          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.village }}</td>
-          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.district }}</td>
-          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.subcounty }}</td>
-          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.parish }}</td>
-          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ village.scheme }}</td>
+          <td class="fw-normal text-truncate" style="max-width: 250px;">{{ village.village }}</td>
+          <td class="fw-normal text-truncate" style="max-width: 250px;">{{ village.district }}</td>
+          <td class="fw-normal text-truncate" style="max-width: 250px;">{{ village.subcounty }}</td>
+          <td class="fw-normal text-truncate" style="max-width: 250px;">{{ village.parish }}</td>
+          <td class="fw-normal text-truncate" style="max-width: 250px;">{{ village.scheme }}</td>
           <td>
             <div class="d-flex gap-1">
               <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ village._id }}">

@@ -39,7 +39,7 @@
   </div>
 
   <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
-    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
       <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-primary">
           <th>District Name</th>
@@ -49,7 +49,7 @@
       <tbody>
         {% for district in districts %}
         <tr class="bg-dark-subtle my-1">
-          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ district.district }}</td>
+          <td class="fw-normal text-truncate" style="max-width: 250px;">{{ district.district }}</td>
           <td>
             <div class="d-flex gap-1">
               <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ district._id }}">
