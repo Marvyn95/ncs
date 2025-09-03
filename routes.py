@@ -696,7 +696,6 @@ def delete_village():
     return redirect(url_for("villages"))
 
 
-
 # customers
 @app.route('/customers', methods=["GET"])
 @login_required
@@ -709,21 +708,41 @@ def customers():
     area_id = user.get("area_id")
     scheme_id = user.get("scheme_id")
 
-    if area_id:
-        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id}))
-        if selected_scheme_id:
-            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id, "scheme_id": selected_scheme_id})), key=lambda x: x["name"].lower())
-        elif not selected_scheme_id:
-            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["name"].lower())
-    elif area_id is None:
-        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
-        if selected_scheme_id:
-            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})), key=lambda x: x["name"].lower())
-        elif not selected_scheme_id:
-            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["name"].lower())
-
     if scheme_id:
-        customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"),"scheme_id": user.get("scheme_id")})),key=lambda x: x["name"].lower())
+        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+        customers = sorted(
+            list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")})),
+            key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+        )
+    else:
+        if area_id:
+            schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id}))
+            if selected_scheme_id:
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+                customers = sorted(
+                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id, "scheme_id": selected_scheme_id})),
+                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                )
+            elif not selected_scheme_id:
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+                customers = sorted(
+                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})),
+                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                )
+        elif area_id is None:
+            schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+            if selected_scheme_id:
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+                customers = sorted(
+                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})),
+                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                )
+            elif not selected_scheme_id:
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+                customers = sorted(
+                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id")})),
+                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                )
 
     villages = sorted(list(db.Villages.find()), key=lambda x: x["village"].lower())
 
