@@ -56,7 +56,17 @@ def roll_down_balances(customer, bpb_object):
                     bpb[0]["balance_on_bill"] = 0
                     bpb[0]["prepayment_balance"] = bpb[0]["payment"] - (monthly_connection_deduction + bpb[0].get("bill", 0))
         if i != 0:
-            if bpb[i-1].get("balance_on_connection", 0) < monthly_connection_deduction:
+            
+            sorted_bpb_object = sorted(bpb_object, key=lambda x: x["period"], reverse=True).pop(0)
+            cumulative_deficit = 0
+            for j in sorted_bpb_object:
+                if j.get("payment", 0) < monthly_connection_deduction:
+                    cumulative_deficit += monthly_connection_deduction - j.get("payment", 0)
+                elif j.get("payment", 0) >= monthly_connection_deduction:
+                    cumulative_deficit += 0
+            monthly_connection_deduction += cumulative_deficit
+
+            if bpb[i-1].get("balance_on_connection", 0) <= monthly_connection_deduction:
                 monthly_connection_deduction = bpb[i-1].get("balance_on_connection", 0)
 
             if bpb[i].get("payment", 0) + bpb[i-1].get("prepayment_balance", 0) <= monthly_connection_deduction:
