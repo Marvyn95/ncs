@@ -66,6 +66,7 @@ def roll_down_balances(customer, bpb_object):
                 elif j.get("payment", 0) >= monthly_connection_deduction:
                     cumulative_deficit += 0
             monthly_connection_deduction += cumulative_deficit
+            print(monthly_connection_deduction)
 
             if bpb[i-1].get("balance_on_connection", 0) <= monthly_connection_deduction:
                 monthly_connection_deduction = bpb[i-1].get("balance_on_connection", 0)
