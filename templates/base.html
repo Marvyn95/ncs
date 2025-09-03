@@ -233,13 +233,33 @@
           <div class="col-lg-6 col-md-6 col-12 d-flex">
             <div class="card shadow border border-secondary rounded-4 bg-secondary-subtle px-3 py-2 flex-fill overflow-hidden">
               <div class="text-truncate" style="max-width: 100%;">
-                <span class="text-primary fw-semibold"><i class="bi bi-building me-1"></i>Umbrella:</span>
-                <span class="fw-bold ms-1 text-truncate" style="font-size: 0.93rem; max-width: 60%;">{{ user.umbrella }}</span>
+              <span class="text-primary fw-semibold"><i class="bi bi-building me-1"></i>Umbrella:</span>
+              <span class="fw-bold ms-1 text-truncate" style="font-size: 0.93rem; max-width: 60%;">{{ user.umbrella }}</span>
               </div>
               <div class="mt-1 text-truncate" style="max-width: 100%;">
-                <span class="text-primary fw-semibold"><i class="bi bi-calendar-fill me-1"></i>Date:</span>
-                <span class="fw-bold ms-1 text-truncate" style="font-size: 0.93rem; max-width: 60%;">{{ date }}</span>
+              <span class="text-primary fw-semibold"><i class="bi bi-calendar-fill me-1"></i>Date:</span>
+              <span class="fw-bold ms-1 text-truncate" style="font-size: 0.93rem; max-width: 60%;">{{ date }}</span>
               </div>
+              {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <div style="position: fixed; top: 20px; right: 20px; z-index: 2000; width: 320px; max-width: 90vw;">
+                  {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show mb-2" role="alert" style="font-size: 0.85rem;">
+                      {{ message }}
+                      <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                  {% endfor %}
+                </div>
+                <script>
+                  setTimeout(function() {
+                    document.querySelectorAll('.alert').forEach(function(alert) {
+                      alert.classList.remove('show');
+                      setTimeout(function() { alert.remove(); }, 300);
+                    });
+                  }, 6000);
+                </script>
+              {% endif %}
+              {% endwith %}
             </div>
           </div>
         </div>
