@@ -59,8 +59,8 @@ def roll_down_balances(customer, bpb_object):
             
             sorted_bpb_object = sorted(bpb, key=lambda x: x["period"], reverse=True)
             sorted_bpb_object.pop(0)
-            if customer.get("amount_due", 0) - bpb[i-1].get("balance_on_connection", 0) < monthly_connection_deduction * len(sorted_bpb_object):
-                monthly_connection_deduction = monthly_connection_deduction + (monthly_connection_deduction * len(sorted_bpb_object)) - (customer.get("amount_due", 0) - bpb[i-1].get("balance_on_connection", 0))
+            if customer.get("amount_due", 0) - bpb[i-1].get("balance_on_connection", 0) < monthly_connection_deduction * i:
+                monthly_connection_deduction = monthly_connection_deduction + ((monthly_connection_deduction * i) - (customer.get("amount_due", 0) - bpb[i-1].get("balance_on_connection", 0)))
 
             if bpb[i-1].get("balance_on_connection", 0) <= monthly_connection_deduction:
                 monthly_connection_deduction = bpb[i-1].get("balance_on_connection", 0)
