@@ -723,7 +723,7 @@ def customers():
             customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["name"].lower())
 
     if scheme_id:
-        customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}), key=lambda x: x["name"].lower()))
+        customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"),"scheme_id": user.get("scheme_id")})),key=lambda x: x["name"].lower())
 
     villages = sorted(list(db.Villages.find()), key=lambda x: x["village"].lower())
 
@@ -1124,9 +1124,10 @@ def reports():
     elif user.get("area_id"):
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
         if not session.get("selected_scheme_id"):
-            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "area_id": user.get("area_id")}), key=lambda x: x["name"].lower()))
+            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"),"customer_reference": {"$exists": True, "$ne": None},"status": "confirmed","type": "ES","area_id": user.get("area_id")})),key=lambda x: x["name"].lower())
+        
         elif session.get("selected_scheme_id"):
-            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id"), "area_id": user.get("area_id")}), key=lambda x: x["name"].lower()))
+            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id"), "area_id": user.get("area_id")})), key=lambda x: x.get("name", "").lower())
 
     
     per_page = 500
