@@ -57,16 +57,17 @@ def roll_down_balances(customer, bpb_object):
                     bpb[0]["prepayment_balance"] = bpb[0]["payment"] - (monthly_connection_deduction + bpb[0].get("bill", 0))
         if i != 0:
             
-            sorted_bpb_object = sorted(bpb, key=lambda x: x["period"], reverse=True)
-            sorted_bpb_object.pop(0)
-            cumulative_deficit = 0
-            for j in sorted_bpb_object:
-                if j.get("payment", 0) < monthly_connection_deduction:
-                    cumulative_deficit += monthly_connection_deduction - j.get("payment", 0)
-                elif j.get("payment", 0) >= monthly_connection_deduction:
-                    cumulative_deficit += 0
-            monthly_connection_deduction += cumulative_deficit
-            print(monthly_connection_deduction)
+            # sorted_bpb_object = sorted(bpb, key=lambda x: x["period"], reverse=True)
+            # sorted_bpb_object.pop(0)
+            # cumulative_deficit = 0
+            # for j in sorted_bpb_object:
+            #     if j.get("payment", 0) < monthly_connection_deduction:
+            #         cumulative_deficit += monthly_connection_deduction - j.get("payment", 0)
+            #         print(f"case-1: {cumulative_deficit}")
+            #     elif j.get("payment", 0) >= monthly_connection_deduction:
+            #         cumulative_deficit += 0
+            #         print(f"case-2: {cumulative_deficit}")
+            # monthly_connection_deduction += cumulative_deficit
 
             if bpb[i-1].get("balance_on_connection", 0) <= monthly_connection_deduction:
                 monthly_connection_deduction = bpb[i-1].get("balance_on_connection", 0)
@@ -83,4 +84,5 @@ def roll_down_balances(customer, bpb_object):
                 elif bpb[i].get("bill", 0) + bpb[i-1].get("balance_on_bill", 0) < (bpb[i]["payment"] + bpb[i-1].get("prepayment_balance", 0) - monthly_connection_deduction):
                     bpb[i]["balance_on_bill"] = 0
                     bpb[i]["prepayment_balance"] = bpb[i]["payment"] + bpb[i-1].get("prepayment_balance", 0) - monthly_connection_deduction - (bpb[i].get("bill", 0) + bpb[i-1].get("balance_on_bill", 0))
+    monthly_connection_deduction = customer.get("amount_due", 0)/int(customer.get("payment_period", 6))
     return bpb
