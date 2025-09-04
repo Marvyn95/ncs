@@ -922,7 +922,7 @@ def edit_customer():
         update_data["meter_serial"] = request.form.get("meter_serial")
 
     if 'first_meter_reading' in request.form:
-        update_data["first_meter_reading"] = float(request.form.get("first_meter_reading"))
+        update_data["first_meter_reading"] = request.form.get("first_meter_reading")
 
     if 'customer_reference' in request.form:
         update_data["customer_reference"] = int(request.form.get("customer_reference"))
@@ -1070,7 +1070,7 @@ def customer_connection():
         "status": "connected",
         "connection_date": datetime.datetime.strptime(connection_date, "%Y-%m-%d"),
         "meter_serial": meter_serial,
-        "first_meter_reading": float(first_meter_reading) if first_meter_reading else 0
+        "first_meter_reading": first_meter_reading if first_meter_reading else 0
     }
 
     db.Customers.update_one(
