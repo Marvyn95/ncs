@@ -1051,7 +1051,7 @@ def customer_connection():
     meter_serial = request.form.get("meter_serial")
     first_meter_reading = request.form.get("first_meter_reading")
 
-    if int(first_meter_reading) > 2**63 - 1:
+    if float(first_meter_reading) > 2**63 - 1:
         flash("First meter reading is too large!", "danger")
         return redirect(url_for("customers"))
 
