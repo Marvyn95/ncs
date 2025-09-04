@@ -709,6 +709,7 @@ def customers():
     scheme_id = user.get("scheme_id")
 
     if scheme_id:
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id}))
         status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
         customers = sorted(
             list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")})),
