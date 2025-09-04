@@ -874,6 +874,12 @@ def edit_customer():
     if "date_applied" in request.form:
         update_data["date_applied"] = datetime.datetime.strptime(request.form.get("date_applied"), "%Y-%m-%d")
 
+    if "tap_pipe_size" in request.form:
+        update_data["tap_pipe_size"] = int(request.form.get("tap_pipe_size"))
+
+    if "tap_pipe_type" in request.form:
+        update_data["tap_pipe_type"] = request.form.get("tap_pipe_type")
+
     if "survey_date" in request.form:
         update_data["survey_date"] = datetime.datetime.strptime(request.form.get("survey_date"), "%Y-%m-%d")
 
@@ -953,6 +959,8 @@ def customer_survey():
     pipe_type = request.form.get("pipe_type")
     pipe_diameter = request.form.get("pipe_diameter")
     pipe_length = request.form.get("pipe_length")
+    tap_pipe_size = request.form.get("tap_pipe_size")
+    tap_pipe_type = request.form.get("tap_pipe_type")
     wealth_assessment_form = request.files.get("wealth_assessment_form")
     survey_date = request.form.get("survey_date")
 
@@ -960,6 +968,8 @@ def customer_survey():
         "pipe_type": pipe_type,
         "pipe_diameter": int(pipe_diameter),
         "pipe_length": float(pipe_length),
+        "tap_pipe_size": int(tap_pipe_size),
+        "tap_pipe_type": tap_pipe_type,
         "status": "surveyed",
         "survey_date": datetime.datetime.strptime(survey_date, "%Y-%m-%d") if survey_date else None
     }

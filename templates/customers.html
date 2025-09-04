@@ -222,6 +222,8 @@ document.addEventListener('DOMContentLoaded', filterVillages);
                 <li class="list-group-item py-1"><strong>Date Applied:</strong> <span class="text-primary">{{ customer.date_applied.strftime('%d %B %Y') if customer.date_applied else 'N/A' }}</span></li>
                 <li class="list-group-item py-1"><strong>Date Surveyed:</strong> <span class="text-primary">{{ customer.survey_date.strftime('%d %B %Y') if customer.survey_date else 'N/A' }}</span></li>
                 <li class="list-group-item py-1"><strong>Transaction ID:</strong> <span class="text-primary">{{ customer.transaction_id or 'N/A' }}</span></li>
+                <li class="list-group-item py-1"><strong>Tapping Point Size:</strong> <span class="text-primary">{{ customer.tap_pipe_size or 'N/A' }}</span></li>
+                <li class="list-group-item py-1"><strong>Tapping Point Type:</strong> <span class="text-primary">{{ customer.tap_pipe_type or 'N/A' }}</span></li>
               </ul>
             </div>
             <div class="col-12 col-md-6">
@@ -466,6 +468,34 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
   <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (m)</label>
   <input type="number" class="form-control form-control-sm" id="pipe_length_{{ customer._id }}" name="pipe_length" value="{{ customer.pipe_length or '' }}" min="0" step="0.01" required>
 </div>
+<div class="col-6 mb-1">
+  <label for="tap_pipe_size_{{ customer._id }}" class="form-label">Tapping Point Size (mm)</label>
+  <select class="form-select form-select-sm" id="tap_pipe_size_{{ customer._id }}" name="tap_pipe_size" required>
+    <option value="" {% if customer.tap_pipe_size is none or customer.tap_pipe_size == "" %}selected{% endif %}>Select Size</option>
+    <option value="15" {% if customer.tap_pipe_size|string == "15" %}selected{% endif %}>15</option>
+    <option value="20" {% if customer.tap_pipe_size|string == "20" %}selected{% endif %}>20</option>
+    <option value="25" {% if customer.tap_pipe_size|string == "25" %}selected{% endif %}>25</option>
+    <option value="32" {% if customer.tap_pipe_size|string == "32" %}selected{% endif %}>32</option>
+    <option value="40" {% if customer.tap_pipe_size|string == "40" %}selected{% endif %}>40</option>
+    <option value="50" {% if customer.tap_pipe_size|string == "50" %}selected{% endif %}>50</option>
+    <option value="63" {% if customer.tap_pipe_size|string == "63" %}selected{% endif %}>63</option>
+    <option value="75" {% if customer.tap_pipe_size|string == "75" %}selected{% endif %}>75</option>
+    <option value="90" {% if customer.tap_pipe_size|string == "90" %}selected{% endif %}>90</option>
+    <option value="110" {% if customer.tap_pipe_size|string == "110" %}selected{% endif %}>110</option>
+    <option value="160" {% if customer.tap_pipe_size|string == "160" %}selected{% endif %}>160</option>
+    <option value="220" {% if customer.tap_pipe_size|string == "220" %}selected{% endif %}>220</option>
+    <option value="260" {% if customer.tap_pipe_size|string == "260" %}selected{% endif %}>260</option>
+  </select>
+</div>
+<div class="col-6 mb-1">
+  <label for="tap_pipe_type_{{ customer._id }}" class="form-label">Tapping Point Type</label>
+  <select class="form-select form-select-sm" id="tap_pipe_type_{{ customer._id }}" name="tap_pipe_type" required>
+    <option value="" {% if customer.tap_pipe_type is none or customer.tap_pipe_type == "" %}selected{% endif %}>Select Type</option>
+    <option value="HDPE" {% if customer.tap_pipe_type == "HDPE" %}selected{% endif %}>HDPE</option>
+    <option value="PVC" {% if customer.tap_pipe_type == "PVC" %}selected{% endif %}>PVC</option>
+    <option value="GI" {% if customer.tap_pipe_type == "GI" %}selected{% endif %}>GI</option>
+  </select>
+</div>
 {% endif %}
 
             {% if customer.status in ['approved', 'paid', 'connected', 'confirmed', 'not_connected'] %}
@@ -637,27 +667,62 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
     <input type="date" class="form-control" id="survey_date_{{ customer._id }}" name="survey_date"
       value="{{ now().strftime('%Y-%m-%d') }}" required>
   </div>
-  <div class="mb-2">
-    <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
-    <select class="form-select" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
-      <option value="HDPE" selected>HDPE</option>
+
+  <div class="row mb-2">
+    <div class="col-6">
+      <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
+      <select class="form-select" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
+        <option value="HDPE" selected>HDPE</option>
+        <option value="PVC">PVC</option>
+        <option value="GI">GI</option>
+      </select>
+    </div>
+    <div class="col-6">
+      <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
+      <select class="form-select" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" required>
+        <option value="15">15</option>
+        <option value="20" selected>20</option>
+        <option value="25">25</option>
+        <option value="32">32</option>
+        <option value="40">40</option>
+        <option value="50">50</option>
+        <option value="65">65</option>
+        <option value="80">80</option>
+      </select>
+    </div>
+  </div>
+
+<div class="row mb-2">
+  <div class="col-6">
+    <label for="tap_pipe_size_{{ customer._id }}" class="form-label">Tapping Point Size (mm)</label>
+    <select class="form-select" id="tap_pipe_size_{{ customer._id }}" name="tap_pipe_size" required>
+      <option value="" selected>Select Size</option>
+      <option value="15">15</option>
+      <option value="20">20</option>
+      <option value="25">25</option>
+      <option value="32">32</option>
+      <option value="40">40</option>
+      <option value="50">50</option>
+      <option value="63">63</option>
+      <option value="75">75</option>
+      <option value="90">90</option>
+      <option value="110">110</option>
+      <option value="160">160</option>
+      <option value="220">220</option>
+      <option value="260">260</option>
+    </select>
+  </div>
+  <div class="col-6">
+    <label for="tap_pipe_type_{{ customer._id }}" class="form-label">Tapping Point Type</label>
+    <select class="form-select" id="tap_pipe_type_{{ customer._id }}" name="tap_pipe_type" required>
+      <option value="" selected>Select Type</option>
+      <option value="HDPE">HDPE</option>
       <option value="PVC">PVC</option>
       <option value="GI">GI</option>
     </select>
   </div>
-<div class="mb-2">
-  <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
-  <select class="form-select" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" required>
-    <option value="15">15</option>
-    <option value="20" selected>20</option>
-    <option value="25">25</option>
-    <option value="32">32</option>
-    <option value="40">40</option>
-    <option value="50">50</option>
-    <option value="65">65</option>
-    <option value="80">80</option>
-  </select>
 </div>
+
   <div class="mb-2">
     <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (meters)</label>
     <input type="number" class="form-control" id="pipe_length_{{ customer._id }}" name="pipe_length" min="0" step="0.01" required>
