@@ -122,7 +122,7 @@ def generate_customer_report(customer):
         ("Initial Connection Fee Deposit", f"{customer.get('amount_paid', 0):,}"),
         ("Payment Period", customer.get('payment_period', '')),
         ("Customer Category", customer.get('type', '')),
-        ("First Meter Reading", f"{customer.get('first_meter_reading', 0):,}"),
+        ("First Meter Reading", f"{customer.get('first_meter_reading', 0)}"),
         ("Meter Serial", f"{customer.get('meter_serial', '')}"),
         ("Application ID", f"{customer.get('application_id', '')}"),
         ("Contact", f"{customer.get('contact', '')}"),
