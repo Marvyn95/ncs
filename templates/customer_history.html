@@ -4,10 +4,23 @@
 <div class="container-fluid" style="font-size:0.85rem;">
   <div class="row mb-3">
     <div class="col-12">
-      <h4 class="mb-4" style="font-size:1.1rem;">
+      <div class="row align-items-center mb-4">
+        <div class="col">
+          <h4 class="mb-0" style="font-size:1.1rem;">
         <span class="mb-1 text-primary fw-semibold">{{ customer.name }}</span>
         <span class="text-muted small">Payment History</span>
-      </h4>
+          </h4>
+        </div>
+        <div class="col-auto text-end">
+          <form method="post" action="{{ url_for('customer_report_download') }}" class="d-inline">
+        <input type="hidden" name="customer_id" value="{{ customer._id }}">
+        <input type="hidden" name="umbrella_id" value="{{ customer.umbrella_id }}">
+        <button type="submit" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-download"></i> Download Report
+        </button>
+          </form>
+        </div>
+      </div>
       <div class="card border-0 shadow-sm bg-secondary bg-opacity-10">
         <div class="card-body py-2 px-3">
           <div class="row small g-2 align-items-center" style="font-size:0.9rem;">

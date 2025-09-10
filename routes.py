@@ -4,12 +4,13 @@ from flask import render_template, flash, request, url_for, session, redirect, s
 import json
 from bson.objectid import ObjectId
 import datetime
-from utils import save_file, login_required, delete_file, roll_down_balances
+from utils import save_file, login_required, delete_file, roll_down_balances, generate_customer_report
 import pandas as pd
 import io
 from dateutil.relativedelta import relativedelta
 import pandas as pd
 import io
+
 
 @app.route('/home', methods=["GET", "POST"])
 @login_required
@@ -964,6 +965,10 @@ def customer_survey():
     wealth_assessment_form = request.files.get("wealth_assessment_form")
     survey_date = request.form.get("survey_date")
 
+    if datetime.datetime.strptime(survey_date, "%Y-%m-%d") < db.Customers.find_one({"_id": ObjectId(customer_id)}).get("date_applied"):
+        flash("Survey date cannot be before application date!", "danger")
+        return redirect(url_for("customers"))
+
     update_data = {
         "pipe_type": pipe_type,
         "pipe_diameter": int(pipe_diameter),
@@ -1023,6 +1028,10 @@ def customer_payment():
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
 
+    if datetime.datetime.strptime(date_paid, "%Y-%m-%d") < customer.get("survey_date") or datetime.datetime.strptime(date_paid, "%Y-%m-%d") < customer.get("date_applied"):
+        flash("Payment date cannot be before survey or application date!", "danger")
+        return redirect(url_for("customers"))
+
     customers = list(db.Customers.find())
 
     if next((x for x in customers if x.get("transaction_id") == transaction_id), None):
@@ -1066,6 +1075,11 @@ def customer_connection():
         return redirect(url_for("customers"))
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
+
+    if datetime.datetime.strptime(connection_date, "%Y-%m-%d") < customer.get("survey_date") or datetime.datetime.strptime(connection_date, "%Y-%m-%d") < customer.get("date_applied") or datetime.datetime.strptime(connection_date, "%Y-%m-%d") < customer.get("date_paid"):
+        flash("Connection date cannot be before survey or application date or payment date!", "danger")
+        return redirect(url_for("customers"))
+
     if customer.get("customer_reference") is not None:
         update_data = {
             "status": "confirmed",
@@ -1263,8 +1277,6 @@ def add_monthly_billing_sheet():
 
     flash("Monthly billing sheet processed successfully!", "success")
     return redirect(url_for("reports"))
-
-
 
 
 @app.route('/add_monthly_payment_sheet', methods=["POST"])
@@ -1531,22 +1543,23 @@ def download_customers():
             "Village": next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), None),
             "Application ID": c.get("application_id"),
             "Status": c.get("status"),
-            "Date of Application": c.get("date_applied"),
+            "Date of Application": c.get("date_applied").strftime("%d, %B, %Y") if isinstance(c.get("date_applied"), datetime.datetime) else c.get("date_applied"),
             "Pipe Diameter": c.get("pipe_diameter"),
-            "Pipe Kength": c.get("pipe_length"),
+            "Pipe Length": c.get("pipe_length"),
+            "Tap Pipe Size": c.get("tap_pipe_size"),
+            "Tap Pipe Type": c.get("tap_pipe_type"),
             "Pipe Type": c.get("pipe_type"),
-            "Date of Survey": c.get("survey_date"),
-            "Initial Amount Due on Payment": c.get("amount_due"),
+            "Date of Survey": c.get("survey_date").strftime("%d, %B, %Y") if isinstance(c.get("survey_date"), datetime.datetime) else c.get("survey_date"),
+            "Initial Connection Balance": c.get("amount_due"),
             "Connection Fee": c.get("connection_fee"),
-            "Payment Period for Balance on Connection (months)": c.get("payment_period"),
-            "initial amount_paid for connection": c.get("amount_paid"),
-            "Date of Connection Payment": c.get("date_paid"),
-            "Connection Payment Transaction ID": c.get("transaction_id"),
-            "Connection Date": c.get("connection_date"),
+            "Connection Balance Payment Period (months)": c.get("payment_period"),
+            "Initial Amount Paid for Connection": c.get("amount_paid"),
+            "Initial Connection Payment Transaction ID": c.get("transaction_id"),
+            "Date of Initial Connection Payment": c.get("date_paid").strftime("%d, %B, %Y") if isinstance(c.get("date_paid"), datetime.datetime) else c.get("date_paid"),
+            "Connection Date": c.get("connection_date").strftime("%d, %B, %Y") if isinstance(c.get("connection_date"), datetime.datetime) else c.get("connection_date"),
             "Meter Serial": c.get("meter_serial"),
             "First Meter Reading": c.get("first_meter_reading"),
             "Customer Reference": c.get("customer_reference"),
-            "Monthly Bills, Payments, Balances": [{"month": i.get("period").strftime('%B, %Y'), "bill": i.get("bill"), "payment": i.get("payment"), "balance_on_connection": i.get("balance_on_connection"), "balance_on_bill": i.get("balance_on_bill")} for i in c.get("bpb", [])],
         })
 
     df = pd.DataFrame(data)
@@ -1556,6 +1569,24 @@ def download_customers():
     output.seek(0)
     return send_file(output,
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                     as_attachment=True,
+                     as_attachment=False,
                      download_name="customers.xlsx")
 
+
+@app.route("/customer_report_download", methods=["POST"])
+def customer_report_download():
+    customer_id = request.form.get("customer_id")
+    umbrella_id = request.form.get("umbrella_id")
+    customer = db.Customers.find_one({"_id": ObjectId(customer_id), "umbrella_id": umbrella_id})
+
+    if not customer:
+        flash("Customer not found.", "danger")
+        return redirect(url_for("customers"))
+
+    report_path = generate_customer_report(customer)
+    return send_file(
+        report_path,
+        as_attachment=False,
+        download_name=f"{customer.get('name', 'customer')}_report.pdf",
+        mimetype="application/pdf"
+    )
