@@ -104,7 +104,7 @@ def generate_customer_report(customer):
 
     pdf.set_font("Arial", "B", size=10)
     pdf.ln(5)
-    pdf.cell(0, 10, "Customer Details", ln=True, align="L")
+    pdf.cell(0, 8, "Customer Details", ln=True, align="L")
 
     # Two columns: left and right
     left_labels = [
@@ -154,23 +154,24 @@ def generate_customer_report(customer):
 
 
     # Table header
-    col_widths = [40, 30, 30, 40, 50]
-    headers = ["Month", "Bills", "Payments", "Balance on Bill", "Balance on Connection"]
-    pdf.set_font("Arial", "B", 10)
+    col_widths = [30, 20, 20, 35, 40, 40]
+    headers = ["Month", "Bills", "Payments", "Balance on Bill", "Balance on Connection", "Prepayment Balance"]
+    pdf.set_font("Arial", "B", 9)
     for i, header in enumerate(headers):
         pdf.cell(col_widths[i], 6, header, border='T', align="L")
-    pdf.set_font("Arial", "", 10)
+    pdf.set_font("Arial", "", 9)
     pdf.ln()
 
     # Table rows
     bpb_object = customer.get("bpb", [])
     for row in bpb_object:
         period_str = str(datetime.strptime(str(row.get("period", "")), "%Y-%m-%d %H:%M:%S").strftime("%B, %Y"))
-        pdf.cell(col_widths[0], 6, period_str, border='T')
-        pdf.cell(col_widths[1], 6, f"{row.get('bill', 0):,}", border='T')
-        pdf.cell(col_widths[2], 6, f"{row.get('payment', 0):,}", border='T')
-        pdf.cell(col_widths[3], 6, f"{row.get('balance_on_bill', 0):,}", border='T')
-        pdf.cell(col_widths[4], 6, f"{row.get('balance_on_connection', 0):,}", border='T')
+        pdf.cell(col_widths[0], 5, period_str, border='T')
+        pdf.cell(col_widths[1], 5, f"{row.get('bill', 0):,}", border='T')
+        pdf.cell(col_widths[2], 5, f"{row.get('payment', 0):,}", border='T')
+        pdf.cell(col_widths[3], 5, f"{row.get('balance_on_bill', 0):,}", border='T')
+        pdf.cell(col_widths[4], 5, f"{row.get('balance_on_connection', 0):,}", border='T')
+        pdf.cell(col_widths[5], 5, f"{row.get('prepayment_balance', 0):,}", border='T')
         pdf.ln()
 
     # Output PDF to memory and return as Flask response
