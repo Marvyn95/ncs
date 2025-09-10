@@ -25,7 +25,7 @@
         <div class="card-body py-2 px-3">
           <div class="row small g-2 align-items-center" style="font-size:0.9rem;">
             <div class="col-6 col-md-3">
-              <span class="fw-semibold text-dark">Reference:</span>
+              <span class="fw-semibold text-dark">Customer Reference:</span>
               <span class="text-primary">{{ customer.customer_reference or '-' }}</span>
             </div>
             <div class="col-6 col-md-3">
@@ -115,10 +115,10 @@
               <th>Month</th>
               <th>Bill</th>
               <th>Payment</th>
-              <th>Balance on Connection</th>
-              <th>Balance on Bill</th>
+              <th>Connection Balance</th>
+              <th>Bill Balance</th>
               <th>Prepayment Balance</th>
-              <th>Overall Balance</th>
+              <th class="d-none d-sm-table-cell">Overall Balance</th>
             </tr>
           </thead>
           <tbody>
@@ -167,7 +167,7 @@
                   -
                 {% endif %}
               </td>
-              <td class="text-truncate" style="max-width: 100px;">
+              <td class="text-truncate d-none d-sm-table-cell" style="max-width: 100px;">
                 {{ "{:,}".format((bpb.balance_on_connection|int) + (bpb.balance_on_bill|int)) or "-" }}
               </td>
             </tr>

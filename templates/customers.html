@@ -6,39 +6,41 @@
     <div class="col-auto">
       <h5 class="fw-bold mb-0">Customers</h5>
     </div>
-    <div class="col d-flex justify-content-end align-items-center">
-      <form method="POST" action="{{ url_for('set_scheme') }}" class="me-2">
+    <div class="col">
+      <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+      <form method="POST" action="{{ url_for('set_scheme') }}">
         <div class="input-group input-group-sm">
-          <label class="input-group-text" for="scheme_select">Scheme</label>
-          <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
-          {% if user.scheme_id %}
-            {% for scheme in schemes %}
-              {% if user.scheme_id|string == scheme._id|string %}
-          disabled
-              {% endif %}
-            {% endfor %}
-          {% endif %}
-          >
-          <option value="" {% if not session.get("selected_scheme_id") %}selected{% endif %}>All Schemes</option>
+        <label class="input-group-text" for="scheme_select">Scheme</label>
+        <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
+        {% if user.scheme_id %}
           {% for scheme in schemes %}
-            <option value="{{ scheme._id }}"
-              {% if session.get("selected_scheme_id")|string == scheme._id|string or (user.scheme_id|string == scheme._id|string) %}selected{% endif %}>
-              {{ scheme.scheme }}
-            </option>
+          {% if user.scheme_id|string == scheme._id|string %}
+        disabled
+          {% endif %}
           {% endfor %}
-          </select>
+        {% endif %}
+        >
+        <option value="" {% if not session.get("selected_scheme_id") %}selected{% endif %}>All Schemes</option>
+        {% for scheme in schemes %}
+          <option value="{{ scheme._id }}"
+          {% if session.get("selected_scheme_id")|string == scheme._id|string or (user.scheme_id|string == scheme._id|string) %}selected{% endif %}>
+          {{ scheme.scheme }}
+          </option>
+        {% endfor %}
+        </select>
         </div>
       </form>
       {% if user.role in ['administrator', 'scheme_manager', 'commercial_officer', 'billing_officer'] %}
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+      <button class="btn btn-primary btn-sm px-2 py-1" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
         <i class="bi bi-plus-lg me-1"></i> Add Customer
       </button>
       {% if user.role not in ["scheme_manager", "area_manager"] %}
-        <a href="{{ url_for('download_customers') }}" class="btn btn-outline-secondary ms-2" title="Download Records">
-          <i class="bi bi-download"></i>
+        <a href="{{ url_for('download_customers') }}" class="btn btn-outline-secondary btn-sm" title="Download Records" style="padding:2px 6px;font-size:0.9em;">
+        <i class="bi bi-download"></i>
         </a>
       {% endif %}
       {% endif %}
+      </div>
     </div>
   </div>
 
@@ -126,7 +128,10 @@ document.addEventListener('DOMContentLoaded', filterVillages);
 </div>
 
 
-  <div class="table-responsive" style="max-height: 390px; overflow-y: auto;">
+  <div class="table-responsive" style="max-height: 390px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
+    <style>
+      .table-responsive::-webkit-scrollbar { display: none; }
+    </style>
     <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
       <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-primary">

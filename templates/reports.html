@@ -5,41 +5,32 @@
   <div class="row">
     <div class="col-12">
       <!-- Header and Action Buttons -->
-      <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
-        <h4 class="fw-bold mb-0 me-3">ES Reports</h4>
-        <div class="d-flex align-items-center ms-auto">
-          <form method="POST" action="{{ url_for('set_scheme') }}" class="d-flex align-items-center me-2"
-        {% for scheme in schemes %}
-          {% if user.scheme_id|string == scheme._id|string %}
-            style="pointer-events: none; opacity: 0.7;"
-          {% endif %}
-        {% endfor %}
-          >
+      <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+        <h4 class="fw-bold mb-0 me-3 flex-shrink-0">ES Reports</h4>
+        <div class="d-flex align-items-center ms-auto flex-wrap gap-2">
+          <form method="POST" action="{{ url_for('set_scheme') }}" class="d-flex align-items-center me-2 flex-wrap gap-2">
         <div class="input-group input-group-sm me-2">
           <label class="input-group-text" for="scheme_select">Scheme</label>
           <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
-            {% for scheme in schemes %}
-          {% if user.scheme_id|string == scheme._id|string %}
-            disabled
-          {% endif %}
-            {% endfor %}
-          >
-            <option value="" selected>All Schemes</option>
-            {% for scheme in schemes %}
+        {% for scheme in schemes %}
+          {% if user.scheme_id|string == scheme._id|string %} disabled {% endif %}
+        {% endfor %}>
+        <option value="" selected>All Schemes</option>
+        {% for scheme in schemes %}
           <option value="{{ scheme._id }}"
-            {% if session.get("selected_scheme_id")|string == scheme._id|string or user.scheme_id|string == scheme._id|string %}selected{% endif %}>
-            {{ scheme.scheme }}
+        {% if session.get("selected_scheme_id")|string == scheme._id|string or user.scheme_id|string == scheme._id|string %}selected{% endif %}>
+        {{ scheme.scheme }}
           </option>
-            {% endfor %}
+        {% endfor %}
           </select>
         </div>
           </form>
           {% if user.role in ["administrator", "billing_officer"] %}
-        <button class="btn btn-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#addMonthlyBillingSheetModal">
-          <i class="bi bi-file-earmark-excel me-1"></i> Add Monthly Billing Sheet
+        <button class="btn btn-success btn-xs me-1 py-1 px-2" data-bs-toggle="modal" data-bs-target="#addMonthlyBillingSheetModal" style="font-size: 0.75rem;">
+          <i class="bi bi-file-earmark-excel me-1"></i> Add Monthly Billing
         </button>
-        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addMonthlyPaymentSheetModal">
-          <i class="bi bi-upload me-1"></i> Add Monthly Payment Sheet
+        <button class="btn btn-primary btn-xs py-1 px-2" data-bs-toggle="modal" data-bs-target="#addMonthlyPaymentSheetModal" style="font-size: 0.75rem;">
+          <i class="bi bi-upload me-1"></i> Add Monthly Payment
         </button>
           {% endif %}
         </div>
@@ -96,18 +87,23 @@
       </div>
 
       <!-- Customer Reports Table -->
-      <div class="table-responsive" style="max-height: 410px; overflow-y: auto;">
+      <div class="table-responsive" style="max-height: 410px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
+        <style>
+          .table-responsive::-webkit-scrollbar {
+        display: none;
+          }
+        </style>
         <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
           <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
             <tr class="table-primary">
               <th>Customer</th>
-              <th>Reference No.</th>
+              <th class="d-none d-sm-table-cell">Reference No.</th>
               <th>Type</th>
-              <th>Connection Date</th>
+              <th class="d-none d-sm-table-cell">Connection Date</th>
               <th>Connection Fee</th>
-              <th>Initial Connection Clearance</th>
-              <th> Current Connection Balance</th>
-              <th>Current Bill Balance</th>
+              <th class="d-none d-sm-table-cell">Initial Connection Clearance</th>
+              <th>Connection Balance</th>
+              <th>Bill Balance</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -115,9 +111,9 @@
             {% for customer in customers %}
             <tr class="bg-dark-subtle my-1">
               <td class="fw-semibold text-truncate" style="max-width: 120px;">{{ customer.name or '-' }}</td>
-              <td class="text-truncate" style="max-width: 120px;">{{ customer.customer_reference or '-' }}</td>
+              <td class="text-truncate d-none d-sm-table-cell" style="max-width: 120px;">{{ customer.customer_reference or '-' }}</td>
               <td class="text-truncate" style="max-width: 100px;">{{ customer.type or '-' }}</td>
-              <td class="text-truncate" style="max-width: 100px;">
+              <td class="text-truncate d-none d-sm-table-cell" style="max-width: 100px;">
                 {% if customer.connection_date %}
                   {{ customer.connection_date.strftime('%d %b %Y') }}
                 {% else %}
@@ -131,7 +127,7 @@
                   -
                 {% endif %}
               </td>
-              <td class="text-truncate" style="max-width: 120px;">
+              <td class="text-truncate d-none d-sm-table-cell" style="max-width: 120px;">
                 {% if customer.amount_paid %}
                   {{ "{:,}".format(customer.amount_paid|int) }}
                 {% else %}
@@ -157,7 +153,7 @@
                   <input type="hidden" name="customer_id" value="{{ customer._id }}">
                   <input type="hidden" name="customer_reference" value="{{ customer.customer_reference }}">
                   <button type="submit" class="btn btn-outline-info btn-sm" title="View History">
-                    <i class="bi bi-clock-history"></i> View
+                    <i class=""></i> View
                   </button>
                 </form>
               </td>
