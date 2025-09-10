@@ -137,7 +137,7 @@ def generate_customer_report(customer):
         right = right_labels[i] if i < len(right_labels) else ("", "")
         pdf.cell(col_width, 10, f"{left[0]}: {left[1]}", border=0)
         pdf.cell(col_width, 10, f"{right[0]}: {right[1]}", border=0)
-        pdf.ln(5)
+        pdf.ln(7)
 
     pdf.ln(5)    
 
@@ -166,12 +166,12 @@ def generate_customer_report(customer):
     bpb_object = customer.get("bpb", [])
     for row in bpb_object:
         period_str = str(datetime.strptime(str(row.get("period", "")), "%Y-%m-%d %H:%M:%S").strftime("%B, %Y"))
-        pdf.cell(col_widths[0], 5, period_str, border='T')
-        pdf.cell(col_widths[1], 5, f"{row.get('bill', 0):,}", border='T')
-        pdf.cell(col_widths[2], 5, f"{row.get('payment', 0):,}", border='T')
-        pdf.cell(col_widths[3], 5, f"{row.get('balance_on_bill', 0):,}", border='T')
-        pdf.cell(col_widths[4], 5, f"{row.get('balance_on_connection', 0):,}", border='T')
-        pdf.cell(col_widths[5], 5, f"{row.get('prepayment_balance', 0):,}", border='T')
+        pdf.cell(col_widths[0], 7, period_str, border='T')
+        pdf.cell(col_widths[1], 7, f"{row.get('bill', 0):,}", border='T')
+        pdf.cell(col_widths[2], 7, f"{row.get('payment', 0):,}", border='T')
+        pdf.cell(col_widths[3], 7, f"{row.get('balance_on_bill', 0):,}", border='T')
+        pdf.cell(col_widths[4], 7, f"{row.get('balance_on_connection', 0):,}", border='T')
+        pdf.cell(col_widths[5], 7, f"{row.get('prepayment_balance', 0):,}", border='T')
         pdf.ln()
 
     # Output PDF to memory and return as Flask response
