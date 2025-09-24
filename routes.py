@@ -719,7 +719,7 @@ def customers():
     scheme_id = user.get("scheme_id")
 
     if scheme_id:
-        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"])
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
         status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
         customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
         status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
@@ -731,7 +731,7 @@ def customers():
         total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")})
     else:
         if area_id:
-            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"])
+            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
             scheme_ids_in_area = [str(scheme["_id"]) for scheme in schemes]
             if selected_scheme_id:
                 status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
@@ -750,7 +750,7 @@ def customers():
                 customers = customers[(page - 1) * per_page : (page) * per_page]
                 total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}})
         elif area_id is None:
-            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"])
+            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
             if selected_scheme_id:
                 status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
                 customers = sorted(
@@ -1179,7 +1179,7 @@ def reports():
     per_page = 100
 
     if not user.get("area_id"):
-        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"])
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
         if not session.get("selected_scheme_id"):
             customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})), key=lambda x: x["name"].lower())
             customers = customers[(page - 1) * per_page: page * per_page]
@@ -1189,7 +1189,7 @@ def reports():
             customers = customers[(page - 1) * per_page: page * per_page]
             total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id")})
     elif user.get("area_id"):
-        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"])
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
         if not session.get("selected_scheme_id"):
             customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"),"customer_reference": {"$exists": True, "$ne": None},"status": "confirmed","type": "ES","area_id": user.get("area_id")})),key=lambda x: x["name"].lower())
             customers = customers[(page - 1) * per_page: page * per_page]
