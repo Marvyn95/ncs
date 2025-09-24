@@ -205,5 +205,41 @@
       </tbody>
     </table>
   </div>
+
+  <div class="d-flex justify-content-end my-3">
+  <nav>
+    <ul class="pagination pagination-sm mb-0">
+      <!-- Previous -->
+      <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+        <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+      </li>
+
+      <!-- Page numbers -->
+      {% set max_pages = 8 %}
+      {% set half = max_pages // 2 %}
+      {% set start_page = page - half %}
+      {% set end_page = page + half %}
+
+      {% if start_page < 1 %}
+        {% set start_page = 1 %}
+      {% endif %}
+      {% if end_page > total_pages %}
+        {% set end_page = total_pages %}
+      {% endif %}
+
+      {% for p in range(start_page, end_page + 1) %}
+        <li class="page-item {% if p == page %}active{% endif %}">
+          <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+        </li>
+      {% endfor %}
+
+      <!-- Next -->
+      <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+        <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
 </div>
 {% endblock %}

@@ -4,31 +4,31 @@
 <div class="container-fluid" style="font-size:0.85rem;">
   <div class="row mb-3">
     <div class="col-12">
-      <div class="row align-items-center mb-4">
+      <div class="row align-items-center mb-3">
         <div class="col">
           <h4 class="mb-0" style="font-size:1.1rem;">
-        <span class="mb-1 text-primary fw-semibold">{{ customer.name }}</span>
-        <span class="text-muted small">Payment History</span>
+            <span class="mb-1 text-primary fw-semibold">{{ customer.name }}</span>
+            <span class="text-muted small">Payment History</span>
           </h4>
         </div>
         <div class="col-auto text-end">
           <form method="post" action="{{ url_for('customer_report_download') }}" class="d-inline">
-        <input type="hidden" name="customer_id" value="{{ customer._id }}">
-        <input type="hidden" name="umbrella_id" value="{{ customer.umbrella_id }}">
-        <button type="submit" class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-download"></i> Download Report
-        </button>
+            <input type="hidden" name="customer_id" value="{{ customer._id }}">
+            <input type="hidden" name="umbrella_id" value="{{ customer.umbrella_id }}">
+            <button type="submit" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-download"></i> Download Report
+            </button>
           </form>
         </div>
       </div>
       <div class="card border-0 shadow-sm bg-secondary bg-opacity-10">
         <div class="card-body py-2 px-3">
-          <div class="row small g-2 align-items-center" style="font-size:0.9rem;">
-            <div class="col-6 col-md-3">
+          <div class="row row-cols-1 row-cols-md-4 g-2 align-items-center" style="font-size:0.9rem;">
+            <div class="col">
               <span class="fw-semibold text-dark">Customer Reference:</span>
               <span class="text-primary">{{ customer.customer_reference or '-' }}</span>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col">
               <span class="fw-semibold text-dark">Connection Date:</span>
               <span class="text-primary">
                 {% if customer.connection_date %}
@@ -38,11 +38,19 @@
                 {% endif %}
               </span>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col">
+              <span class="fw-semibold text-dark">Scheme:</span>
+              <span class="text-primary">{{ customer.scheme or '-' }}</span>
+            </div>
+            <div class="col">
+              <span class="fw-semibold text-dark">Village:</span>
+              <span class="text-primary">{{ customer.village or '-' }}</span>
+            </div>
+            <div class="col">
               <span class="fw-semibold text-dark">Payment Period:</span>
               <span class="text-primary">{{ customer.payment_period or '-' }}</span> months
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col">
               <span class="fw-semibold text-dark">Monthly Installment:</span>
               <span class="text-primary">
                 {% if customer.connection_fee and customer.payment_period %}
@@ -52,9 +60,7 @@
                 {% endif %}
               </span>
             </div>
-          </div>
-          <div class="row small g-2 align-items-center mt-1" style="font-size:0.9rem;">
-            <div class="col-6 col-md-3">
+            <div class="col">
               <span class="fw-semibold text-dark">Connection Fee:</span>
               <span class="text-primary">
                 {% if customer.connection_fee %}
@@ -64,7 +70,7 @@
                 {% endif %}
               </span>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col">
               <span class="fw-semibold text-dark">Initial Clearance:</span>
               <span class="text-primary">
                 {% if customer.amount_paid %}
@@ -74,7 +80,7 @@
                 {% endif %}
               </span>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col">
               <span class="fw-semibold text-dark">Initial Deficit:</span>
               <span class="text-primary">
                 {% if customer.connection_fee and customer.amount_paid %}
@@ -84,7 +90,7 @@
                 {% endif %}
               </span>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col">
               <span class="fw-semibold text-dark">Overall Balance:</span>
               <span class="text-primary">
                 {% if customer.bpb %}

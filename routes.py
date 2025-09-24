@@ -451,9 +451,9 @@ def schemes():
 
     # Attach area and district names for display if needed
     for scheme in schemes:
-        scheme["area"] = next((area.get("area") for area in areas if str(area["_id"]) == scheme["area_id"]), None)
-        scheme["district"] = next((district.get("district") for district in districts if str(district["_id"]) == scheme["district_id"]), None)
-        scheme["umbrella"] = next((umbrella.get("umbrella") for umbrella in umbrellas if str(umbrella["_id"]) == scheme["umbrella_id"]), None)
+        scheme["area"] = next((area.get("area") for area in areas if str(area.get("_id")) == scheme.get("area_id")), None)
+        scheme["district"] = next((district.get("district") for district in districts if str(district.get("_id")) == scheme.get("district_id")), None)
+        scheme["umbrella"] = next((umbrella.get("umbrella") for umbrella in umbrellas if str(umbrella.get("_id")) == scheme.get("umbrella_id")), None)
 
     return render_template("schemes.html",
                            user=user,
@@ -539,11 +539,20 @@ def districts():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     districts = sorted(list(db.Districts.find()), key=lambda x: x["district"].lower())
+    page = int(request.args.get('page', 1))
+    per_page = 100
+
+    districts = districts[(page - 1) * per_page: page * per_page]
+    total = db.Districts.count_documents({})
+    total_pages = (total + per_page - 1) // per_page
+
     return render_template("districts.html",
                            user=user,
                            section="districts",
                            date=datetime.datetime.now().strftime("%d %B %Y"),
-                           districts=districts)
+                           districts=districts,
+                           page=page,
+                           total_pages=total_pages)
 
 @app.route('/add_district', methods=["POST"])
 def add_district():
@@ -594,12 +603,15 @@ def villages():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     page = int(request.args.get('page', 1))
+    per_page = 120
 
-    villages = list(db.Villages.find())
-    schemes = list(db.Schemes.find())
-    districts = list(db.Districts.find())
-    subcounties = list(db.Subcounties.find())
-    parishes = list(db.Parishes.find())
+    villages = sorted(list(db.Villages.find()), key=lambda x: x["village"])
+    schemes = sorted(list(db.Schemes.find()), key=lambda x: x["scheme"])
+    districts = sorted(list(db.Districts.find()), key=lambda x: x["district"])
+    subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"])
+    parishes = sorted(list(db.Parishes.find()), key=lambda x: x["parish"])
+
+    villages = villages[(page - 1) * per_page: page * per_page]
 
     for village in villages:
         village["parish"] = next((item["parish"] for item in parishes if str(item["_id"]) == village.get("parish_id")), None)
@@ -608,22 +620,18 @@ def villages():
         village["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == village.get("scheme_id")), None)
 
     # Pagination
-    per_page = 500
-    total = len(villages)
-    start = (page - 1) * per_page
-    end = start + per_page
-    villages = villages[start:end]
+    total = db.Villages.count_documents({})
     total_pages = (total + per_page - 1) // per_page
 
     return render_template("villages.html",
                            user=user,
                            section="villages",
                            date=datetime.datetime.now().strftime("%d %B %Y"),
-                           villages=sorted(villages, key=lambda x: x["village"].lower()),
-                           schemes=sorted(schemes, key=lambda x: x["scheme"].lower()),
-                           subcounties=sorted(subcounties, key=lambda x: x["subcounty"].lower()),
-                           parishes=sorted(parishes, key=lambda x: x["parish"].lower()),
-                           districts=sorted(districts, key=lambda x: x["district"].lower()),
+                           villages=villages,
+                           schemes=schemes,
+                           subcounties=subcounties,
+                           parishes=parishes,
+                           districts=districts,
                            page=page,
                            total_pages=total_pages,
                            per_page=per_page)
@@ -704,47 +712,61 @@ def customers():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     page = int(request.args.get('page', 1))
+    per_page = 50
 
     selected_scheme_id = session.get("selected_scheme_id")
     area_id = user.get("area_id")
     scheme_id = user.get("scheme_id")
 
     if scheme_id:
-        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id}))
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"])
+        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
         status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
         customers = sorted(
-            list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")})),
+            customers,
             key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
         )
+        customers = customers[(page - 1) * per_page : (page) * per_page]
+        total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")})
     else:
         if area_id:
-            schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id}))
-            if selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-                customers = sorted(
-                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id, "scheme_id": selected_scheme_id})),
-                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                )
-            elif not selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-                customers = sorted(
-                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})),
-                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                )
-        elif area_id is None:
-            schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"])
+            scheme_ids_in_area = [str(scheme["_id"]) for scheme in schemes]
             if selected_scheme_id:
                 status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
                 customers = sorted(
                     list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})),
                     key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
                 )
+                customers = customers[(page - 1) * per_page : (page) * per_page]
+                total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})
+            elif not selected_scheme_id:
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+                customers = sorted(
+                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}})),
+                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                )
+                customers = customers[(page - 1) * per_page : (page) * per_page]
+                total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}})
+        elif area_id is None:
+            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"])
+            if selected_scheme_id:
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+                customers = sorted(
+                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})),
+                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                )
+                customers = customers[(page - 1) * per_page : (page) * per_page]
+                total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})
             elif not selected_scheme_id:
                 status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
                 customers = sorted(
                     list(db.Customers.find({"umbrella_id": user.get("umbrella_id")})),
                     key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
                 )
+                customers = customers[(page - 1) * per_page : (page) * per_page]
+                total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id")})
 
     villages = sorted(list(db.Villages.find()), key=lambda x: x["village"].lower())
 
@@ -752,12 +774,8 @@ def customers():
         customer["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == customer.get("scheme_id")), None)
         customer["village"] = next((item["village"] for item in villages if str(item["_id"]) == customer.get("village_id")), None)
 
-    per_page = 500
-    total = len(customers)
-    start = (page - 1) * per_page
-    end = start + per_page
-    customers = customers[start:end]
     total_pages = (total + per_page - 1) // per_page
+    print(total)
 
     return render_template("customers.html",
                            user=user,
@@ -1157,28 +1175,30 @@ def reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
 
-    page = int(request.args.get('page', 1))    
+    page = int(request.args.get('page', 1))
+    per_page = 100
 
     if not user.get("area_id"):
-        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"])
         if not session.get("selected_scheme_id"):
             customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})), key=lambda x: x["name"].lower())
+            customers = customers[(page - 1) * per_page: page * per_page]
+            total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})
         elif session.get("selected_scheme_id"):
             customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id")})), key=lambda x: x["name"].lower())
+            customers = customers[(page - 1) * per_page: page * per_page]
+            total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id")})
     elif user.get("area_id"):
-        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"])
         if not session.get("selected_scheme_id"):
             customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"),"customer_reference": {"$exists": True, "$ne": None},"status": "confirmed","type": "ES","area_id": user.get("area_id")})),key=lambda x: x["name"].lower())
-        
+            customers = customers[(page - 1) * per_page: page * per_page]
+            total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "area_id": user.get("area_id")})
         elif session.get("selected_scheme_id"):
             customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id"), "area_id": user.get("area_id")})), key=lambda x: x.get("name", "").lower())
-
+            customers = customers[(page - 1) * per_page: page * per_page]
+            total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id"), "area_id": user.get("area_id")})
     
-    per_page = 500
-    total = len(customers)
-    start = (page - 1) * per_page
-    end = start + per_page
-    customers = customers[start:end]
     total_pages = (total + per_page - 1) // per_page
 
     return render_template("reports.html",
@@ -1371,6 +1391,10 @@ def customer_history():
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     customer_id = request.form.get('customer_id')
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
+    villages = list(db.Villages.find())
+    schemes = list(db.Schemes.find())
+    customer["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == customer.get("village_id")), 'N/A')
+    customer["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == customer.get("scheme_id")), 'N/A')
     return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now().strftime("%d %B %Y"))
 
 
@@ -1379,7 +1403,13 @@ def subcounties():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     districts = list(db.Districts.find())
-    subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"].lower())
+    subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"])
+    page = int(request.args.get('page', 1))
+    per_page = 50
+    subcounties = subcounties[(page - 1) * per_page: page * per_page]
+    total = db.Subcounties.count_documents({})
+    total_pages = (total + per_page - 1) // per_page
+
     for s in subcounties:
         s["district"] = next((d.get("district") for d in districts if str(d.get("_id")) == s.get("district_id")), 'N/A')
 
@@ -1387,7 +1417,9 @@ def subcounties():
                            user=user,
                            districts=districts,
                            subcounties=subcounties,
-                           date=datetime.datetime.now().strftime("%d %B %Y"))
+                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           page=page,
+                           total_pages=total_pages)
 
 @app.route('/add_subcounty', methods=['POST'])
 def add_subcounty():
@@ -1454,6 +1486,12 @@ def parishes():
     parishes = sorted(list(db.Parishes.find()), key=lambda x: x["parish"].lower())
     districts = sorted(list(db.Districts.find()), key=lambda x: x["district"].lower())
 
+    page = int(request.args.get('page', 1))
+    per_page = 100
+    parishes = parishes[(page - 1) * per_page: page * per_page]
+    total = db.Parishes.count_documents({})
+    total_pages = (total + per_page - 1) // per_page
+
     for p in parishes:
         p["subcounty"] = next((s.get("subcounty") for s in subcounties if str(s["_id"]) == p.get("subcounty_id")), 'N/A')
         p["district"] = next((d.get("district") for d in districts if str(d["_id"]) == p.get("district_id")), 'N/A')
@@ -1463,10 +1501,9 @@ def parishes():
                            subcounties=subcounties,
                            parishes=parishes,
                            districts=districts,
-                           date=datetime.datetime.now().strftime("%d %B %Y"))
-
-
-
+                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           page=page,
+                           total_pages=total_pages)
 
 @app.route('/add_parish', methods=['POST'])
 def add_parish():
@@ -1590,3 +1627,139 @@ def customer_report_download():
         download_name=f"{customer.get('name', 'customer')}_report.pdf",
         mimetype="application/pdf"
     )
+@app.route("/upload_customers", methods=["POST"])
+def upload_customers():
+    file = request.files.get("customers_file")
+
+    if not file or file.filename == "":
+        flash("No file selected!", "danger")
+        return redirect(url_for("customers"))
+    
+    if file.filename.endswith(".xls"):
+        flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
+        return redirect(url_for("customers"))
+    
+    if file.filename.endswith(".csv"):
+        df = pd.read_csv(file)
+    elif file.filename.endswith((".xlsx")):
+        df = pd.read_excel(file)
+    else:
+        flash("Unsupported file format, upload a CSV or Excel file!", "danger")
+        return redirect(url_for("customers"))
+    
+    if len(df.columns) != 10:
+        flash("Customer upload file must have exactly 10 columns!", "danger")
+        return redirect(url_for("customers"))
+    
+    if df.columns[0] != "MeterRef" or df.columns[1] != "MeterSerial" or df.columns[2] != "CustomerRef" or df.columns[3] != "Name" or df.columns[4] != "Phone" or df.columns[5] != "VillageName" or df.columns[6] != "SchemeName" or df.columns[7] != "UmbrellaName" or df.columns[8] != "CustomerType" or df.columns[9] != "CreationDate":
+        flash("Customer upload file must have 'MeterRef', 'MeterSerial', 'CustomerRef', 'Name', 'Phone', 'VillageName', 'SchemeName', 'UmbrellaName', 'CustomerType', and 'CreationDate' as the first ten columns respectively!", "danger")
+        return redirect(url_for("customers"))
+
+    schemes = list(db.Schemes.find())
+    umbrellas = list(db.Umbrellas.find())
+    villages = list(db.Villages.find())
+    
+    cust_no = 0
+    es_no = 0
+    ms_no = 0
+    for row in df.itertuples(index=False):
+        cust_no += 1
+        print(cust_no)
+        meter_ref = row[0]
+        meter_serial = row[1]
+        name = row[3]
+        phone = row[4]
+        village_name = row[5]
+        scheme_name = row[6]
+        umbrella_name = row[7]
+        customer_type = row[8]
+        creation_date = row[9]
+
+        if pd.isna(meter_ref) or pd.isna(name) or pd.isna(scheme_name) or pd.isna(umbrella_name) or pd.isna(creation_date):
+            continue
+
+        name = str(name).strip() if not pd.isna(name) else None
+        contact = str(phone).strip() if not pd.isna(phone) else None
+        status = "confirmed"
+        type = "ES" if "ES-" in str(name) else "MS"
+        meter_serial = str(meter_serial).strip() if not pd.isna(meter_serial) else None
+        customer_reference = meter_ref if not pd.isna(meter_ref) else None
+
+        # customercreation date info 
+        creation_date_formatted = pd.to_datetime(creation_date)
+
+        # umbrella info
+        umbrella = next((u for u in umbrellas
+                        if (u.get("umbrella", "").lower() == str(umbrella_name).lower()
+                        or u.get("umbrella", "").split(" ")[0].lower() == str(umbrella_name).split(" ")[0].lower()
+                        )),
+                        None
+        )
+
+        if umbrella is not None:
+            umbrella_id = str(umbrella.get("_id"))
+        else:
+            db.Umbrellas.insert_one({"umbrella": umbrella_name})
+            umbrellas = list(db.Umbrellas.find())
+            umbrella = next((u for u in umbrellas if u.get("umbrella", "").lower() == str(umbrella_name).lower()), None)
+            umbrella_id = str(umbrella.get("_id"))
+
+        # checking if customer exists
+        existing_customer = db.Customers.find_one({
+            "customer_reference": {"$in": [customer_reference, str(customer_reference)]},
+            "umbrella_id": str(umbrella.get("_id"))
+        })
+
+        if existing_customer:
+            continue
+        
+        # scheme info
+        scheme = next((s for s in schemes if s.get("scheme", "").lower() == str(scheme_name).lower() and s.get("umbrella_id") == umbrella_id), None)
+        if scheme is not None:
+            scheme_id = str(scheme.get("_id"))
+        else:
+            db.Schemes.insert_one({"scheme": str(scheme_name), "umbrella_id": str(umbrella_id)})
+            schemes = list(db.Schemes.find())
+            scheme = next((s for s in schemes if s.get("scheme", "").lower() == str(scheme_name).lower() and s.get("umbrella_id") == str(umbrella_id)), None)
+            scheme_id = str(scheme.get("_id"))
+
+        #village info
+        village = next((v for v in villages if v.get("village", "").lower() == str(village_name).lower() and v.get("scheme_id") == str(scheme_id)), None)
+        if village is not None:
+            village_id = str(village.get("_id"))
+        else:
+            db.Villages.insert_one({"village": str(village_name), "scheme_id": str(scheme_id), "umbrella_id": str(umbrella_id)})
+            villages = list(db.Villages.find())
+            village = next((v for v in villages if v.get("village", "").lower() == str(village_name).lower() and v.get("scheme_id") == str(scheme_id)), None)
+            village_id = str(village.get("_id")) if village else None
+
+        new_customer = {
+            "name": name,
+            "contact": contact ,
+            "scheme_id": scheme_id,
+            "village_id": village_id,
+            "umbrella_id": umbrella_id,
+            "status": status,
+            "connection_date": creation_date_formatted,
+            "customer_reference": customer_reference,
+            "type": type,
+            "meter_serial": meter_serial,
+        }
+
+        if type == "ES":
+            new_customer["payment_period"] = 6
+            new_customer["connection_fee"] = 100000
+            new_customer["amount_due"] = 60000
+            new_customer["amount_paid"] = 40000
+        
+        db.Customers.insert_one(new_customer)
+
+        if type == "ES":
+            es_no += 1
+        elif type == "MS":
+            ms_no += 1
+
+        # cust_no += 1
+
+    flash(f"{cust_no} Customers uploaded successfully!, {es_no} ES, {ms_no} MS", "success")
+    return redirect(url_for("customers"))
