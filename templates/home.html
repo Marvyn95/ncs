@@ -2,92 +2,75 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-  <!-- Header -->
-  <div class="mb-4">
-    <h4 class="fw-bold">Dashboard</h4>
-    <p class="text-muted small"></p>
-  </div>
   <!-- Top Summary Stats -->
   <div class="row flex-row flex-wrap g-3 mb-4">
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+
+    <div class="col-6 col-md-3 col-lg-2">
       <a href="{{ url_for('customers') }}" class="text-decoration-none">
-        <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
+        <div class="card bg-white rounded-2 shadow-sm p-2 h-100 border-0">
           <div class="d-flex align-items-center">
-            <div class="me-3 fs-2 text-primary"><i class="bi bi-people-fill"></i></div>
+            <span class="me-2 fs-3 text-primary"><i class="bi bi-people-fill"></i></span>
             <div>
-              <div class="fw-bold fs-4 text-primary">{{ customers_count }}</div>
-              <div class="small ">Total Customers</div>
+              <div class="small">Customers</div>
+              <div class="fw-bold fs-5 text-primary">{{ customers_count }}</div>
             </div>
           </div>
         </div>
       </a>
     </div>
-
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
-        <div class="d-flex align-items-center">
-          <div class="me-3 fs-2 text-success"><i class="bi bi-diagram-3-fill"></i></div>
-          <div>
-            <div class="fw-bold fs-4 text-success">{{ schemes_count }}</div>
-            <div class="small ">Total schemes</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
-        <div class="d-flex align-items-center">
-          <div class="me-3 fs-2 text-warning"><i class="bi bi-person-lines-fill"></i></div>
-          <div>
-            <div class="fw-bold fs-4 text-warning">{{ application_count }}</div>
-            <div class="small ">Applicants pending surveys</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
-        <div class="d-flex align-items-center">
-          <div class="me-3 fs-2 text-info"><i class="bi bi-clipboard-data-fill"></i></div>
-          <div>
-            <div class="fw-bold fs-4 text-info">{{ survey_count }}</div>
-            <div class="small ">Surveys pending approvals</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
-        <div class="fw-bold fs-4 text-success">{{ approval_count }}</div>
-        <div class="small">Approvals pending payments</div>
-      </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
-        <div class="fw-bold fs-4 text-warning">{{ pending_connection_count }}</div>
-        <div class="small">Pending Connections</div>
-      </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+    <div class="col-6 col-md-3 col-lg-2">
       <a href="{{ url_for('reports') }}" class="text-decoration-none">
-        <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
-          <div class="fw-bold fs-4 text-secondary">{{ es_customers }}</div>
-          <div class="small">Total ES Customers</div>
+        <div class="card bg-white rounded-2 shadow-sm p-2 h-100 border-0">
+          <div class="d-flex align-items-center">
+            <span class="me-2 fs-3 text-success"><i class="bi bi-person-badge-fill"></i></span>
+            <div>
+              <div class="small">ES Customers</div>
+              <div class="fw-bold fs-5 text-success">{{ es_customers }}</div>
+            </div>
+          </div>
         </div>
       </a>
     </div>
-
-    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-      <div class="card shadow-sm border-start border-3 border-dark bg-secondary-subtle p-3 h-100">
-        <div class="fw-bold fs-4 text-dark">{{ villages_count }}</div>
-        <div class="small">Villages</div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <a href="#" class="text-decoration-none">
+        <div class="card bg-white rounded-2 shadow-sm p-2 h-100 border-0">
+          <div class="d-flex align-items-center">
+            <span class="me-2 fs-3 text-info"><i class="bi bi-diagram-3-fill"></i></span>
+            <div>
+              <div class="small">Schemes</div>
+              <div class="fw-bold fs-5 text-info">{{ schemes_count }}</div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <a href="#" class="text-decoration-none">
+        <div class="card bg-white rounded-2 shadow-sm p-2 h-100 border-0">
+          <div class="d-flex align-items-center">
+            <span class="me-2 fs-3 text-warning"><i class="bi bi-house-door-fill"></i></span>
+            <div>
+              <div class="small">Villages</div>
+              <div class="fw-bold fs-5 text-warning">{{ villages_count }}</div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-12 col-md-4 col-lg-3">
+      <div class="card bg-white rounded-2 shadow-sm p-2 h-100 border-0">
+        <div class="d-flex flex-column justify-content-center align-items-start h-100 gap-1">
+          <div class="small text-muted mb-0">Pending Surveys: <span class="fw-bold fs-6 text-primary">{{ application_count }}</span></div>
+          <div class="small text-muted mb-0">Approved: <span class="fw-bold fs-6 text-primary">{{ approval_count }}</span></div>
+          <div class="small text-muted mb-0">Pending Connections: <span class="fw-bold fs-6 text-primary">{{ pending_connection_count }}</span></div>
+        </div>
       </div>
     </div>
+
   </div>
+  
+
+
 </div>
+
 {% endblock %}
