@@ -93,8 +93,8 @@
         display: none;
           }
         </style>
-        <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
-          <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+        <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.70rem;">
+          <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa; font-size:0.70rem;">
             <tr class="table-primary">
               <th>Customer</th>
               <th class="d-none d-sm-table-cell">Reference No.</th>
@@ -107,55 +107,55 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody style="font-size:0.70rem;">
             {% for customer in customers %}
             <tr class="bg-dark-subtle my-1">
               <td class="fw-semibold text-truncate" style="max-width: 120px;">{{ customer.name or '-' }}</td>
               <td class="text-truncate d-none d-sm-table-cell" style="max-width: 120px;">{{ customer.customer_reference or '-' }}</td>
               <td class="text-truncate" style="max-width: 100px;">{{ customer.type or '-' }}</td>
               <td class="text-truncate d-none d-sm-table-cell" style="max-width: 100px;">
-                {% if customer.connection_date %}
-                  {{ customer.connection_date.strftime('%d %b %Y') }}
-                {% else %}
-                  -
-                {% endif %}
+          {% if customer.connection_date %}
+            {{ customer.connection_date.strftime('%d %b %Y') }}
+          {% else %}
+            -
+          {% endif %}
               </td>
               <td class="text-truncate" style="max-width: 100px;">
-                {% if customer.connection_fee %}
-                  {{ "{:,}".format(customer.connection_fee|int) }}
-                {% else %}
-                  -
-                {% endif %}
+          {% if customer.connection_fee %}
+            {{ "{:,}".format(customer.connection_fee|int) }}
+          {% else %}
+            -
+          {% endif %}
               </td>
               <td class="text-truncate d-none d-sm-table-cell" style="max-width: 120px;">
-                {% if customer.amount_paid %}
-                  {{ "{:,}".format(customer.amount_paid|int) }}
-                {% else %}
-                  -
-                {% endif %}
+          {% if customer.amount_paid %}
+            {{ "{:,}".format(customer.amount_paid|int) }}
+          {% else %}
+            -
+          {% endif %}
               </td>
               <td class="text-truncate" style="max-width: 120px;">
-                {% if customer.bpb %}
-                  {{ "{:,}".format(customer.bpb[-1].get('balance_on_connection', 0)|int) }}
-                {% else %}
-                  {{"{:,}".format(customer.amount_due)}}
-                {% endif %}
+          {% if customer.bpb %}
+            {{ "{:,}".format(customer.bpb[-1].get('balance_on_connection', 0)|int) }}
+          {% else %}
+            {{"{:,}".format(customer.amount_due)}}
+          {% endif %}
               </td>
               <td class="text-truncate" style="max-width: 120px;">
-                {% if customer.bpb %}
-                  {{ "{:,}".format(customer.bpb[-1].get('balance_on_bill', 0)|int) }}
-                {% else %}
-                  -
-                {% endif %}
+          {% if customer.bpb %}
+            {{ "{:,}".format(customer.bpb[-1].get('balance_on_bill', 0)|int) }}
+          {% else %}
+            -
+          {% endif %}
               </td>
               <td>
-                <form method="POST" action="{{ url_for('customer_history') }}" style="display:inline;">
-                  <input type="hidden" name="customer_id" value="{{ customer._id }}">
-                  <input type="hidden" name="customer_reference" value="{{ customer.customer_reference }}">
-                  <button type="submit" class="btn btn-outline-info btn-sm" title="View History">
-                    <i class=""></i> View
-                  </button>
-                </form>
+          <form method="POST" action="{{ url_for('customer_history') }}" style="display:inline;">
+            <input type="hidden" name="customer_id" value="{{ customer._id }}">
+            <input type="hidden" name="customer_reference" value="{{ customer.customer_reference }}">
+            <button type="submit" class="btn btn-outline-info btn-sm" title="View History">
+              <i class=""></i> View
+            </button>
+          </form>
               </td>
             </tr>
             {% endfor %}
@@ -163,24 +163,39 @@
         </table>
       </div>
 
-<div class="d-flex justify-content-end mt-3">
-
-  <span class="me-3 align-self-center text-muted" style="font-size:0.95em;">
+<div class="d-flex justify-content-center mt-3">
+  <span class="me-3 align-self-center text-muted" style="font-size:0.85em;">
     Total: <strong>{{ total }}</strong>
   </span>
-
   <nav>
     <ul class="pagination pagination-sm mb-0">
       <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-        <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+        <a class="page-link" href="?page={{ page - 1 }}">«</a>
       </li>
-      {% for p in range(1, total_pages + 1) %}
-      <li class="page-item {% if p == page %}active{% endif %}">
-        <a class="page-link" href="?page={{ p }}">{{ p }}</a>
-      </li>
+      {% set start_page = page - 2 if page - 2 > 1 else 1 %}
+      {% set end_page = start_page + 5 if start_page + 5 < total_pages else total_pages %}
+      {% if end_page - start_page < 5 %}
+        {% set start_page = end_page - 5 if end_page - 5 > 1 else 1 %}
+      {% endif %}
+      {% if start_page > 1 %}
+        <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+        {% if start_page > 2 %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+      {% endif %}
+      {% for p in range(start_page, end_page + 1) %}
+        <li class="page-item {% if p == page %}active{% endif %}">
+          <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+        </li>
       {% endfor %}
+      {% if end_page < total_pages %}
+        {% if end_page < total_pages - 1 %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+        <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
+      {% endif %}
       <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-        <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+        <a class="page-link" href="?page={{ page + 1 }}">»</a>
       </li>
     </ul>
   </nav>

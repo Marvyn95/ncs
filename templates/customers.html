@@ -162,21 +162,21 @@ document.addEventListener('DOMContentLoaded', filterVillages);
       .table-responsive::-webkit-scrollbar { display: none; }
     </style>
     <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
-      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa; font-size:0.65rem;">
         <tr class="table-primary">
-            <th>Name</th>
-            <th>Type</th>
-            <th class="d-none d-sm-table-cell">Contact</th>
-            <th class="d-none d-sm-table-cell">Scheme</th>
-            <th class="d-none d-sm-table-cell">Village</th>
-            <th>Status</th>
-            <th>Connection Fee</th>
-            <th>Connection Clearance</th>
-            <th class="d-none d-sm-table-cell">Connection Balance</th>
-            <th>Actions</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th class="d-none d-sm-table-cell">Contact</th>
+        <th class="d-none d-sm-table-cell">Scheme</th>
+        <th class="d-none d-sm-table-cell">Village</th>
+        <th>Status</th>
+        <th>Connection Fee</th>
+        <!-- <th>Connection Clearance</th> -->
+        <!-- <th class="d-none d-sm-table-cell">Connection Balance</th> -->
+        <th>Actions</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody style="font-size:0.65rem;">
         {% for customer in customers %}
         <tr class="bg-dark-subtle my-1">
           <td class="fw-semibold text-truncate">{{ customer.name or '-' }}</td>
@@ -185,46 +185,48 @@ document.addEventListener('DOMContentLoaded', filterVillages);
           <td class="text-truncate d-none d-sm-table-cell">{{ customer.scheme or '-' }}</td>
           <td class="text-truncate d-none d-sm-table-cell">{{ customer.village or '-' }}</td>
           <td class="text-truncate">{{ customer.status or '-' }}</td>
-<td class="text-truncate">
-  {% if customer.connection_fee %}
-    {{ "{:,}".format(customer.connection_fee|int) }}
-  {% else %}
-    -
-  {% endif %}
-</td>
-<td class="text-truncate">
-  {% if customer.amount_paid %}
-    {{ "{:,}".format(customer.amount_paid|int) }}
-  {% else %}
-    -
-  {% endif %}
-</td>
-<td class="text-truncate d-none d-sm-table-cell">
-  {% if customer.amount_due %}
-    {{ "{:,}".format(customer.amount_due|int) }}
-  {% else %}
-    -
-  {% endif %}
-</td>
+        <td class="text-truncate">
+      {% if customer.connection_fee %}
+        {{ "{:,}".format(customer.connection_fee|int) }}
+      {% else %}
+        -
+      {% endif %}
+        </td>
+
+        <!-- <td class="text-truncate">
+      {% if customer.amount_paid %}
+        {{ "{:,}".format(customer.amount_paid|int) }}
+      {% else %}
+        -
+      {% endif %}
+        </td> -->
+
+        <!-- <td class="text-truncate d-none d-sm-table-cell">
+      {% if customer.amount_due %}
+        {{ "{:,}".format(customer.amount_due|int) }}
+      {% else %}
+        -
+      {% endif %}
+        </td> -->
           <td>
-            <div class="d-flex gap-1">
-              <button class="btn btn-outline-info btn-sm p-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ customer._id }}">
-                <i class="bi bi-eye"></i>
-                </button>
-                {% if user.role in ["administrator"] or user.role in ["area_manager"] and customer.status == "applied" %}
-                <button class="btn btn-outline-primary btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                {% endif %}
-                {% if user.role in ["administrator"] %}
-              <button class="btn btn-outline-danger btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ customer._id }}">
-                <i class="bi bi-trash"></i>
-              </button>
-                {% endif %}
-              <button class="btn btn-outline-warning btn-sm p-1" data-bs-toggle="modal" data-bs-target="#actionModal-{{ customer._id }}">
-                <i class="bi bi-lightning"></i>
-              </button>
-            </div>
+        <div class="d-flex gap-1">
+          <button class="btn btn-outline-info btn-sm p-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ customer._id }}">
+        <i class="bi bi-eye"></i>
+        </button>
+        {% if user.role in ["administrator"] or user.role in ["area_manager"] and customer.status == "applied" %}
+        <button class="btn btn-outline-primary btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">
+          <i class="bi bi-pencil"></i>
+        </button>
+        {% endif %}
+        {% if user.role in ["administrator"] %}
+          <button class="btn btn-outline-danger btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ customer._id }}">
+        <i class="bi bi-trash"></i>
+          </button>
+        {% endif %}
+          <button class="btn btn-outline-warning btn-sm p-1" data-bs-toggle="modal" data-bs-target="#actionModal-{{ customer._id }}">
+        <i class="bi bi-lightning"></i>
+          </button>
+        </div>
           </td>
         </tr>
 
@@ -934,53 +936,44 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </div>
 
-
-
         {% endfor %}
       </tbody>
     </table>
   </div>
 
-<div class="d-flex justify-content-end mt-3">
-  <span class="me-3 align-self-center text-muted" style="font-size:0.95em;">
+<div class="d-flex justify-content-center mt-3">
+  <span class="me-3 align-self-center text-muted" style="font-size:0.85em;">
     Total: <strong>{{ total }}</strong>
   </span>
   <nav>
     <ul class="pagination pagination-sm mb-0">
       <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-        <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+        <a class="page-link" href="?page={{ page - 1 }}">«</a>
       </li>
-      {# Calculate start and end page for visible range #}
-      {% set half = 4 %}
-      {% set start = page - half + 1 if page - half + 1 > 1 else 1 %}
-      {% set end = start + 8 - 1 %}
-      {% if end > total_pages %}
-        {% set end = total_pages %}
-        {% set start = end - 8 + 1 if end - 8 + 1 > 1 else 1 %}
+      {% set start_page = page - 2 if page - 2 > 1 else 1 %}
+      {% set end_page = start_page + 5 if start_page + 5 < total_pages else total_pages %}
+      {% if end_page - start_page < 5 %}
+        {% set start_page = end_page - 5 if end_page - 5 > 1 else 1 %}
       {% endif %}
-      {% if start > 1 %}
-        <li class="page-item">
-          <a class="page-link" href="?page=1">1</a>
-        </li>
-        {% if start > 2 %}
+      {% if start_page > 1 %}
+        <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+        {% if start_page > 2 %}
           <li class="page-item disabled"><span class="page-link">…</span></li>
         {% endif %}
       {% endif %}
-      {% for p in range(start, end + 1) %}
+      {% for p in range(start_page, end_page + 1) %}
         <li class="page-item {% if p == page %}active{% endif %}">
           <a class="page-link" href="?page={{ p }}">{{ p }}</a>
         </li>
       {% endfor %}
-      {% if end < total_pages %}
-        {% if end < total_pages - 1 %}
+      {% if end_page < total_pages %}
+        {% if end_page < total_pages - 1 %}
           <li class="page-item disabled"><span class="page-link">…</span></li>
         {% endif %}
-        <li class="page-item">
-          <a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a>
-        </li>
+        <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
       {% endif %}
       <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-        <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+        <a class="page-link" href="?page={{ page + 1 }}">»</a>
       </li>
     </ul>
   </nav>

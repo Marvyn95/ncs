@@ -25,8 +25,6 @@ def home():
     customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
     customers_count = len(customers)
 
-    print("Customers count:", customers_count)
-
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
     scheme_count = len(schemes)
 
@@ -39,6 +37,24 @@ def home():
     pending_connection_count = len([c for c in customers if c.get("status") == "paid"])
     es_customers = len([e for e in customers if e.get("type") == "ES"])  
 
+    date = datetime.datetime.now()
+
+    current_day = date.strftime("%A")
+    current_date = date.strftime("%d") 
+    current_month = date.strftime("%B")
+    current_year = date.strftime("%Y")
+    timezone = 'East Africa time (EAT), UTC +3'
+
+    if session.get("schemes_customers"):
+        schemes_customers = session.get("schemes_customers")
+    else:
+        schemes_customers = []
+        for scheme in schemes:
+            count = len([c for c in customers if c.get("scheme_id") == str(scheme["_id"])])
+            schemes_customers.append({"scheme": scheme["scheme"], "number_of_customers": count})
+        schemes_customers = sorted(schemes_customers, key=lambda x: x["scheme"].lower())
+        session["schemes_customers"] = schemes_customers
+
     return render_template("home.html",
                            section="home",
                            user=user,
@@ -50,7 +66,14 @@ def home():
                            approval_count=approval_count,
                            pending_connection_count=pending_connection_count,
                            es_customers=es_customers,
-                           date = datetime.datetime.now().strftime("%d %B %Y"))
+                           date = date.strftime("%d %B %Y"),
+                           current_day=current_day,
+                           current_date=current_date,
+                           current_month=current_month,
+                           current_year=current_year,
+                           timezone=timezone,
+                           schemes_customers=schemes_customers
+                           )
 
 
 
@@ -1196,6 +1219,8 @@ def customer_confirmation():
         {"_id": ObjectId(customer_id)},
         {"$set": {"customer_reference": customer_reference, "status": "confirmed"}}
     )
+    
+    session.pop("schemes_customers", None)
     flash("Customer confirmed successfully!", "success")
     return redirect(url_for("customers"))
 
@@ -1222,6 +1247,8 @@ def delete_customer():
 
 
     db.Customers.delete_one({"_id": ObjectId(customer_id)})
+    session.pop("schemes_customers", None)
+
     flash("Customer deleted successfully!", "success")
     return redirect(url_for("customers"))
 
@@ -1824,7 +1851,7 @@ def upload_customers():
             "type": type,
             "meter_serial": meter_serial,
             "transaction_id": secrets.token_hex(16),
-            "first_meter_reading": 0
+            "first_meter_reading": "0"
         }
 
         if type == "ES":
@@ -1839,6 +1866,8 @@ def upload_customers():
             es_no += 1
         elif type == "MS":
             ms_no += 1
+
+    session.pop("schemes_customers", None)
 
     flash(f"{cust_no} Customers processed!, {es_no} ES, {ms_no} MS, {es_no + ms_no} uploaded", "success")
     return redirect(url_for("customers"))
