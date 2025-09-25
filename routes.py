@@ -1840,5 +1840,5 @@ def upload_customers():
         elif type == "MS":
             ms_no += 1
 
-    flash(f"{cust_no} Customers uploaded successfully!, {es_no} ES, {ms_no} MS", "success")
+    flash(f"{cust_no} Customers processed!, {es_no} ES, {ms_no} MS, {es_no + ms_no} uploaded", "success")
     return redirect(url_for("customers"))
