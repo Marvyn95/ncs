@@ -10,16 +10,22 @@ import io
 from dateutil.relativedelta import relativedelta
 import pandas as pd
 import io
-
+import secrets
 
 @app.route('/home', methods=["GET", "POST"])
 @login_required
 def home():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
     
     customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
     customers_count = len(customers)
+
+    print("Customers count:", customers_count)
 
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
     scheme_count = len(schemes)
@@ -170,7 +176,12 @@ def change_password():
 @login_required
 def umbrellas():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
+
     umbrellas = list(db.Umbrellas.find())
     return render_template("umbrellas.html",
                            user=user,
@@ -238,7 +249,12 @@ def delete_umbrella():
 @login_required
 def users():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
+
     umbrellas = list(db.Umbrellas.find())
     areas = list(db.Areas.find())
     schemes = list(db.Schemes.find())
@@ -370,7 +386,11 @@ def delete_user():
 @login_required
 def areas():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
 
     areas = sorted((list(db.Areas.find())), key=lambda x: x["area"].lower())
     umbrellas = sorted((list(db.Umbrellas.find())), key=lambda x: x["umbrella"].lower())
@@ -438,7 +458,11 @@ def delete_area():
 @login_required
 def schemes():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
 
     if session.get("selected_umbrella_id"):
         schemes = list(db.Schemes.find({"umbrella_id": session.get("selected_umbrella_id")}))
@@ -462,8 +486,8 @@ def schemes():
                            schemes=sorted(schemes, key=lambda x: x["scheme"].lower()),
                            areas=sorted(areas, key=lambda x: x["area"].lower()),
                            districts=sorted(districts, key=lambda x: x["district"].lower()),
-                           umbrellas=sorted(umbrellas, key=lambda x: x["umbrella"].lower()))
-
+                           umbrellas=sorted(umbrellas, key=lambda x: x["umbrella"].lower()),
+                           total=len(schemes))
 
 @app.route('/umbrella_selection', methods=["GET"])
 @login_required
@@ -537,7 +561,12 @@ def delete_scheme():
 @login_required
 def districts():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
+
     districts = sorted(list(db.Districts.find()), key=lambda x: x["district"].lower())
     page = request.args.get('page', None)
     if page:
@@ -607,7 +636,12 @@ def delete_district():
 @login_required
 def villages():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
+
     page = request.args.get('page', None)
     if page:
         page = int(page)
@@ -723,7 +757,11 @@ def delete_village():
 @login_required
 def customers():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
     
     page = request.args.get('page', None)
     if page:
@@ -1194,7 +1232,11 @@ def delete_customer():
 @login_required
 def reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
 
     page = request.args.get('page', None)
     if page:
@@ -1430,7 +1472,11 @@ def customer_history():
 @app.route("/subcounties")
 def subcounties():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
     districts = list(db.Districts.find())
     subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"])
     page = int(request.args.get('page', 1))
@@ -1510,7 +1556,11 @@ def delete_subcounty():
 @app.route("/parishes")
 def parishes():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
     subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"].lower())
     parishes = sorted(list(db.Parishes.find()), key=lambda x: x["parish"].lower())
     districts = sorted(list(db.Districts.find()), key=lambda x: x["district"].lower())
@@ -1773,6 +1823,8 @@ def upload_customers():
             "customer_reference": customer_reference,
             "type": type,
             "meter_serial": meter_serial,
+            "transaction_id": secrets.token_hex(16),
+            "first_meter_reading": 0
         }
 
         if type == "ES":
@@ -1787,8 +1839,6 @@ def upload_customers():
             es_no += 1
         elif type == "MS":
             ms_no += 1
-
-        # cust_no += 1
 
     flash(f"{cust_no} Customers uploaded successfully!, {es_no} ES, {ms_no} MS", "success")
     return redirect(url_for("customers"))
