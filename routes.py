@@ -539,7 +539,13 @@ def districts():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     districts = sorted(list(db.Districts.find()), key=lambda x: x["district"].lower())
-    page = int(request.args.get('page', 1))
+    page = request.args.get('page', None)
+    if page:
+        page = int(page)
+    else:
+        page = session.get("districts_page", 1)
+        page = int(page)
+    session['districts_page'] = page
     per_page = 100
 
     districts = districts[(page - 1) * per_page: page * per_page]
@@ -602,7 +608,13 @@ def delete_district():
 def villages():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
-    page = int(request.args.get('page', 1))
+    page = request.args.get('page', None)
+    if page:
+        page = int(page)
+    else:
+        page = session.get("villages_page", 1)
+        page = int(page)
+    session['villages_page'] = page
     per_page = 120
 
     villages = sorted(list(db.Villages.find()), key=lambda x: x["village"])
@@ -634,7 +646,8 @@ def villages():
                            districts=districts,
                            page=page,
                            total_pages=total_pages,
-                           per_page=per_page)
+                           per_page=per_page,
+                           total=total)
 
 @app.route('/add_village', methods=["POST"])
 def add_village():
@@ -711,7 +724,15 @@ def delete_village():
 def customers():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
-    page = int(request.args.get('page', 1))
+    
+    page = request.args.get('page', None)
+    if page:
+        page = int(page)
+    else:
+        page = session.get("customers_page", 1)
+        page = int(page)
+    session['customers_page'] = page
+
     per_page = 50
 
     selected_scheme_id = session.get("selected_scheme_id")
@@ -775,7 +796,6 @@ def customers():
         customer["village"] = next((item["village"] for item in villages if str(item["_id"]) == customer.get("village_id")), None)
 
     total_pages = (total + per_page - 1) // per_page
-    print(total)
 
     return render_template("customers.html",
                            user=user,
@@ -787,7 +807,8 @@ def customers():
                            villages=villages,
                            page=page,
                            total_pages=total_pages,
-                           per_page=per_page
+                           per_page=per_page,
+                           total=total
                            )
 
 
@@ -1175,8 +1196,15 @@ def reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
 
-    page = int(request.args.get('page', 1))
-    per_page = 100
+    page = request.args.get('page', None)
+    if page:
+        page = int(page)
+    else:
+        page = session.get("reports_page", 1)
+        page = int(page)
+    session['reports_page'] = page
+
+    per_page = 50
 
     if not user.get("area_id"):
         schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
@@ -1209,7 +1237,8 @@ def reports():
                            schemes=schemes,
                            page=page,
                            total_pages=total_pages,
-                           per_page=per_page
+                           per_page=per_page,
+                           total=total
                            )
 
 
