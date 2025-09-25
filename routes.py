@@ -1194,7 +1194,7 @@ def customer_confirmation():
 
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
-        {"$set": {"customer_reference": int(customer_reference), "status": "confirmed"}}
+        {"$set": {"customer_reference": customer_reference, "status": "confirmed"}}
     )
     flash("Customer confirmed successfully!", "success")
     return redirect(url_for("customers"))
@@ -1743,7 +1743,7 @@ def upload_customers():
     ms_no = 0
     for row in df.itertuples(index=False):
         cust_no += 1
-        print(cust_no)
+        # print(cust_no)
         meter_ref = row[0]
         meter_serial = row[1]
         name = row[3]
