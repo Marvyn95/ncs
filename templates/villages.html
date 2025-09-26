@@ -274,38 +274,39 @@
     </table>
   </div>
 
-<div class="d-flex justify-content-end my-3">
-
-  <span class="me-3 align-self-center text-muted" style="font-size:0.95em;">
+<div class="d-flex justify-content-center mt-3">
+  <span class="me-3 align-self-center text-muted" style="font-size:0.85em;">
     Total: <strong>{{ total }}</strong>
   </span>
-
   <nav>
     <ul class="pagination pagination-sm mb-0">
       <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-        <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+        <a class="page-link" href="?page={{ page - 1 }}">«</a>
       </li>
-      {# Show max 8 pages, centered around current page if possible #}
-      {% set max_pages = 8 %}
-      {% set start_page = page - (max_pages // 2) %}
-      {% if start_page < 1 %}
-        {% set start_page = 1 %}
+      {% set start_page = page - 2 if page - 2 > 1 else 1 %}
+      {% set end_page = start_page + 5 if start_page + 5 < total_pages else total_pages %}
+      {% if end_page - start_page < 5 %}
+        {% set start_page = end_page - 5 if end_page - 5 > 1 else 1 %}
       {% endif %}
-      {% set end_page = start_page + max_pages - 1 %}
-      {% if end_page > total_pages %}
-        {% set end_page = total_pages %}
-        {% set start_page = end_page - max_pages + 1 %}
-        {% if start_page < 1 %}
-          {% set start_page = 1 %}
+      {% if start_page > 1 %}
+        <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+        {% if start_page > 2 %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
         {% endif %}
       {% endif %}
       {% for p in range(start_page, end_page + 1) %}
-      <li class="page-item {% if p == page %}active{% endif %}">
-        <a class="page-link" href="?page={{ p }}">{{ p }}</a>
-      </li>
+        <li class="page-item {% if p == page %}active{% endif %}">
+          <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+        </li>
       {% endfor %}
+      {% if end_page < total_pages %}
+        {% if end_page < total_pages - 1 %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+        <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
+      {% endif %}
       <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-        <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+        <a class="page-link" href="?page={{ page + 1 }}">»</a>
       </li>
     </ul>
   </nav>
