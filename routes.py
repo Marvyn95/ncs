@@ -1781,7 +1781,7 @@ def upload_customers():
         customer_type = row[8]
         creation_date = row[9]
 
-        if pd.isna(meter_ref) or pd.isna(name) or pd.isna(scheme_name) or pd.isna(umbrella_name) or pd.isna(creation_date):
+        if pd.isna(meter_ref) or pd.isna(name) or pd.isna(scheme_name) or pd.isna(umbrella_name) or pd.isna(creation_date) or pd.isna(village_name):
             continue
 
         name = str(name).strip() if not pd.isna(name) else None
