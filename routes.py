@@ -800,55 +800,124 @@ def customers():
     area_id = user.get("area_id")
     scheme_id = user.get("scheme_id")
 
+    search_query = session.get("search_query", "")
+
     if scheme_id:
         schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
         status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
+        
+        if not search_query:
+            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
+        else:
+            customers = list(db.Customers.find({
+                "umbrella_id": user.get("umbrella_id"),
+                "scheme_id": user.get("scheme_id"),
+                "$or": [
+                    {"name": {"$regex": search_query, "$options": "i"}},
+                    {"contact": {"$regex": search_query, "$options": "i"}},
+                ]
+            }))
         status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+        
         customers = sorted(
             customers,
             key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
         )
+        total = len(customers)
         customers = customers[(page - 1) * per_page : (page) * per_page]
-        total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")})
     else:
         if area_id:
             schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
             scheme_ids_in_area = [str(scheme["_id"]) for scheme in schemes]
             if selected_scheme_id:
                 status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-                customers = sorted(
-                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})),
-                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                )
+
+                if not search_query:
+                    customers = sorted(
+                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                else:
+                    customers = sorted(
+                        list(db.Customers.find({
+                            "umbrella_id": user.get("umbrella_id"),
+                            "scheme_id": selected_scheme_id,
+                            "$or": [
+                                {"name": {"$regex": search_query, "$options": "i"}},
+                                {"contact": {"$regex": search_query, "$options": "i"}},
+                            ]
+                        })),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                total = len(customers)
                 customers = customers[(page - 1) * per_page : (page) * per_page]
-                total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})
             elif not selected_scheme_id:
                 status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-                customers = sorted(
-                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}})),
-                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                )
+
+                if not search_query:
+                    customers = sorted(
+                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}})),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                else:
+                    customers = sorted(
+                        list(db.Customers.find({
+                            "umbrella_id": user.get("umbrella_id"),
+                            "scheme_id": {"$in": scheme_ids_in_area},
+                            "$or": [
+                                {"name": {"$regex": search_query, "$options": "i"}},
+                                {"contact": {"$regex": search_query, "$options": "i"}},
+                            ]
+                        })),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                total = len(customers)
                 customers = customers[(page - 1) * per_page : (page) * per_page]
-                total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}})
         elif area_id is None:
             schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
             if selected_scheme_id:
                 status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-                customers = sorted(
-                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})),
-                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                )
+
+                if not search_query:
+                    customers = sorted(
+                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                else:
+                    customers = sorted(
+                        list(db.Customers.find({
+                            "umbrella_id": user.get("umbrella_id"),
+                            "scheme_id": selected_scheme_id,
+                            "$or": [
+                                {"name": {"$regex": search_query, "$options": "i"}},
+                                {"contact": {"$regex": search_query, "$options": "i"}},
+                            ]
+                        })),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                total = len(customers)
                 customers = customers[(page - 1) * per_page : (page) * per_page]
-                total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})
             elif not selected_scheme_id:
                 status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-                customers = sorted(
-                    list(db.Customers.find({"umbrella_id": user.get("umbrella_id")})),
-                    key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                )
+
+                if not search_query:
+                    customers = sorted(
+                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id")})),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                else:
+                    customers = sorted(
+                        list(db.Customers.find({
+                            "umbrella_id": user.get("umbrella_id"),
+                            "$or": [
+                                {"name": {"$regex": search_query, "$options": "i"}},
+                                {"contact": {"$regex": search_query, "$options": "i"}},
+                            ]
+                        })),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                total = len(customers)
                 customers = customers[(page - 1) * per_page : (page) * per_page]
-                total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id")})
 
     villages = sorted(list(db.Villages.find()), key=lambda x: x["village"].lower())
 
@@ -879,6 +948,7 @@ def customers():
 def set_scheme():
     scheme_id = request.form.get('scheme_id')
     session['selected_scheme_id'] = str(scheme_id)
+    session.pop('search_query', None)
     flash("Scheme set.", "success")
     return redirect(request.referrer)
 
@@ -1264,37 +1334,160 @@ def reports():
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
     else:
         user["umbrella"] = None
-
+    
     page = request.args.get('page', None)
     if page:
         page = int(page)
     else:
-        page = session.get("reports_page", 1)
+        page = session.get("customers_page", 1)
         page = int(page)
-    session['reports_page'] = page
+    session['customers_page'] = page
 
     per_page = 50
 
-    if not user.get("area_id"):
-        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
-        if not session.get("selected_scheme_id"):
-            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})), key=lambda x: x["name"].lower())
-            customers = customers[(page - 1) * per_page: page * per_page]
-            total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})
-        elif session.get("selected_scheme_id"):
-            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id")})), key=lambda x: x["name"].lower())
-            customers = customers[(page - 1) * per_page: page * per_page]
-            total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id")})
-    elif user.get("area_id"):
-        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
-        if not session.get("selected_scheme_id"):
-            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"),"customer_reference": {"$exists": True, "$ne": None},"status": "confirmed","type": "ES","area_id": user.get("area_id")})),key=lambda x: x["name"].lower())
-            customers = customers[(page - 1) * per_page: page * per_page]
-            total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "area_id": user.get("area_id")})
-        elif session.get("selected_scheme_id"):
-            customers = sorted(list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id"), "area_id": user.get("area_id")})), key=lambda x: x.get("name", "").lower())
-            customers = customers[(page - 1) * per_page: page * per_page]
-            total = db.Customers.count_documents({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES", "scheme_id": session.get("selected_scheme_id"), "area_id": user.get("area_id")})
+    selected_scheme_id = session.get("selected_scheme_id")
+    area_id = user.get("area_id")
+    scheme_id = user.get("scheme_id")
+
+    search_query = session.get("reports_search_query", "")
+
+    if scheme_id:
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
+        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+        
+        if not search_query:
+            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"}))
+        else:
+            customers = list(db.Customers.find({
+                "umbrella_id": user.get("umbrella_id"),
+                "scheme_id": user.get("scheme_id"),
+                "customer_reference": {"$exists": True, "$ne": None},
+                "status": "confirmed",
+                "type": "ES",
+                "$or": [
+                    {"name": {"$regex": search_query, "$options": "i"}},
+                    {"contact": {"$regex": search_query, "$options": "i"}},
+                ]
+            }))
+        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+        
+        customers = sorted(
+            customers,
+            key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+        )
+        total = len(customers)
+        customers = customers[(page - 1) * per_page : (page) * per_page]
+    else:
+        if area_id:
+            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
+            scheme_ids_in_area = [str(scheme["_id"]) for scheme in schemes]
+            if selected_scheme_id:
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+
+                if not search_query:
+                    customers = sorted(
+                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                else:
+                    customers = sorted(
+                        list(db.Customers.find({
+                            "umbrella_id": user.get("umbrella_id"),
+                            "scheme_id": selected_scheme_id,
+                            "customer_reference": {"$exists": True, "$ne": None},
+                            "status": "confirmed",
+                            "type": "ES",
+                            "$or": [
+                                {"name": {"$regex": search_query, "$options": "i"}},
+                                {"contact": {"$regex": search_query, "$options": "i"}},
+                            ]
+                        })),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                total = len(customers)
+                customers = customers[(page - 1) * per_page : (page) * per_page]
+            elif not selected_scheme_id:
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+
+                if not search_query:
+                    customers = sorted(
+                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}, "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                else:
+                    customers = sorted(
+                        list(db.Customers.find({
+                            "umbrella_id": user.get("umbrella_id"),
+                            "scheme_id": {"$in": scheme_ids_in_area},
+                            "customer_reference": {"$exists": True, "$ne": None},
+                            "status": "confirmed",
+                            "type": "ES",
+                            "$or": [
+                                {"name": {"$regex": search_query, "$options": "i"}},
+                                {"contact": {"$regex": search_query, "$options": "i"}},
+                            ]
+                        })),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                total = len(customers)
+                customers = customers[(page - 1) * per_page : (page) * per_page]
+        elif area_id is None:
+            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
+            if selected_scheme_id:
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+
+                if not search_query:
+                    customers = sorted(
+                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                else:
+                    customers = sorted(
+                        list(db.Customers.find({
+                            "umbrella_id": user.get("umbrella_id"),
+                            "scheme_id": selected_scheme_id,
+                            "customer_reference": {"$exists": True, "$ne": None},
+                            "status": "confirmed",
+                            "type": "ES",
+                            "$or": [
+                                {"name": {"$regex": search_query, "$options": "i"}},
+                                {"contact": {"$regex": search_query, "$options": "i"}},
+                            ]
+                        })),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                total = len(customers)
+                customers = customers[(page - 1) * per_page : (page) * per_page]
+            elif not selected_scheme_id:
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+
+                if not search_query:
+                    customers = sorted(
+                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                else:
+                    customers = sorted(
+                        list(db.Customers.find({
+                            "umbrella_id": user.get("umbrella_id"),
+                            "customer_reference": {"$exists": True, "$ne": None},
+                            "status": "confirmed",
+                            "type": "ES",
+                            "$or": [
+                                {"name": {"$regex": search_query, "$options": "i"}},
+                                {"contact": {"$regex": search_query, "$options": "i"}},
+                            ]
+                        })),
+                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
+                    )
+                total = len(customers)
+                customers = customers[(page - 1) * per_page : (page) * per_page]
+
+    villages = sorted(list(db.Villages.find()), key=lambda x: x["village"].lower())
+
+    for customer in customers:
+        customer["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == customer.get("scheme_id")), None)
+        customer["village"] = next((item["village"] for item in villages if str(item["_id"]) == customer.get("village_id")), None)
     
     total_pages = (total + per_page - 1) // per_page
 
@@ -1871,3 +2064,31 @@ def upload_customers():
 
     flash(f"{cust_no} Customers processed!, {es_no} ES, {ms_no} MS, {es_no + ms_no} uploaded", "success")
     return redirect(url_for("customers"))
+
+
+@app.route("/search_customers", methods=["POST"])
+def search_customers():
+    search_query = request.form.get("search", "").strip()
+    if search_query:
+        session["search_query"] = search_query
+        session["reports_page"] = 1
+        session["customers_page"] = 1
+    else:
+        session.pop("search_query", None)
+        session["reports_page"] = 1
+        session["customers_page"] = 1
+    return redirect(url_for("customers"))
+
+
+@app.route("/search_customers_2", methods=["POST"])
+def search_customers_2():
+    search_query = request.form.get("search", "").strip()
+    if search_query:
+        session["reports_search_query"] = search_query
+        session["reports_page"] = 1
+        session["customers_page"] = 1
+    else:
+        session.pop("reports_search_query", None)
+        session["reports_page"] = 1
+        session["customers_page"] = 1
+    return redirect(url_for("reports"))
