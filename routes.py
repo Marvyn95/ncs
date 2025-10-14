@@ -952,6 +952,15 @@ def set_scheme():
     flash("Scheme set.", "success")
     return redirect(request.referrer)
 
+@app.route('/set_reports_scheme', methods=['POST'])
+@login_required
+def set_reports_scheme():
+    scheme_id = request.form.get('scheme_id')
+    session['reports_selected_scheme_id'] = str(scheme_id)
+    session.pop('search_query', None)
+    flash("Scheme set.", "success")
+    return redirect(request.referrer)
+
 
 @app.route('/add_customer', methods=["POST"])
 @login_required
@@ -1345,7 +1354,7 @@ def reports():
 
     per_page = 50
 
-    selected_scheme_id = session.get("selected_scheme_id")
+    selected_scheme_id = session.get("reports_selected_scheme_id")
     area_id = user.get("area_id")
     scheme_id = user.get("scheme_id")
 
@@ -2071,11 +2080,9 @@ def search_customers():
     search_query = request.form.get("search", "").strip()
     if search_query:
         session["search_query"] = search_query
-        session["reports_page"] = 1
         session["customers_page"] = 1
     else:
         session.pop("search_query", None)
-        session["reports_page"] = 1
         session["customers_page"] = 1
     return redirect(url_for("customers"))
 
@@ -2086,9 +2093,7 @@ def search_customers_2():
     if search_query:
         session["reports_search_query"] = search_query
         session["reports_page"] = 1
-        session["customers_page"] = 1
     else:
         session.pop("reports_search_query", None)
         session["reports_page"] = 1
-        session["customers_page"] = 1
     return redirect(url_for("reports"))
