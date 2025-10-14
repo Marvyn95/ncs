@@ -1537,9 +1537,10 @@ def add_monthly_billing_sheet():
         flash("Unsupported file format, upload a CSV or Excel file!", "danger")
         return redirect(url_for("reports"))
     
-    if len(df.columns) != 31:
-        flash("Monthly billing sheet must have exactly 31 columns!", "danger")
-        return redirect(url_for("reports"))
+    # if len(df.columns) != 31:
+    #     flash("Monthly billing sheet must have exactly 31 columns!", "danger")
+    #     return redirect(url_for("reports"))
+    
     if df.columns[1] != "MeterRef" or df.columns[9] != "Period" or df.columns[19] != "TotalCharges":
         flash("Monthly billing sheet must have 'MeterRef', 'Period', and 'TotalCharges' as the second, tenth, and twentieth columns respectively!", "danger")
         return redirect(url_for("reports"))
