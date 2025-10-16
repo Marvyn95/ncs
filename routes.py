@@ -16,6 +16,11 @@ import secrets
 @login_required
 def home():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    
+    if user is None:
+        flash("User not found!", "danger")
+        return redirect(url_for("logout"))
+    
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
@@ -199,6 +204,11 @@ def change_password():
 @login_required
 def umbrellas():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if user is None:
+        flash("User not found!", "danger")
+        return redirect(url_for("logout"))
+
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
@@ -272,6 +282,11 @@ def delete_umbrella():
 @login_required
 def users():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if user is None:
+        flash("User not found!", "danger")
+        return redirect(url_for("logout"))
+
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
@@ -409,6 +424,11 @@ def delete_user():
 @login_required
 def areas():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if user is None:
+        flash("User not found!", "danger")
+        return redirect(url_for("logout"))
+
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
@@ -481,6 +501,11 @@ def delete_area():
 @login_required
 def schemes():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if user is None:
+        flash("User not found!", "danger")
+        return redirect(url_for("logout"))
+
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
@@ -584,6 +609,11 @@ def delete_scheme():
 @login_required
 def districts():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if user is None:
+        flash("User not found!", "danger")
+        return redirect(url_for("logout"))
+
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
@@ -659,6 +689,11 @@ def delete_district():
 @login_required
 def villages():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if user is None:
+        flash("User not found!", "danger")
+        return redirect(url_for("logout"))
+
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
@@ -780,6 +815,11 @@ def delete_village():
 @login_required
 def customers():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if user is None:
+        flash("User not found!", "danger")
+        return redirect(url_for("logout"))
+
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
@@ -1338,6 +1378,11 @@ def delete_customer():
 @login_required
 def reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if user is None:
+        flash("User not found!", "danger")
+        return redirect(url_for("logout"))
+
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
@@ -1702,6 +1747,11 @@ def customer_history():
 @app.route("/subcounties")
 def subcounties():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if user is None:
+        flash("User not found!", "danger")
+        return redirect(url_for("logout"))
+
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
@@ -1786,6 +1836,11 @@ def delete_subcounty():
 @app.route("/parishes")
 def parishes():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if user is None:
+        flash("User not found!", "danger")
+        return redirect(url_for("logout"))
+
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
@@ -1871,14 +1926,23 @@ def delete_parish():
 @app.route("/download_customers")
 def download_customers():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
+    selected_scheme_id = session.get("selected_scheme_id")
+    date = datetime.datetime.now().strftime("%d.%B.%Y")
+
+    if selected_scheme_id:
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id}))
+        scheme = db.Schemes.find_one({"_id": ObjectId(selected_scheme_id)})
+        attachment_name = f"{scheme.get('scheme')}_customers_{date}.xlsx"
+    else:
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
+        attachment_name = f"all_customers_{date}.xlsx"
     data = []
     villages = list(db.Villages.find())
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
     areas = list(db.Areas.find({"umbrella_id": user.get("umbrella_id")}))
-    districts = list(db.Districts.find())
-    subcounties = list(db.Subcounties.find())
-    parishes = list(db.Parishes.find())
+    # districts = list(db.Districts.find())
+    # subcounties = list(db.Subcounties.find())
+    # parishes = list(db.Parishes.find())
     for c in customers:
         data.append({
             "Name": c.get("name"),
@@ -1889,13 +1953,13 @@ def download_customers():
             "Village": next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), None),
             "Application ID": c.get("application_id"),
             "Status": c.get("status"),
-            "Date of Application": c.get("date_applied").strftime("%d, %B, %Y") if isinstance(c.get("date_applied"), datetime.datetime) else c.get("date_applied"),
+            "Application Date": c.get("date_applied").strftime("%d, %B, %Y") if isinstance(c.get("date_applied"), datetime.datetime) else c.get("date_applied"),
             "Pipe Diameter": c.get("pipe_diameter"),
             "Pipe Length": c.get("pipe_length"),
             "Tap Pipe Size": c.get("tap_pipe_size"),
             "Tap Pipe Type": c.get("tap_pipe_type"),
             "Pipe Type": c.get("pipe_type"),
-            "Date of Survey": c.get("survey_date").strftime("%d, %B, %Y") if isinstance(c.get("survey_date"), datetime.datetime) else c.get("survey_date"),
+            "Survey Date": c.get("survey_date").strftime("%d, %B, %Y") if isinstance(c.get("survey_date"), datetime.datetime) else c.get("survey_date"),
             "Initial Connection Balance": c.get("amount_due"),
             "Connection Fee": c.get("connection_fee"),
             "Connection Balance Payment Period (months)": c.get("payment_period"),
@@ -1916,7 +1980,7 @@ def download_customers():
     return send_file(output,
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                      as_attachment=False,
-                     download_name="customers.xlsx")
+                     download_name=attachment_name)
 
 
 @app.route("/customer_report_download", methods=["POST"])
@@ -1936,6 +2000,8 @@ def customer_report_download():
         download_name=f"{customer.get('name', 'customer')}_report.pdf",
         mimetype="application/pdf"
     )
+
+
 @app.route("/upload_customers", methods=["POST"])
 def upload_customers():
     file = request.files.get("customers_file")
@@ -2076,6 +2142,7 @@ def upload_customers():
     return redirect(url_for("customers"))
 
 
+
 @app.route("/search_customers", methods=["POST"])
 def search_customers():
     search_query = request.form.get("search", "").strip()
@@ -2088,6 +2155,7 @@ def search_customers():
     return redirect(url_for("customers"))
 
 
+
 @app.route("/search_customers_2", methods=["POST"])
 def search_customers_2():
     search_query = request.form.get("search", "").strip()
@@ -2098,3 +2166,52 @@ def search_customers_2():
         session.pop("reports_search_query", None)
         session["reports_page"] = 1
     return redirect(url_for("reports"))
+
+
+
+@app.route("/download_es_reports")
+def download_es_reports():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    reports_selected_scheme_id = session.get("reports_selected_scheme_id")
+    date = datetime.datetime.now().strftime("%d.%B.%Y")
+
+    if reports_selected_scheme_id:
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": reports_selected_scheme_id, "type": "ES"}).sort("name", 1))
+        scheme = db.Schemes.find_one({"_id": ObjectId(reports_selected_scheme_id)})
+        attachment_name = f"{scheme.get('scheme')}_es_report_{date}.xlsx"
+    else:
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "type": "ES"}).sort("name", 1))
+        attachment_name = f"es_report_{date}.xlsx"
+    data = []
+    villages = list(db.Villages.find())
+    schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+    areas = list(db.Areas.find({"umbrella_id": user.get("umbrella_id")}))
+    # districts = list(db.Districts.find())
+    # subcounties = list(db.Subcounties.find())
+    # parishes = list(db.Parishes.find())
+    for c in customers:
+        data.append({
+            "Name": c.get("name"),
+            "Type": c.get("type"),
+            "Contact": c.get("contact"),
+            "Customer Reference": c.get("customer_reference"),
+            "Scheme": next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), None),
+            "Area": next((a.get("area") for a in areas if str(a.get("_id")) == c.get("area_id")), None),
+            "Village": next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), None),
+            "Connection Fee": c.get("connection_fee"),
+            "Initial Amount Paid for Connection": c.get("amount_paid"),
+            "Payment Period": c.get("payment_period"),
+            "Connection Balance": c.get("bpb")[-1].get("balance_on_connection", 0) if c.get("bpb") else c.get("amount_due", 0),
+            "Bill Balance": c.get("bpb")[-1].get("balance_on_bill", 0) if c.get("bpb") else 0,
+            "Overall Balance": c.get("bpb")[-1].get("balance_on_connection", 0) + c.get("bpb")[-1].get("balance_on_bill", 0) if c.get("bpb") else c.get("amount_due", 0),
+        })
+
+    df = pd.DataFrame(data)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='ES SHEET')
+    output.seek(0)
+    return send_file(output,
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                     as_attachment=False,
+                     download_name=attachment_name)
