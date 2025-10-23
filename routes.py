@@ -1132,7 +1132,7 @@ def edit_customer():
     if "date_paid" in request.form:
         update_data["date_paid"] = datetime.datetime.strptime(request.form.get("date_paid"), "%Y-%m-%d")
 
-    if 'connection_fee' in request.form and 'amount_paid' in request.form:
+    if 'connection_fee' in request.form or 'amount_paid' in request.form:
         update_data["amount_due"] = int(request.form.get("connection_fee")) - int(request.form.get("amount_paid"))
 
     if 'connection_date' in request.form:
