@@ -578,7 +578,7 @@ def edit_scheme():
 
     scheme_info = db.Schemes.find_one({"_id": ObjectId(scheme_id)})
 
-    if (new_scheme_name != scheme_info['scheme'] or new_area_id != scheme_info['area_id'] or new_district_id != scheme_info['district_id'] or new_umbrella_id != scheme_info['umbrella_id']):
+    if (new_scheme_name != scheme_info.get("scheme") or new_area_id != scheme_info.get("area_id") or new_district_id != scheme_info.get("district_id") or new_umbrella_id != scheme_info.get("umbrella_id")):
         if db.Schemes.find_one({"scheme": new_scheme_name, "area_id": new_area_id, "district_id": new_district_id, "umbrella_id": new_umbrella_id}) is not None:
             flash("Scheme already exists for this area and district!", "danger")
             return redirect(url_for("schemes"))
