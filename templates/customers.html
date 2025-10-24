@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
               {% endif %}
             </div>
 
-{% if customer.status in ["surveyed", "approved", "disapproved", 'paid', 'connected', 'confirmed', 'not_connected'] %}
+{% if customer.status in ["surveyed", "approved", "disapproved", 'paid', 'verified','not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not_connected'] %}
 <div class="col-6 mb-1">
   <label for="survey_date_{{ customer._id }}" class="form-label">Survey Date</label>
   <input type="date" class="form-control form-control-sm" id="survey_date_{{ customer._id }}" name="survey_date"
@@ -546,14 +546,14 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
 </div>
 {% endif %}
 
-            {% if customer.status in ['approved', 'paid', 'connected', 'confirmed', 'not_connected'] %}
+            {% if customer.status in ['approved', 'paid', 'verified', 'not_verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not_connected'] %}
             {% if customer.status == 'approved' %}
             <div class="col-6 mb-1">
               <label for="approval_{{ customer._id }}" class="form-label">Approval</label>
               <select class="form-select form-select-sm" id="approval_{{ customer._id }}" name="approval" required>
                 <option value="approved" {% if customer.approval == "approved" %}selected{% endif %}>Approved</option>
                 <option value="disapproved" {% if customer.approval == "disapproved" %}selected{% endif %}>Disapproved</option>
-              </select>
+              </select>s
             </div>
             {% endif %}
             <div class="col-6 mb-1">
@@ -593,7 +593,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
             </script>
             {% endif %}
 
-{% if customer.status in ["paid", "connected", 'not_connected', 'confirmed'] %}
+{% if customer.status in ["paid", "verified", "not_verified", "materials issued", "materials pending", "connected", 'not_connected', 'confirmed'] %}
 <div class="col-6 mb-1">
   <label for="amount_paid_{{ customer._id }}" class="form-label">Initial connection deposit</label>
   <input type="number" class="form-control form-control-sm" id="amount_paid_{{ customer._id }}" name="amount_paid" value="{{ customer.amount_paid or '' }}" min="0" step="0.01" required>
@@ -616,19 +616,14 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
 </div>
 {% endif %}
 
-{% if customer.status in ["connected", "confirmed", "not_connected"] %}
+
+{% if customer.status in ["verified", "not_verified", "materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
+
+{% if customer.status == "connected" %}
 <div class="col-6 mb-1">
   <label for="connection_date_{{ customer._id }}" class="form-label">Connection Date</label>
   <input type="date" class="form-control form-control-sm" id="connection_date_{{ customer._id }}" name="connection_date"
     value="{{ customer.connection_date.strftime('%Y-%m-%d') if customer.connection_date else '' }}" required>
-</div>
-<div class="col-6 mb-1">
-  <label for="connection_status_{{ customer._id }}" class="form-label">Connection Status</label>
-  <select class="form-select form-select-sm" id="connection_status_{{ customer._id }}" name="connection_status" required>
-    <option value="confirmed" {% if customer.status == "confirmed" %}selected{% endif %}>Confirmed</option>
-    <option value="connected" {% if customer.status == "connected" %}selected{% endif %}>Connected</option>
-    <option value="not_connected" {% if customer.status == "not_connected" %}selected{% endif %}>Not Connected</option>
-  </select>
 </div>
 <div class="col-6 mb-1">
   <label for="meter_serial_{{ customer._id }}" class="form-label">Meter Serial Number</label>
@@ -640,6 +635,21 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
   <input type="number" class="form-control form-control-sm" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
     value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
 </div>
+{% endif %}
+
+<div class="col-6 mb-1">
+  <label for="connection_status_{{ customer._id }}" class="form-label">Status</label>
+  <select class="form-select form-select-sm" id="connection_status_{{ customer._id }}" name="connection_status" required>
+    <option value="confirmed" {% if customer.status == "confirmed" %}selected{% endif %}>Confirmed</option>
+    <option value="connected" {% if customer.status == "connected" %}selected{% endif %}>Connected</option>
+    <option value="not connected" {% if customer.status == "not connected" %}selected{% endif %}>Not Connected</option>
+    <option value="materials issued" {% if customer.status == "materials issued" %}selected{% endif %}>Materials Issued</option>
+    <option value="materials pending" {% if customer.status == "materials pending" %}selected{% endif %}>Materials Pending</option>
+    <option value="verified" {% if customer.status == "verified" %}selected{% endif %}>Verified</option>
+    <option value="not verified" {% if customer.status == "not verified" %}selected{% endif %}>Not Verified</option>
+  </select>
+</div>
+
 {% endif %}
 
             {% if customer.status == "confirmed" %}
@@ -696,7 +706,11 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
     Approve <span class="text-primary">{{ customer.name }}</span>
   {% elif customer.status == 'approved' %}
     Payment Details for <span class="text-primary">{{ customer.name }}</span>
-  {% elif customer.status == 'paid' or customer.status == 'not_connected' %}
+  {% elif customer.status == 'paid' or customer.status == 'not verified' %}
+    Verify <span class="text-primary">{{ customer.name }}</span>
+  {% elif customer.status == 'verified' %}
+    Update Material Delivery Status for <span class="text-primary">{{ customer.name }}</span>
+  {% elif customer.status == 'materials issued' %}
     Connection Details for <span class="text-primary">{{ customer.name }}</span>
   {% elif customer.status == 'connected' %}
     Confirm <span class="text-primary">{{ customer.name }}</span>
@@ -891,7 +905,36 @@ document.addEventListener('DOMContentLoaded', function() {
 </form>
 
 
-{% elif customer.status == 'paid' and user.role in ['administrator', 'area_manager'] or customer.status == 'not_connected' and user.role in ['administrator', 'area_manager']   %}
+{% elif customer.status == 'paid' and user.role in ['administrator', 'billing_officer', 'deputy_manager'] or customer.status == 'not verified' and user.role in ['administrator', 'area_manager']   %}
+<form method="POST" action="{{ url_for('customer_verification') }}">
+  <input type="hidden" name="customer_id" value="{{ customer._id }}">
+  <div class="mb-2">
+    <label for="customer_reference_{{ customer._id }}" class="form-label">Verification Status</label>
+    <select class="form-select" id="customer_reference_{{ customer._id }}" name="verification_status" required>
+      <option value="verified">Verified</option>
+      <option value="not verified">Not Verified</option>
+    </select>
+  </div>
+  <div class="modal-footer py-1">
+    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+  </div>
+</form>
+
+{% elif customer.status == 'verified' and user.role in ['administrator', 'stores_officer'] or customer.status == 'materials pending' and user.role in ['administrator', 'stores_officer'] %}
+<form method="POST" action="{{ url_for('materials_issuance') }}">
+  <input type="hidden" name="customer_id" value="{{ customer._id }}">
+  <input type="hidden" name="issuance_status" value="{{ true }}">
+  <div class="mb-2">
+    <p class="text-success fw-bold">Materials Issued for {{ customer.name }}?</p>
+  </div>
+  <div class="modal-footer py-1">
+    <button type="submit" class="btn btn-primary btn-sm">Yes</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+  </div>
+</form>
+
+{% elif customer.status == 'materials issued' and user.role in ['administrator', 'area_manager'] or customer.status == 'not connected' and user.role in ['administrator', 'area_manager'] %}
 <form method="POST" action="{{ url_for('customer_connection') }}">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <div class="mb-2">
@@ -933,6 +976,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
   </div>
 </form>
+
 {% else %}
 <div class="d-flex flex-column align-items-center justify-content-center py-4">
   <i class="bi bi-check-circle-fill text-success" style="font-size:2rem;"></i>
