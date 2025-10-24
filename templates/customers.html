@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
               {% endif %}
             </div>
 
-{% if customer.status in ["surveyed", "approved", "disapproved", 'paid', 'verified','not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not_connected'] %}
+{% if customer.status in ["surveyed", "approved", "disapproved", 'paid', 'verified','not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
 <div class="col-6 mb-1">
   <label for="survey_date_{{ customer._id }}" class="form-label">Survey Date</label>
   <input type="date" class="form-control form-control-sm" id="survey_date_{{ customer._id }}" name="survey_date"
@@ -546,7 +546,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
 </div>
 {% endif %}
 
-            {% if customer.status in ['approved', 'paid', 'verified', 'not_verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not_connected'] %}
+            {% if customer.status in ['approved', 'paid', 'verified', 'not_verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
             {% if customer.status == 'approved' %}
             <div class="col-6 mb-1">
               <label for="approval_{{ customer._id }}" class="form-label">Approval</label>
@@ -593,7 +593,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
             </script>
             {% endif %}
 
-{% if customer.status in ["paid", "verified", "not_verified", "materials issued", "materials pending", "connected", 'not_connected', 'confirmed'] %}
+{% if customer.status in ["paid", "verified", "not_verified", "materials issued", "materials pending", "connected", 'not connected', 'confirmed'] %}
 <div class="col-6 mb-1">
   <label for="amount_paid_{{ customer._id }}" class="form-label">Initial connection deposit</label>
   <input type="number" class="form-control form-control-sm" id="amount_paid_{{ customer._id }}" name="amount_paid" value="{{ customer.amount_paid or '' }}" min="0" step="0.01" required>
