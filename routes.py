@@ -844,7 +844,7 @@ def customers():
 
     if scheme_id:
         schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
-        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "confirmed": 10}
+        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
         
         if not search_query:
             customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
@@ -857,7 +857,7 @@ def customers():
                     {"contact": {"$regex": search_query, "$options": "i"}},
                 ]
             }))
-        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "confirmed": 10}
+        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
         
         customers = sorted(
             customers,
@@ -870,7 +870,7 @@ def customers():
             schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
             scheme_ids_in_area = [str(scheme["_id"]) for scheme in schemes]
             if selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "confirmed": 10}
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
 
                 if not search_query:
                     customers = sorted(
@@ -892,7 +892,7 @@ def customers():
                 total = len(customers)
                 customers = customers[(page - 1) * per_page : (page) * per_page]
             elif not selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "confirmed": 10}
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
 
                 if not search_query:
                     customers = sorted(
@@ -916,7 +916,7 @@ def customers():
         elif area_id is None:
             schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
             if selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "confirmed": 10}
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
 
                 if not search_query:
                     customers = sorted(
@@ -938,7 +938,7 @@ def customers():
                 total = len(customers)
                 customers = customers[(page - 1) * per_page : (page) * per_page]
             elif not selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "confirmed": 10}
+                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
 
                 if not search_query:
                     customers = sorted(
@@ -1277,7 +1277,7 @@ def customer_payment():
         {"_id": ObjectId(customer_id)},
         {"$set": update_data}
     )
-    
+
     flash("Payment recorded successfully!", "success")
     return redirect(url_for("customers"))
 
