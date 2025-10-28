@@ -185,7 +185,21 @@ def register():
 @login_required
 def profile():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+
+    if user.get("umbrella_id"):
+        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+    else:
+        user["umbrella"] = None
+
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
+    
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
+
     umbrellas = db.Umbrellas.find()
     return render_template("profile.html",
                            user=user,
@@ -246,6 +260,14 @@ def umbrellas():
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
     else:
         user["umbrella"] = None
+
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
+    
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
 
     umbrellas = list(db.Umbrellas.find())
     return render_template("umbrellas.html",
@@ -324,6 +346,14 @@ def users():
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
     else:
         user["umbrella"] = None
+
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
+    
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
 
     umbrellas = list(db.Umbrellas.find())
     areas = list(db.Areas.find())
@@ -467,6 +497,14 @@ def areas():
     else:
         user["umbrella"] = None
 
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
+    
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
+
     areas = sorted((list(db.Areas.find())), key=lambda x: x["area"].lower())
     umbrellas = sorted((list(db.Umbrellas.find())), key=lambda x: x["umbrella"].lower())
 
@@ -543,6 +581,14 @@ def schemes():
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
     else:
         user["umbrella"] = None
+
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
+    
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
 
     if session.get("selected_umbrella_id"):
         schemes = list(db.Schemes.find({"umbrella_id": session.get("selected_umbrella_id")}))
@@ -652,6 +698,14 @@ def districts():
     else:
         user["umbrella"] = None
 
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
+    
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
+
     districts = sorted(list(db.Districts.find()), key=lambda x: x["district"].lower())
     page = request.args.get('page', None)
     if page:
@@ -731,6 +785,14 @@ def villages():
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
     else:
         user["umbrella"] = None
+
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
+    
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
 
     page = request.args.get('page', None)
     if page:
@@ -857,6 +919,14 @@ def customers():
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
     else:
         user["umbrella"] = None
+
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
+    
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
     
     page = request.args.get('page', None)
     if page:
@@ -1461,6 +1531,14 @@ def reports():
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
     else:
         user["umbrella"] = None
+
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
+    
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
     
     page = request.args.get('page', None)
     if page:
@@ -1830,6 +1908,15 @@ def subcounties():
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
     else:
         user["umbrella"] = None
+
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
+    
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
+
     districts = list(db.Districts.find())
     subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"])
     page = int(request.args.get('page', 1))
@@ -1919,6 +2006,15 @@ def parishes():
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
     else:
         user["umbrella"] = None
+
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
+    
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
+        
     subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"].lower())
     parishes = sorted(list(db.Parishes.find()), key=lambda x: x["parish"].lower())
     districts = sorted(list(db.Districts.find()), key=lambda x: x["district"].lower())
