@@ -244,146 +244,44 @@ document.addEventListener('DOMContentLoaded', filterVillages);
 
 <!-- View Modal -->
 <div class="modal fade" id="viewModal-{{ customer._id }}" tabindex="-1" aria-labelledby="viewModalLabel-{{ customer._id }}" aria-hidden="true">
-  <div class="modal-dialog modal-md modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content" style="font-size:0.85rem;">
       <div class="modal-header py-1">
-        <h5 class="modal-title" id="viewModalLabel-{{ customer._id }}">
-          Details for: <span class="text-primary">{{ customer.name or 'N/A' }}</span>
-        </h5>
+        <h6 class="modal-title text-primary" id="viewModalLabel-{{ customer._id }}">
+          {{ customer.name or 'N/A' }}
+        </h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body py-1">
-        <div class="container-fluid">
-          <div class="row">
-            <div class="col-12 col-md-6">
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item py-1"><strong>Name:</strong> <span class="text-primary">{{ customer.name or 'N/A' }}</span></li>
-                <li class="list-group-item py-1"><strong>Type:</strong> <span class="text-primary">{{ customer.type or 'N/A' }}</span></li>
-                <li class="list-group-item py-1"><strong>Contact:</strong> <span class="text-primary">{{ customer.contact }}</span></li>
-                <li class="list-group-item py-1"><strong>Scheme:</strong> <span class="text-primary">{{ customer.scheme or 'N/A' }}</span></li>
-                <li class="list-group-item py-1"><strong>Village:</strong> <span class="text-primary">{{ customer.village or 'N/A' }}</span></li>
-                <li class="list-group-item py-1"><strong>Status:</strong> <span class="text-primary">{{ customer.status or 'N/A' }}</span></li>
-                <li class="list-group-item py-1"><strong>Application ID:</strong> <span class="text-primary">{{ customer.application_id or 'N/A' }}</span></li>
-                <li class="list-group-item py-1"><strong>Pipe Type:</strong> <span class="text-primary">{{ customer.pipe_type or 'N/A' }}</span></li>
-                <li class="list-group-item py-1"><strong>Pipe Diameter:</strong> <span class="text-primary">{{ customer.pipe_diameter or 'N/A' }} mm</span></li>
-                <li class="list-group-item py-1"><strong>Pipe Length:</strong> <span class="text-primary">{{ customer.pipe_length or 'N/A' }} M</span></li>
-                <li class="list-group-item py-1"><strong>Date Applied:</strong> <span class="text-primary">{{ customer.date_applied.strftime('%d %B %Y') if customer.date_applied else 'N/A' }}</span></li>
-                <li class="list-group-item py-1"><strong>Date Surveyed:</strong> <span class="text-primary">{{ customer.survey_date.strftime('%d %B %Y') if customer.survey_date else 'N/A' }}</span></li>
-                <li class="list-group-item py-1"><strong>Transaction ID:</strong> <span class="text-primary">{{ customer.transaction_id or 'N/A' }}</span></li>
-                <li class="list-group-item py-1"><strong>Tapping Point Size:</strong> <span class="text-primary">{{ customer.tap_pipe_size or 'N/A' }}</span></li>
-                <li class="list-group-item py-1"><strong>Tapping Point Type:</strong> <span class="text-primary">{{ customer.tap_pipe_type or 'N/A' }}</span></li>
-              </ul>
-            </div>
-            <div class="col-12 col-md-6">
-              <ul class="list-group list-group-flush">
-                <li class="list-group-item py-1">
-                  <strong>Connection Fee:</strong>
-                  <span class="text-primary">
-                    {% if customer.connection_fee %}
-                      {{ "{:,}".format(customer.connection_fee|int) }}
-                    {% else %}
-                      N/A
-                    {% endif %}
-                  </span>
-                </li>
-                <li class="list-group-item py-1">
-                  <strong>Initial Connection Clearance:</strong>
-                  <span class="text-primary">
-                    {% if customer.amount_paid %}
-                      {{ "{:,}".format(customer.amount_paid|int) }}
-                    {% else %}
-                      N/A
-                    {% endif %}
-                  </span>
-                </li>
-                <li class="list-group-item py-1">
-                  <strong>Connection Balance:</strong>
-                  <span class="text-primary">
-                    {% if customer.amount_due %}
-                      {{ "{:,}".format(customer.amount_due|int) }}
-                    {% else %}
-                      N/A
-                    {% endif %}
-                  </span>
-                </li>
-                <li class="list-group-item py-1">
-                  <strong>Date Paid:</strong>
-                  <span class="text-primary">
-                    {% if customer.date_paid %}
-                      {{ customer.date_paid.strftime('%d %B %Y') }}
-                    {% else %}
-                      N/A
-                    {% endif %}
-                  </span>
-                </li>
-                <li class="list-group-item py-1">
-                  <strong>Meter Serial Number:</strong>
-                  <span class="text-primary">
-                    {{ customer.meter_serial or 'N/A' }}
-                  </span>
-                </li>
-                <li class="list-group-item py-1">
-                  <strong>Initial Meter Reading:</strong>
-                  <span class="text-primary">
-                    {% if customer.first_meter_reading is not none and customer.first_meter_reading != '' %}
-                      {{ customer.first_meter_reading or 'N/A' }}
-                    {% else %}
-                      N/A
-                    {% endif %}
-                  </span>
-                </li>
-                <li class="list-group-item py-1">
-                  <strong>ID Document:</strong>
-                  {% if customer.id_document %}
-                    <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">View Document</a>
-                  {% else %}
-                    <span class="text-primary">N/A</span>
-                  {% endif %}
-                </li>
-                <li class="list-group-item py-1">
-                  <strong>Recommendation Letter:</strong>
-                  {% if customer.recommendation_letter %}
-                    <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">View Document</a>
-                  {% else %}
-                    <span class="text-primary">N/A</span>
-                  {% endif %}
-                </li>
-                <li class="list-group-item py-1">
-                  <strong>Wealth Assessment Form:</strong>
-                  {% if customer.wealth_assessment_form %}
-                    <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">View Document</a>
-                  {% else %}
-                    <span class="text-primary">N/A</span>
-                  {% endif %}
-                </li>
-                <li class="list-group-item py-1">
-                  <strong>Proof of Payment:</strong>
-                  {% if customer.proof_of_payment %}
-                    <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.proof_of_payment) }}" target="_blank">View Document</a>
-                  {% else %}
-                    <span class="text-primary">N/A</span>
-                  {% endif %}
-                </li>
-                <li class="list-group-item py-1">
-                  <strong>Date Connected:</strong>
-                  {% if customer.connection_date %}
-                    <span class="text-primary">{{ customer.connection_date.strftime('%d %B %Y') }}</span>
-                  {% else %}
-                    <span class="text-primary">N/A</span>
-                  {% endif %}
-                </li>
-                <li class="list-group-item py-1">
-                  <strong>Customer Reference:</strong>
-                  {% if customer.customer_reference %}
-                    <span class="text-primary">{{ customer.customer_reference }}</span>
-                  {% else %}
-                    <span class="text-primary">N/A</span>
-                  {% endif %}
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item py-1"><strong>Type:</strong> {{ customer.type or '-' }}</li>
+          <li class="list-group-item py-1"><strong>Contact:</strong> {{ customer.contact or '-' }}</li>
+          <li class="list-group-item py-1"><strong>Scheme:</strong> {{ customer.scheme or '-' }}</li>
+          <li class="list-group-item py-1"><strong>Village:</strong> {{ customer.village or '-' }}</li>
+          <li class="list-group-item py-1"><strong>Status:</strong> {{ customer.status or '-' }}</li>
+          <li class="list-group-item py-1"><strong>Application ID:</strong> {{ customer.application_id or '-' }}</li>
+          <li class="list-group-item py-1"><strong>Pipe:</strong> {{ customer.pipe_type or '-' }}, DN {{ customer.pipe_diameter or '-' }}mm, Length: {{ customer.pipe_length or '-' }}m</li>
+          <li class="list-group-item py-1"><strong>Date Applied:</strong> {{ customer.date_applied.strftime('%d %b %Y') if customer.date_applied else '-' }}</li>
+          <li class="list-group-item py-1"><strong>Date Surveyed:</strong> {{ customer.survey_date.strftime('%d %b %Y') if customer.survey_date else '-' }}</li>
+          <li class="list-group-item py-1"><strong>Connection Fee:</strong> {{ "{:,}".format(customer.connection_fee|int) if customer.connection_fee else '-' }}</li>
+          <li class="list-group-item py-1"><strong>Amount Paid for connection:</strong> {{ "{:,}".format(customer.amount_paid|int) if customer.amount_paid else '-' }}</li>
+          <li class="list-group-item py-1"><strong>Connection Fee Balance:</strong> {{ "{:,}".format(customer.amount_due|int) if customer.amount_due else '-' }}</li>
+          <li class="list-group-item py-1"><strong>Date Paid:</strong> {{ customer.date_paid.strftime('%d %b %Y') if customer.date_paid else '-' }}</li>
+          <li class="list-group-item py-1"><strong>Meter Serial:</strong> {{ customer.meter_serial or '-' }}</li>
+          <li class="list-group-item py-1"><strong>First Meter Reading:</strong> {{ customer.first_meter_reading or '-' }}</li>
+          <li class="list-group-item py-1"><strong>Tapping:</strong> {{ customer.tap_pipe_size or '-' }}mm, {{ customer.tap_pipe_type or '-' }}</li>
+          <li class="list-group-item py-1"><strong>Docs:</strong>
+            {% if customer.id_document %}<a href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">ID document</a>{% endif %}
+            {% if customer.recommendation_letter %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">Recommendation Letter</a>{% endif %}
+            {% if customer.wealth_assessment_form %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">Wealth Assessment Form</a>{% endif %}
+            {% if customer.proof_of_payment %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.proof_of_payment) }}" target="_blank">Proof of Payment</a>{% endif %}
+            {% if not (customer.id_document or customer.recommendation_letter or customer.wealth_assessment_form or customer.proof_of_payment) %}-{% endif %}
+          </li>
+          <li class="list-group-item py-1"><strong>Date of Verification:</strong> {{ customer.verification_date.strftime('%d %b %Y') if customer.verification_date else '-' }}</li>
+          <li class="list-group-item py-1"><strong>Date Materials were Issued:</strong> {{ customer.issuance_date.strftime('%d %b %Y') if customer.issuance_date else '-' }}</li>
+          <li class="list-group-item py-1"><strong>Date of Connection:</strong> {{ customer.connection_date.strftime('%d %b %Y') if customer.connection_date else '-' }}</li>
+          <li class="list-group-item py-1"><strong>Customer Reference:</strong> {{ customer.customer_reference or '-' }}</li>
+        </ul>
       </div>
       <div class="modal-footer py-1">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
@@ -616,10 +514,23 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
 </div>
 {% endif %}
 
-
 {% if customer.status in ["verified", "not_verified", "materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
+<div class="col-6 mb-1">
+  <label for="verification_date_{{ customer._id }}" class="form-label">Date of Verification</label>
+  <input type="date" class="form-control form-control-sm" id="verification_date_{{ customer._id }}" name="verification_date"
+    value="{{ customer.verification_date.strftime('%Y-%m-%d') if customer.verification_date else '' }}">
+</div>
+{% endif %}
 
-{% if customer.status == "connected" %}
+{% if customer.status in ["materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
+<div class="col-6 mb-1">
+  <label for="issuance_date_{{ customer._id }}" class="form-label">Date of Materials Issuance</label>
+  <input type="date" class="form-control form-control-sm" id="issuance_date_{{ customer._id }}" name="issuance_date"
+    value="{{ customer.issuance_date.strftime('%Y-%m-%d') if customer.issuance_date else '' }}">
+</div>
+{% endif %}
+
+{% if customer.status in ["connected", "confirmed", "not connected"] %}
 <div class="col-6 mb-1">
   <label for="connection_date_{{ customer._id }}" class="form-label">Connection Date</label>
   <input type="date" class="form-control form-control-sm" id="connection_date_{{ customer._id }}" name="connection_date"
@@ -637,6 +548,8 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
 </div>
 {% endif %}
 
+
+{% if customer.status in ["verified", "not_verified", "materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
 <div class="col-6 mb-1">
   <label for="connection_status_{{ customer._id }}" class="form-label">Status</label>
   <select class="form-select form-select-sm" id="connection_status_{{ customer._id }}" name="connection_status" required>
@@ -649,15 +562,15 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
     <option value="not verified" {% if customer.status == "not verified" %}selected{% endif %}>Not Verified</option>
   </select>
 </div>
-
 {% endif %}
 
-            {% if customer.status == "confirmed" %}
-            <div class="col-6 mb-1">
-              <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
-              <input type="number" class="form-control form-control-sm" id="customer_reference_{{ customer._id }}" name="customer_reference" value="{{ customer.customer_reference or '' }}" required>
-            </div>
-            {% endif %}
+{% if customer.status == "confirmed" %}
+<div class="col-6 mb-1">
+  <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
+  <input type="number" class="form-control form-control-sm" id="customer_reference_{{ customer._id }}" name="customer_reference" value="{{ customer.customer_reference or '' }}" required>
+</div>
+{% endif %}
+
           </div>
         </div>
         <div class="modal-footer py-1">
@@ -909,6 +822,12 @@ document.addEventListener('DOMContentLoaded', function() {
 <form method="POST" action="{{ url_for('customer_verification') }}">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <div class="mb-2">
+  <label for="verification_date_{{ customer._id }}" class="form-label">Verification Date</label>
+  <input type="date" class="form-control" id="verification_date_{{ customer._id }}" name="verification_date"
+    value="{{ customer.verification_date.strftime('%Y-%m-%d') if customer.verification_date else now().strftime('%Y-%m-%d') }}"
+    readonly>
+  </div>
+  <div class="mb-2">
     <label for="customer_reference_{{ customer._id }}" class="form-label">Verification Status</label>
     <select class="form-select" id="customer_reference_{{ customer._id }}" name="verification_status" required>
       <option value="verified">Verified</option>
@@ -926,10 +845,14 @@ document.addEventListener('DOMContentLoaded', function() {
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <input type="hidden" name="issuance_status" value="{{ true }}">
   <div class="mb-2">
-    <p class="text-success fw-bold">Materials Issued for {{ customer.name }}?</p>
+    <label for="issuance_date_{{ customer._id }}" class="form-label">Materials Issuance Date</label>
+    <input type="date" class="form-control" id="issuance_date_{{ customer._id }}" name="issuance_date" value="{{ customer.issuance_date.strftime('%Y-%m-%d') if customer.issuance_date else now().strftime('%Y-%m-%d') }}" required>
   </div>
+  <!-- <div class="mb-2">
+    <p class="text-success fw-bold">Update Materials Delivery Status for {{ customer.name }}</p>
+  </div> -->
   <div class="modal-footer py-1">
-    <button type="submit" class="btn btn-primary btn-sm">Yes</button>
+    <button type="submit" class="btn btn-primary btn-sm">Materials Issued</button>
     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
   </div>
 </form>

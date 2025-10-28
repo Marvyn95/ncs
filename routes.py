@@ -1137,6 +1137,12 @@ def edit_customer():
 
     if 'connection_date' in request.form:
         update_data["connection_date"] = datetime.datetime.strptime(request.form.get("connection_date"), "%Y-%m-%d")
+
+    if 'issuance_date' in request.form:
+        update_data["issuance_date"] = datetime.datetime.strptime(request.form.get("issuance_date"), "%Y-%m-%d")
+
+    if 'verification_date' in request.form:
+        update_data["verification_date"] = datetime.datetime.strptime(request.form.get("verification_date"), "%Y-%m-%d")
     
     if 'connection_status' in request.form:
         if request.form.get("connection_status") == "connected" and customer.get("customer_reference") is not None:
@@ -1286,11 +1292,12 @@ def customer_payment():
 @login_required
 def customer_verification():
     customer_id = request.form.get("customer_id")
+    verification_date = request.form.get("verification_date")
     verification_status = request.form.get("verification_status")
 
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
-        {"$set": {"status": verification_status}}
+        {"$set": {"status": verification_status, "verification_date": datetime.datetime.strptime(verification_date, "%Y-%m-%d")}}
     )
     flash("Customer status updated!", "success")
     return redirect(url_for("customers"))
@@ -1300,10 +1307,11 @@ def customer_verification():
 def materials_issuance():
     customer_id = request.form.get("customer_id")
     issuance_status = request.form.get("issuance_status")
+    issuance_date = request.form.get("issuance_date")
 
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
-        {"$set": {"status": "materials issued"}}
+        {"$set": {"status": "materials issued", "issuance_date": datetime.datetime.strptime(issuance_date, "%Y-%m-%d")}}
     )
 
     flash("Customer status updated successfully!", "success")
