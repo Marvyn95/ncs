@@ -271,13 +271,13 @@ document.addEventListener('DOMContentLoaded', filterVillages);
           <li class="list-group-item py-1"><strong>First Meter Reading:</strong> {{ customer.first_meter_reading or '-' }}</li>
           <li class="list-group-item py-1"><strong>Tapping:</strong> {{ customer.tap_pipe_size or '-' }}mm, {{ customer.tap_pipe_type or '-' }}</li>
           <li class="list-group-item py-1"><strong>Docs:</strong>
-          <li class="list-group-item py-1"><strong>Transaction ID:</strong> {{ customer.transaction_id or '-' }}</li>
             {% if customer.id_document %}<a href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">ID document</a>{% endif %}
             {% if customer.recommendation_letter %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">Recommendation Letter</a>{% endif %}
             {% if customer.wealth_assessment_form %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">Wealth Assessment Form</a>{% endif %}
             {% if customer.proof_of_payment %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.proof_of_payment) }}" target="_blank">Proof of Payment</a>{% endif %}
             {% if not (customer.id_document or customer.recommendation_letter or customer.wealth_assessment_form or customer.proof_of_payment) %}-{% endif %}
           </li>
+          <li class="list-group-item py-1"><strong>Transaction ID:</strong> {{ customer.transaction_id or '-' }}</li>
           <li class="list-group-item py-1"><strong>Date of Verification:</strong> {{ customer.verification_date.strftime('%d %b %Y') if customer.verification_date else '-' }}</li>
           <li class="list-group-item py-1"><strong>Date Materials were Issued:</strong> {{ customer.issuance_date.strftime('%d %b %Y') if customer.issuance_date else '-' }}</li>
           <li class="list-group-item py-1"><strong>Date of Connection:</strong> {{ customer.connection_date.strftime('%d %b %Y') if customer.connection_date else '-' }}</li>
