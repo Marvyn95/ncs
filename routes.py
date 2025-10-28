@@ -71,7 +71,10 @@ def home():
     application_count = len([a for a in customers if a.get("status") == "applied"])
     survey_count = len([s for s in customers if s.get("status") == "surveyed"])
     approval_count = len([a for a in customers if a.get("status") == "approved"])
-    pending_connection_count = len([c for c in customers if c.get("status") == "paid"])
+    paid_count = len([p for p in customers if p.get("status") == "paid"])
+    verified_count = len([v for v in customers if v.get("status") == "verified"])
+    pending_connection_count = len([c for c in customers if c.get("status") == "materials issued"])
+    connected_count = len([c for c in customers if c.get("status") == "connected"])
     es_customers = len([e for e in customers if e.get("type") == "ES"])  
 
     date = datetime.datetime.now()
@@ -101,7 +104,10 @@ def home():
                            application_count=application_count,
                            survey_count=survey_count,
                            approval_count=approval_count,
-                           pending_connection_count=pending_connection_count,
+                           paid_count=paid_count,
+                           verified_count=verified_count,
+                           pending_connection_count= pending_connection_count,
+                           connected_count=connected_count,
                            es_customers=es_customers,
                            date = date.strftime("%d %B %Y"),
                            current_day=current_day,

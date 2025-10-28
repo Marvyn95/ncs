@@ -7,6 +7,27 @@
 
     <div class="col-lg-8">
       <div class="row flex-row flex-wrap g-3">
+
+        <div class="col-6 col-md-3 col-lg-4">
+          <!-- Date and Time Card -->
+          <div class="card bg-light rounded-3 shadow-sm border-0 text-center flex-shrink-0">
+            <div class="h-100 d-flex flex-column justify-content-center align-items-center p-2">
+
+              <!-- Day -->
+              <div class="mb-1">
+                <span class="fw-bold fs-5 text-primary">{{ current_day }}</span>
+              </div>
+
+              <!-- Date -->
+              <div class="d-flex align-items-center mb-1">
+                <i class="bi bi-calendar-week-fill fs-6 text-success me-2"></i>
+                <span class="fw-semibold fs-6 text-dark">{{ current_month }} {{ current_date }}, {{ current_year }}</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
         <div class="col-6 col-md-3 col-lg-4">
             <a href="{{ url_for('customers') }}" class="text-decoration-none">
             <div class="card bg-white rounded-2 shadow-sm p-2 h-100 border-0">
@@ -38,20 +59,6 @@
             </a>
         </div>
         
-        <div class="col-12 col-md-4 col-lg-4">
-            <div class="card bg-white rounded-2 shadow-sm p-2 h-100 border-0">
-            <div class="row align-items-center">
-              <div class="col-2 text-center">
-              <span class="fs-3 text-warning"><i class="bi bi-clipboard-data"></i></span>
-              </div>
-              <div class="col-10">
-              <div class="small">Pending Surveys: <span class="fw-bold fs-6 text-primary">{{ application_count }}</span></div>
-              <div class="small">Approved Applicants: <span class="fw-bold fs-6 text-primary">{{ approval_count }}</span></div>
-              <div class="small">Pending Connections: <span class="fw-bold fs-6 text-primary">{{ pending_connection_count }}</span></div>
-              </div>
-            </div>
-            </div>
-        </div>
       </div>
 
       <div class="row flex-row flex-wrap g-3 mt-0">
@@ -85,30 +92,24 @@
     </div>
 
     <div class="col-lg-4">
-      <div class="d-flex flex-column h-100 gap-2">
-<!-- Date and Time Card -->
-<div class="card bg-light rounded-3 shadow-sm border-0 text-center flex-shrink-0" style="min-height: 180px;">
-  <div class="h-100 d-flex flex-column justify-content-center align-items-center p-2">
+      <div class="d-flex flex-column gap-2">
 
-    <!-- Day -->
-    <div class="mb-1">
-      <span class="fw-bold fs-5 text-primary">{{ current_day }}</span>
-    </div>
-
-    <!-- Date -->
-    <div class="d-flex align-items-center mb-1">
-      <i class="bi bi-calendar-week-fill fs-6 text-success me-2"></i>
-      <span class="fw-semibold fs-6 text-dark">{{ current_month }} {{ current_date }}, {{ current_year }}</span>
-    </div>
-
-    <!-- Badge -->
-    <div class="alert alert-primary py-1 px-3 rounded-pill d-flex align-items-center justify-content-center">
-      <span class="fw-bold fs-6">Today</span>
-    </div>
-
-  </div>
-</div>
-
+          <div class="card bg-white rounded-2 shadow-sm p-2 h-100 border-0">
+            <div class="row align-items-center">
+              <div class="col-2 text-center">
+              <span class="fs-3 text-warning"><i class="bi bi-clipboard-data"></i></span>
+              </div>  
+              <div class="col-10">
+              <div class="small">Applications: <span class="fw-bold fs-6 text-primary">{{ application_count or '-' }}</span></div>
+              <div class="small">Surveyed applicants: <span class="fw-bold fs-6 text-primary">{{ survey_count or '-' }}</span></div>
+              <div class="small">Approved Applicants: <span class="fw-bold fs-6 text-primary">{{ approval_count or '-' }}</span></div>
+              <div class="small">Paid Applicants: <span class="fw-bold fs-6 text-primary">{{ paid_count or '-' }}</span></div>
+              <div class="small">Verified Applicants: <span class="fw-bold fs-6 text-primary">{{ verified_count or '-' }}</span></div>
+              <div class="small">Pending Connection: <span class="fw-bold fs-6 text-primary">{{ pending_connection_count or '-' }}</span></div>
+              <div class="small">Pending Confirmation: <span class="fw-bold fs-6 text-primary">{{ connected_count or '-' }}</span></div>
+              </div>
+            </div>
+          </div>
 
         <!-- Image Card -->
         <div class="card bg-white rounded-3 shadow-sm border-0 d-flex flex-column align-items-center justify-content-center flex-grow-2 p-3">
