@@ -1118,7 +1118,7 @@ def add_customer():
     recommendation_letter = request.files.get("recommendation_letter")
     date_applied = request.form.get("date_applied")
 
-    customers = list(db.Customers.find())
+    customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
     if next((x for x in customers if x.get("application_id") == request.form.get("application_id")), None):
         flash("Application ID already exists!", "danger")
         return redirect(url_for("customers"))
