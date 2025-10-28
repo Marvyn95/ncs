@@ -21,20 +21,51 @@ def home():
         flash("User not found!", "danger")
         return redirect(url_for("logout"))
     
+    if user.get("area_id") == None and user.get("scheme_id") == None:
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
+        customers_count = len(customers)
+        
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+        scheme_count = len(schemes)
+        
+        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
+        villages_count = len(villages)
+
+    elif user.get("area_id") != None and user.get("scheme_id") == None:
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
+        customers_count = len(customers)
+        
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
+        scheme_count = len(schemes)
+        scheme_ids = [str(scheme["_id"]) for scheme in schemes]
+        
+        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}))
+        villages_count = len(villages)
+
+    if user.get("scheme_id") != None:
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
+        customers_count = len(customers)
+        
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
+        scheme_count = len(schemes)
+
+        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
+        villages_count = len(villages)
+
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
         user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
     else:
         user["umbrella"] = None
+
+    if user.get("area_id"):
+        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area_doc.get("area") if area_doc else None
     
-    customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
-    customers_count = len(customers)
-
-    schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
-    scheme_count = len(schemes)
-
-    villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
-    villages_count = len(villages)
+    if user.get("scheme_id"):
+        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
+    
 
     application_count = len([a for a in customers if a.get("status") == "applied"])
     survey_count = len([s for s in customers if s.get("status") == "surveyed"])

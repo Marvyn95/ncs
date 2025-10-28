@@ -236,10 +236,22 @@
               <span class="text-primary fw-semibold"><i class="bi bi-building me-1"></i>Umbrella:</span>
               <span class="fw-bold ms-1 text-truncate" style="font-size: 0.93rem; max-width: 60%;">{{ user.umbrella }}</span>
               </div>
-              <div class="mt-1 text-truncate" style="max-width: 100%;">
-              <span class="text-primary fw-semibold"><i class="bi bi-calendar-fill me-1"></i>Date:</span>
-              <span class="fw-bold ms-1 text-truncate" style="font-size: 0.93rem; max-width: 60%;">{{ date }}</span>
-              </div>
+                <div class="mt-1 text-truncate" style="max-width: 100%;">
+                <span class="text-primary fw-semibold">
+                  {% if user.scheme %}
+                  <i class="bi bi-diagram-3-fill me-1"></i>Scheme:
+                  {% elif user.area %}
+                  <i class="bi bi-map-fill me-1"></i>Area:
+                  {% endif %}
+                </span>
+                <span class="fw-bold ms-1 text-truncate" style="font-size: 0.93rem; max-width: 60%;">
+                  {% if user.scheme %}
+                  {{ user.scheme }}
+                  {% elif user.area %}
+                  {{ user.area }}
+                  {% endif %}
+                </span>
+                </div>
               {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
                 <div style="position: fixed; top: 20px; right: 20px; z-index: 2000; width: 320px; max-width: 90vw;">
