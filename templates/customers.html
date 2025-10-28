@@ -271,6 +271,7 @@ document.addEventListener('DOMContentLoaded', filterVillages);
           <li class="list-group-item py-1"><strong>First Meter Reading:</strong> {{ customer.first_meter_reading or '-' }}</li>
           <li class="list-group-item py-1"><strong>Tapping:</strong> {{ customer.tap_pipe_size or '-' }}mm, {{ customer.tap_pipe_type or '-' }}</li>
           <li class="list-group-item py-1"><strong>Docs:</strong>
+          <li class="list-group-item py-1"><strong>Transaction ID:</strong> {{ customer.transaction_id or '-' }}</li>
             {% if customer.id_document %}<a href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">ID document</a>{% endif %}
             {% if customer.recommendation_letter %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">Recommendation Letter</a>{% endif %}
             {% if customer.wealth_assessment_form %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">Wealth Assessment Form</a>{% endif %}
