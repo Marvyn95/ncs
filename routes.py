@@ -43,7 +43,7 @@ def home():
         villages_count = len(villages)
 
     if user.get("scheme_id") != None:
-        schemes = list(db.Schemes.find({"_id": ObjectId(user.get("scheme_id"))}))
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(user.get("scheme_id"))}))
         scheme_count = len(schemes)
         scheme_ids = [str(scheme["_id"]) for scheme in schemes]
 
