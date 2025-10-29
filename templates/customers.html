@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', filterVillages);
           <li class="list-group-item py-1"><strong>Date Paid:</strong> {{ customer.date_paid.strftime('%d %b %Y') if customer.date_paid else '-' }}</li>
           <li class="list-group-item py-1"><strong>Meter Serial:</strong> {{ customer.meter_serial or '-' }}</li>
           <li class="list-group-item py-1"><strong>First Meter Reading:</strong> {{ customer.first_meter_reading or '-' }}</li>
-          <li class="list-group-item py-1"><strong>Tapping:</strong> {{ customer.tap_pipe_size or '-' }}mm, {{ customer.tap_pipe_type or '-' }}</li>
+          <li class="list-group-item py-1"><strong>Tapping:</strong> DN {{ customer.tap_pipe_size or '-' }}mm, {{ customer.tap_pipe_type or '-' }}</li>
           <li class="list-group-item py-1"><strong>Docs:</strong>
             {% if customer.id_document %}<a href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">ID document</a>{% endif %}
             {% if customer.recommendation_letter %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">Recommendation Letter</a>{% endif %}
