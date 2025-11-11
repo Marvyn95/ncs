@@ -1247,7 +1247,10 @@ def edit_customer():
         update_data["connection_date"] = datetime.datetime.strptime(request.form.get("connection_date"), "%Y-%m-%d")
 
     if 'issuance_date' in request.form:
-        update_data["issuance_date"] = datetime.datetime.strptime(request.form.get("issuance_date"), "%Y-%m-%d")
+        if request.form.get("issuance_date"):
+            update_data["issuance_date"] = datetime.datetime.strptime(request.form.get("issuance_date"), "%Y-%m-%d")
+        else:
+            update_data["issuance_date"] = None
 
     if 'verification_date' in request.form:
         update_data["verification_date"] = datetime.datetime.strptime(request.form.get("verification_date"), "%Y-%m-%d")
