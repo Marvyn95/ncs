@@ -1162,7 +1162,6 @@ def edit_customer():
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
     customers = list(db.Customers.find())
 
-
     update_data = {
         "name": request.form.get("name"),
         "contact": request.form.get("contact"),
@@ -1200,7 +1199,10 @@ def edit_customer():
         update_data["proof_of_payment"] = save_file(proof_of_payment)
 
     if "date_applied" in request.form:
-        update_data["date_applied"] = datetime.datetime.strptime(request.form.get("date_applied"), "%Y-%m-%d")
+        if request.form.get("date_applied"):
+            update_data["date_applied"] = datetime.datetime.strptime(request.form.get("date_applied"), "%Y-%m-%d")
+        else:
+            update_data["date_applied"] = None
 
     if "tap_pipe_size" in request.form:
         update_data["tap_pipe_size"] = int(request.form.get("tap_pipe_size"))
@@ -1209,7 +1211,10 @@ def edit_customer():
         update_data["tap_pipe_type"] = request.form.get("tap_pipe_type")
 
     if "survey_date" in request.form:
-        update_data["survey_date"] = datetime.datetime.strptime(request.form.get("survey_date"), "%Y-%m-%d")
+        if request.form.get("survey_date"):
+            update_data["survey_date"] = datetime.datetime.strptime(request.form.get("survey_date"), "%Y-%m-%d")
+        else:
+            update_data["survey_date"] = None
 
     if "pipe_type" in request.form:
         update_data["pipe_type"] = request.form.get("pipe_type")
@@ -1238,13 +1243,19 @@ def edit_customer():
         update_data["amount_paid"] = int(request.form.get("amount_paid"))
 
     if "date_paid" in request.form:
-        update_data["date_paid"] = datetime.datetime.strptime(request.form.get("date_paid"), "%Y-%m-%d")
+        if request.form.get("date_paid"):
+            update_data["date_paid"] = datetime.datetime.strptime(request.form.get("date_paid"), "%Y-%m-%d")
+        else:
+            update_data["date_paid"] = None
 
     if 'connection_fee' in request.form or 'amount_paid' in request.form:
         update_data["amount_due"] = int(request.form.get("connection_fee", 0)) - int(request.form.get("amount_paid", 0))
 
     if 'connection_date' in request.form:
-        update_data["connection_date"] = datetime.datetime.strptime(request.form.get("connection_date"), "%Y-%m-%d")
+        if request.form.get("connection_date"):
+            update_data["connection_date"] = datetime.datetime.strptime(request.form.get("connection_date"), "%Y-%m-%d")
+        else:
+            update_data["connection_date"] = None
 
     if 'issuance_date' in request.form:
         if request.form.get("issuance_date"):
@@ -1253,7 +1264,10 @@ def edit_customer():
             update_data["issuance_date"] = None
 
     if 'verification_date' in request.form:
-        update_data["verification_date"] = datetime.datetime.strptime(request.form.get("verification_date"), "%Y-%m-%d")
+        if request.form.get("verification_date"):
+            update_data["verification_date"] = datetime.datetime.strptime(request.form.get("verification_date"), "%Y-%m-%d")
+        else:
+            update_data["verification_date"] = None
     
     if 'connection_status' in request.form:
         if request.form.get("connection_status") == "connected" and customer.get("customer_reference") is not None:
