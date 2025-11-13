@@ -169,9 +169,9 @@ def generate_customer_report(customer):
         pdf.cell(col_widths[0], 7, period_str, border='T')
         pdf.cell(col_widths[1], 7, f"{row.get('bill', 0):,}", border='T')
         pdf.cell(col_widths[2], 7, f"{row.get('payment', 0):,}", border='T')
-        pdf.cell(col_widths[3], 7, f"{row.get('balance_on_bill', 0):,}", border='T')
-        pdf.cell(col_widths[4], 7, f"{row.get('balance_on_connection', 0):,}", border='T')
-        pdf.cell(col_widths[5], 7, f"{row.get('prepayment_balance', 0):,}", border='T')
+        pdf.cell(col_widths[3], 7, f"{int(row.get('balance_on_bill', 0)):,}", border='T')
+        pdf.cell(col_widths[4], 7, f"{int(row.get('balance_on_connection', 0)):,}", border='T')
+        pdf.cell(col_widths[5], 7, f"{int(row.get('prepayment_balance', 0)):,}", border='T')
         pdf.ln()
 
     # Output PDF to memory and return as Flask response
