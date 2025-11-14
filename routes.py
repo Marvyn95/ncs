@@ -2352,7 +2352,6 @@ def search_customers():
     return redirect(url_for("customers"))
 
 
-
 @app.route("/search_customers_2", methods=["POST"])
 def search_customers_2():
     search_query = request.form.get("search", "").strip()
