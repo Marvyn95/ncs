@@ -2214,9 +2214,9 @@ def upload_customers():
         flash("Unsupported file format, upload a CSV or Excel file!", "danger")
         return redirect(url_for("customers"))
     
-    if len(df.columns) != 10:
-        flash("Customer upload file must have exactly 10 columns!", "danger")
-        return redirect(url_for("customers"))
+    # if len(df.columns) != 10:
+    #     flash("Customer upload file must have exactly 10 columns!", "danger")
+    #     return redirect(url_for("customers"))
     
     if df.columns[0] != "MeterRef" or df.columns[1] != "MeterSerial" or df.columns[2] != "CustomerRef" or df.columns[3] != "Name" or df.columns[4] != "Phone" or df.columns[5] != "VillageName" or df.columns[6] != "SchemeName" or df.columns[7] != "UmbrellaName" or df.columns[8] != "CustomerType" or df.columns[9] != "CreationDate":
         flash("Customer upload file must have 'MeterRef', 'MeterSerial', 'CustomerRef', 'Name', 'Phone', 'VillageName', 'SchemeName', 'UmbrellaName', 'CustomerType', and 'CreationDate' as the first ten columns respectively!", "danger")
@@ -2231,7 +2231,6 @@ def upload_customers():
     ms_no = 0
     for row in df.itertuples(index=False):
         cust_no += 1
-        # print(cust_no)
         meter_ref = row[0]
         meter_serial = row[1]
         name = row[3]
@@ -2241,6 +2240,11 @@ def upload_customers():
         umbrella_name = row[7]
         customer_type = row[8]
         creation_date = row[9]
+        
+        application_id = str(row[10]).strip() if len(row) > 10 else None
+        pipe_length = str(row[11]).strip() if len(row) > 11 else None
+        connection_fee = row[12] if len(row) > 12 else None
+        initial_amount_paid = row[13] if len(row) > 13 else None
 
         if pd.isna(meter_ref) or pd.isna(name) or pd.isna(scheme_name) or pd.isna(umbrella_name) or pd.isna(creation_date) or pd.isna(village_name):
             continue
@@ -2312,14 +2316,16 @@ def upload_customers():
             "type": type,
             "meter_serial": meter_serial,
             "transaction_id": secrets.token_hex(16),
-            "first_meter_reading": "0"
+            "first_meter_reading": "0",
+            "pipe_length": pipe_length if pipe_length else None,
+            "application_id": application_id if application_id else None
         }
 
         if type == "ES":
             new_customer["payment_period"] = 6
-            new_customer["connection_fee"] = 100000
-            new_customer["amount_due"] = 60000
-            new_customer["amount_paid"] = 40000
+            new_customer["connection_fee"] = int(connection_fee) if connection_fee else 100000
+            new_customer["amount_paid"] = int(initial_amount_paid) if initial_amount_paid else 40000
+            new_customer["amount_due"] = new_customer["connection_fee"] - new_customer["amount_paid"]
         
         db.Customers.insert_one(new_customer)
 
@@ -2332,7 +2338,6 @@ def upload_customers():
 
     flash(f"{cust_no} Customers processed!, {es_no} ES, {ms_no} MS, {es_no + ms_no} uploaded", "success")
     return redirect(url_for("customers"))
-
 
 
 @app.route("/search_customers", methods=["POST"])
