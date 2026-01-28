@@ -78,14 +78,16 @@ def home():
     confirmed_count = len([c for c in customers if c.get("status") == "confirmed"])
     es_customers = len([e for e in customers if e.get("type") == "ES"])
 
-    total_applicants = application_count + survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count
+
+    total_disapprovals = len([d for d in customers if d.get("status") == "disapproved"])
+    total_not_verified = len([n for n in customers if n.get("status") == "not verified"])
+
+    total_applicants = application_count + survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_disapprovals + total_not_verified
     total_surveys = survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count
     total_approvals = approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count
     total_verifications = verified_count + pending_connection_count + connected_count + confirmed_count
     total_connections = connected_count + confirmed_count
     total_confirmations = confirmed_count
-    total_disapprovals = len([d for d in customers if d.get("status") == "disapproved"])
-    total_not_verified = len([n for n in customers if n.get("status") == "not verified"])
 
     date = datetime.datetime.now()
 
