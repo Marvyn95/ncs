@@ -9,26 +9,6 @@
       <div class="row flex-row flex-wrap g-3">
 
         <div class="col-6 col-md-3 col-lg-4">
-          <!-- Date and Time Card -->
-          <div class="card bg-light rounded-3 shadow-sm border-0 text-center flex-shrink-0">
-            <div class="h-100 d-flex flex-column justify-content-center align-items-center p-2">
-
-              <!-- Day -->
-              <div class="mb-1">
-                <span class="fw-bold fs-5 text-primary">{{ current_day }}</span>
-              </div>
-
-              <!-- Date -->
-              <div class="d-flex align-items-center mb-1">
-                <i class="bi bi-calendar-week-fill fs-6 text-success me-2"></i>
-                <span class="fw-semibold fs-6 text-dark">{{ current_month }} {{ current_date }}, {{ current_year }}</span>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-        <div class="col-6 col-md-3 col-lg-4">
             <a href="{{ url_for('customers') }}" class="text-decoration-none">
             <div class="card bg-white rounded-2 shadow-sm p-2 h-100 border-0">
               <div class="row align-items-center">
@@ -107,7 +87,7 @@
                 <div class="small">Confirmed: <span class="fw-bold fs-6 text-primary">{{ confirmed_count or '-' }}</span></div>
               </div>
               
-              <!-- <div class="col-6">
+              <div class="col-6">
                 <div class="small">Total Applications: <span class="fw-bold fs-6 text-primary">{{ total_applicants or '-' }}</span></div>
                 <div class="small">Total Surveys: <span class="fw-bold fs-6 text-primary">{{ total_surveys or '-' }}</span></div>
                 <div class="small">Total Approvals: <span class="fw-bold fs-6 text-primary">{{ total_approvals or '-' }}</span></div>
@@ -118,14 +98,12 @@
                 <div class="small">Total Materials Issued: <span class="fw-bold fs-6 text-primary">{{ total_materials_issued or '-' }}</span></div>
                 <div class="small">Total Connections: <span class="fw-bold fs-6 text-primary">{{ total_connections or '-' }}</span></div>
                 <div class="small">Total Confirmations: <span class="fw-bold fs-6 text-primary">{{ total_confirmations or '-' }}</span></div>
-              </div> -->
-
-              
+              </div>
             </div>
           </div>
 
         <!-- Image Card -->
-        <div class="card bg-white rounded-3 shadow-sm border-0 d-flex flex-column align-items-center justify-content-center flex-grow-2 p-3">
+        <!-- <div class="card bg-white rounded-3 shadow-sm border-0 d-flex flex-column align-items-center justify-content-center flex-grow-2 p-3">
           <h5 class="mb-1 text-primary">Areas of operation</h5>
           <h1 class="small text-muted">midwestern region, Uganda</h1>
           <div class="d-flex align-items-center w-100">
@@ -137,6 +115,29 @@
             <i class="bi bi-suit-diamond-fill me-1"></i>
               <div>Districts: <span class="text-primary">15</span></div>
               <div>Villages: <span class="text-primary">{{ villages_count }}</span></div>
+            </div>
+          </div>
+        </div> -->
+        <div class="col-12">
+          <div class="card bg-secondary-subtle rounded-2 shadow-sm p-3 h-100 border-0">
+            <h6 class="mb-2 text-primary">No. of Customers by Scheme</h6>
+            <div class="table-responsive" style="max-height: 330px; overflow-y: auto; scrollbar-width: none; -webkit-scrollbar { display: none; }">
+              <table class="table table-hover table-striped table-secondary align-middle mb-0 small">
+              <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa; font-size:0.75rem;">
+              <tr>
+              <th>Scheme</th>
+              <th class="text-center">Number of Customers</th>
+              </tr>
+              </thead>
+              <tbody style="font-size:0.70rem;">
+              {% for item in schemes_customers %}
+              <tr>
+              <td>{{ item.scheme }}</td>
+              <td class="text-center" style="font-size:0.8rem;">{{ item.number_of_customers }}</td>
+              </tr>
+              {% endfor %}
+              </tbody>
+              </table>
             </div>
           </div>
         </div>

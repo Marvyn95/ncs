@@ -215,43 +215,25 @@
       <!-- Main content -->
       <div class="flex-grow-1 d-flex flex-column ms-3 h-100">
         <div class="row g-2 mb-2 w-100">
-          <div class="col-lg-6 col-md-6 col-12 d-flex">
+            <div class="col-lg-6 col-md-6 col-12 d-flex">
             <div class="card shadow border border-secondary rounded-4 bg-secondary-subtle px-3 py-2 flex-fill overflow-hidden">
-              <div class="d-flex align-items-center mb-2">
-                <i class="bi bi-person-circle text-primary flex-shrink-0" style="font-size: 1.5rem;"></i>
-                <div class="ms-2 text-truncate" style="min-width: 0;">
-                  <div class="fw-bold text-truncate" style="font-size: 0.98rem; max-width: 100%;">{{ user.first_name }} {{ user.last_name }}</div>
-                  <div class="text-muted small text-truncate" style="max-width: 100%;">{{ user.role }}</div>
-                </div>
+              <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-person-circle text-primary flex-shrink-0" style="font-size: 1.3rem;"></i>
+              <div class="text-truncate" style="min-width: 0; flex: 1;">
+                <div class="fw-bold text-truncate" style="font-size: 0.87rem;">{{ user.first_name }} {{ user.last_name }} <span class="text-secondary">({{ user.role }})</span></div>
+                <div class="small text-secondary text-truncate">{{ user.email }}</div>
+                <div class="small text-secondary text-truncate">{{ user.umbrella }}{% if user.scheme %} • {{ user.scheme }}{% elif user.area %} • {{ user.area }}{% endif %}</div>
               </div>
-              <div class="text-truncate" style="max-width: 100%;">
-                <span class="text-primary fw-semibold"><i class="bi bi-envelope-fill me-1"></i>Email:</span>
-                <span class="fw-bold ms-1 text-truncate" style="font-size: 0.93rem; max-width: 60%;">{{ user.email }}</span>
               </div>
             </div>
-          </div>
+            </div>
+
           <div class="col-lg-6 col-md-6 col-12 d-flex">
             <div class="card shadow border border-secondary rounded-4 bg-secondary-subtle px-3 py-2 flex-fill overflow-hidden">
-              <div class="text-truncate" style="max-width: 100%;">
-              <span class="text-primary fw-semibold"><i class="bi bi-building me-1"></i>Umbrella:</span>
-              <span class="fw-bold ms-1 text-truncate" style="font-size: 0.93rem; max-width: 60%;">{{ user.umbrella }}</span>
-              </div>
-                <div class="mt-1 text-truncate" style="max-width: 100%;">
-                <span class="text-primary fw-semibold">
-                  {% if user.scheme %}
-                  <i class="bi bi-diagram-3-fill me-1"></i>Scheme:
-                  {% elif user.area %}
-                  <i class="bi bi-map-fill me-1"></i>Area:
-                  {% endif %}
-                </span>
-                <span class="fw-bold ms-1 text-truncate" style="font-size: 0.93rem; max-width: 60%;">
-                  {% if user.scheme %}
-                  {{ user.scheme }}
-                  {% elif user.area %}
-                  {{ user.area }}
-                  {% endif %}
-                </span>
-                </div>
+            <div class="text-start">
+              <p class="mb-1 text-primary fw-semibold">{{ date.strftime('%A') }}</p>
+              <p class="">{{ date.strftime('%d %b, %Y') }}</p>
+            </div>
               {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
                 <div style="position: fixed; top: 20px; right: 20px; z-index: 2000; width: 320px; max-width: 90vw;">

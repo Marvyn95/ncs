@@ -124,7 +124,7 @@ def home():
                            connected_count=connected_count,
                            confirmed_count=confirmed_count,
                            es_customers=es_customers,
-                           date = date.strftime("%d %B %Y"),
+                           date = date,
                            current_day=current_day,
                            current_date=current_date,
                            current_month=current_month,
