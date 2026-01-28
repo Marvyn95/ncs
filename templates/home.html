@@ -86,7 +86,8 @@
           <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa; font-size:0.75rem;">
           <tr>
           <th>Scheme</th>
-          <th class="text-center">Number of Customers</th>
+          <th class="text-center">Customers</th>
+          <th class="text-center">ES Customers</th>
           </tr>
           </thead>
           <tbody style="font-size:0.70rem;">
@@ -94,6 +95,7 @@
           <tr>
           <td>{{ item.scheme }}</td>
           <td class="text-center" style="font-size:0.8rem;">{{ item.number_of_customers }}</td>
+          <td class="text-center" style="font-size:0.8rem;">{{ item.es_customers }}</td>
           </tr>
           {% endfor %}
           </tbody>

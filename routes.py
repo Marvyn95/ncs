@@ -105,7 +105,8 @@ def home():
         schemes_customers = []
         for scheme in schemes:
             count = len([c for c in customers if c.get("scheme_id") == str(scheme["_id"])])
-            schemes_customers.append({"scheme": scheme["scheme"], "number_of_customers": count})
+            es_cust = len([e for e in customers if e.get("scheme_id") == str(scheme["_id"]) and e.get("type") == "ES"])
+            schemes_customers.append({"scheme": scheme["scheme"], "number_of_customers": count, "es_customers": es_cust})
         schemes_customers = sorted(schemes_customers, key=lambda x: x["scheme"].lower())
         session["schemes_customers"] = schemes_customers
 
