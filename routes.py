@@ -75,7 +75,17 @@ def home():
     verified_count = len([v for v in customers if v.get("status") == "verified"])
     pending_connection_count = len([c for c in customers if c.get("status") == "materials issued"])
     connected_count = len([c for c in customers if c.get("status") == "connected"])
-    es_customers = len([e for e in customers if e.get("type") == "ES"])  
+    confirmed_count = len([c for c in customers if c.get("status") == "confirmed"])
+    es_customers = len([e for e in customers if e.get("type") == "ES"])
+
+    total_applicants = application_count + survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count
+    total_surveys = survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count
+    total_approvals = approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count
+    total_verifications = verified_count + pending_connection_count + connected_count + confirmed_count
+    total_connections = connected_count + confirmed_count
+    total_confirmations = confirmed_count
+    total_disapprovals = len([d for d in customers if d.get("status") == "disapproved"])
+    total_not_verified = len([n for n in customers if n.get("status") == "not verified"])
 
     date = datetime.datetime.now()
 
@@ -115,7 +125,15 @@ def home():
                            current_month=current_month,
                            current_year=current_year,
                            timezone=timezone,
-                           schemes_customers=schemes_customers
+                           schemes_customers=schemes_customers,
+                            total_applicants=total_applicants,
+                            total_surveys=total_surveys,
+                            total_approvals=total_approvals,
+                            total_verifications=total_verifications,
+                            total_connections=total_connections,
+                            total_confirmations=total_confirmations,
+                            total_disapprovals=total_disapprovals,
+                            total_not_verified=total_not_verified,
                            )
 
 

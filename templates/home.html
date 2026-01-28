@@ -95,18 +95,27 @@
       <div class="d-flex flex-column gap-2">
 
           <div class="card bg-white rounded-2 shadow-sm p-2 h-100 border-0">
-            <div class="row align-items-center">
-              <div class="col-2 text-center">
-              <span class="fs-3 text-warning"><i class="bi bi-clipboard-data"></i></span>
-              </div>  
-              <div class="col-10">
-              <div class="small">Applications: <span class="fw-bold fs-6 text-primary">{{ application_count or '-' }}</span></div>
-              <div class="small">Surveyed applicants: <span class="fw-bold fs-6 text-primary">{{ survey_count or '-' }}</span></div>
-              <div class="small">Approved Applicants: <span class="fw-bold fs-6 text-primary">{{ approval_count or '-' }}</span></div>
-              <div class="small">Paid Applicants: <span class="fw-bold fs-6 text-primary">{{ paid_count or '-' }}</span></div>
-              <div class="small">Verified Applicants: <span class="fw-bold fs-6 text-primary">{{ verified_count or '-' }}</span></div>
-              <div class="small">Pending Connection: <span class="fw-bold fs-6 text-primary">{{ pending_connection_count or '-' }}</span></div>
-              <div class="small">Pending Confirmation: <span class="fw-bold fs-6 text-primary">{{ connected_count or '-' }}</span></div>
+            <div class="row align-items-start">  
+              <div class="col-6">
+                <div class="small">Current Applications: <span class="fw-bold fs-6 text-primary">{{ application_count or '-' }}</span></div>
+                <div class="small">Current Surveys: <span class="fw-bold fs-6 text-primary">{{ survey_count or '-' }}</span></div>
+                <div class="small">Current Approvals: <span class="fw-bold fs-6 text-primary">{{ approval_count or '-' }}</span></div>
+                <div class="small">Current Payments: <span class="fw-bold fs-6 text-primary">{{ paid_count or '-' }}</span></div>
+                <div class="small">Current Verifications: <span class="fw-bold fs-6 text-primary">{{ verified_count or '-' }}</span></div>
+                <div class="small">Pending Connections: <span class="fw-bold fs-6 text-primary">{{ pending_connection_count or '-' }}</span></div>
+                <div class="small">Pending Confirmations: <span class="fw-bold fs-6 text-primary">{{ connected_count or '-' }}</span></div>
+                <div class="small">Confirmed: <span class="fw-bold fs-6 text-primary">{{ confirmed_count or '-' }}</span></div>
+              </div>
+              
+              <div class="col-6">
+                <div class="small">Total Applications: <span class="fw-bold fs-6 text-primary">{{ total_applicants or '-' }}</span></div>
+                <div class="small">Total Surveys: <span class="fw-bold fs-6 text-primary">{{ total_surveys or '-' }}</span></div>
+                <div class="small">Total Approvals: <span class="fw-bold fs-6 text-primary">{{ total_approvals or '-' }}</span></div>
+                <div class="small">Total Disapprovals: <span class="fw-bold fs-6 text-danger">{{ total_disapprovals or '-' }}</span></div>
+                <div class="small">Total Verifications: <span class="fw-bold fs-6 text-primary">{{ total_verifications or '-' }}</span></div>
+                <div class="small">Total Not Verified: <span class="fw-bold fs-6 text-danger">{{ total_not_verified or '-' }}</span></div>
+                <div class="small">Total Connections: <span class="fw-bold fs-6 text-primary">{{ total_connections or '-' }}</span></div>
+                <div class="small">Total Confirmations: <span class="fw-bold fs-6 text-primary">{{ total_confirmations or '-' }}</span></div>
               </div>
             </div>
           </div>
