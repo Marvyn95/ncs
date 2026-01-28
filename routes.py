@@ -85,6 +85,7 @@ def home():
     total_applicants = application_count + survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_disapprovals + total_not_verified
     total_surveys = survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_disapprovals + total_not_verified
     total_approvals = approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_not_verified
+    total_payments = paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_not_verified
     total_verifications = verified_count + pending_connection_count + connected_count + confirmed_count
     total_connections = connected_count + confirmed_count
     total_confirmations = confirmed_count
@@ -132,6 +133,7 @@ def home():
                             total_applicants=total_applicants,
                             total_surveys=total_surveys,
                             total_approvals=total_approvals,
+                            total_payments=total_payments,
                             total_verifications=total_verifications,
                             total_connections=total_connections,
                             total_confirmations=total_confirmations,
