@@ -91,7 +91,7 @@ def home():
 
     date = datetime.datetime.now()
 
-    current_day = date.strftime("%A")
+    current_day = date.strftime("%A")s
     current_date = date.strftime("%d") 
     current_month = date.strftime("%B")
     current_year = date.strftime("%Y")
@@ -120,6 +120,7 @@ def home():
                            verified_count=verified_count,
                            pending_connection_count= pending_connection_count,
                            connected_count=connected_count,
+                           confirmed_count=confirmed_count,
                            es_customers=es_customers,
                            date = date.strftime("%d %B %Y"),
                            current_day=current_day,
