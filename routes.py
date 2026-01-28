@@ -234,7 +234,7 @@ def profile():
     umbrellas = db.Umbrellas.find()
     return render_template("profile.html",
                            user=user,
-                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           date=datetime.datetime.now(),
                            section="profile",
                            umbrellas=umbrellas)
 
@@ -304,7 +304,7 @@ def umbrellas():
     return render_template("umbrellas.html",
                            user=user,
                            section="umbrellas",
-                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           date=datetime.datetime.now(),
                            umbrellas=sorted(umbrellas, key=lambda x: x["umbrella"].lower()))
 
 @app.route('/add_umbrella', methods=["POST"])
@@ -402,7 +402,7 @@ def users():
     return render_template("users.html",
                            user=user,
                            section="users",
-                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           date=datetime.datetime.now(),
                            users=users,
                            umbrellas=umbrellas,
                            areas=areas,
@@ -545,7 +545,7 @@ def areas():
     return render_template("areas.html",
                            user=user,
                            section="areas",
-                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           date=datetime.datetime.now(),
                            areas=areas,
                            umbrellas=umbrellas)
 
@@ -639,7 +639,7 @@ def schemes():
     return render_template("schemes.html",
                            user=user,
                            section="schemes",
-                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           date=datetime.datetime.now().strftime,
                            schemes=sorted(schemes, key=lambda x: x["scheme"].lower()),
                            areas=sorted(areas, key=lambda x: x["area"].lower()),
                            districts=sorted(districts, key=lambda x: x["district"].lower()),
@@ -754,7 +754,7 @@ def districts():
     return render_template("districts.html",
                            user=user,
                            section="districts",
-                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           date=datetime.datetime.now(),
                            districts=districts,
                            page=page,
                            total_pages=total_pages)
@@ -855,7 +855,7 @@ def villages():
     return render_template("villages.html",
                            user=user,
                            section="villages",
-                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           date=datetime.datetime.now(),
                            villages=villages,
                            schemes=schemes,
                            subcounties=subcounties,
@@ -1103,7 +1103,7 @@ def customers():
     return render_template("customers.html",
                            user=user,
                            section="customers",
-                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           date=datetime.datetime.now(),
                            now=datetime.datetime.now,
                            customers=customers,
                            schemes=schemes,
@@ -1747,7 +1747,7 @@ def reports():
     return render_template("reports.html",
                            user=user,
                            section="reports",
-                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           date=datetime.datetime.now(),
                            customers=customers,
                            schemes=schemes,
                            page=page,
@@ -1980,7 +1980,7 @@ def subcounties():
                            user=user,
                            districts=districts,
                            subcounties=subcounties,
-                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           date=datetime.datetime.now(),
                            page=page,
                            total_pages=total_pages)
 
@@ -2082,7 +2082,7 @@ def parishes():
                            subcounties=subcounties,
                            parishes=parishes,
                            districts=districts,
-                           date=datetime.datetime.now().strftime("%d %B %Y"),
+                           date=datetime.datetime.now(),
                            page=page,
                            total_pages=total_pages)
 
