@@ -1941,7 +1941,7 @@ def customer_history():
     schemes = list(db.Schemes.find())
     customer["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == customer.get("village_id")), 'N/A')
     customer["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == customer.get("scheme_id")), 'N/A')
-    return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now().strftime("%d %B %Y"))
+    return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now())
 
 
 @app.route("/subcounties")
