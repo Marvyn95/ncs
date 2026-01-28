@@ -83,8 +83,8 @@ def home():
     total_not_verified = len([n for n in customers if n.get("status") == "not verified"])
 
     total_applicants = application_count + survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_disapprovals + total_not_verified
-    total_surveys = survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count
-    total_approvals = approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count
+    total_surveys = survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_disapprovals + total_not_verified
+    total_approvals = approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_not_verified
     total_verifications = verified_count + pending_connection_count + connected_count + confirmed_count
     total_connections = connected_count + confirmed_count
     total_confirmations = confirmed_count
