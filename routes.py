@@ -91,7 +91,7 @@ def home():
 
     date = datetime.datetime.now()
 
-    current_day = date.strftime("%A")s
+    current_day = date.strftime("%A")
     current_date = date.strftime("%d") 
     current_month = date.strftime("%B")
     current_year = date.strftime("%Y")
