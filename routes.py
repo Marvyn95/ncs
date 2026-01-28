@@ -87,6 +87,7 @@ def home():
     total_approvals = approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_not_verified
     total_payments = paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_not_verified
     total_verifications = verified_count + pending_connection_count + connected_count + confirmed_count
+    total_materials_issued = pending_connection_count + connected_count + confirmed_count
     total_connections = connected_count + confirmed_count
     total_confirmations = confirmed_count
 
@@ -135,6 +136,7 @@ def home():
                             total_approvals=total_approvals,
                             total_payments=total_payments,
                             total_verifications=total_verifications,
+                            total_materials_issued=total_materials_issued,
                             total_connections=total_connections,
                             total_confirmations=total_confirmations,
                             total_disapprovals=total_disapprovals,
