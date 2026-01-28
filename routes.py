@@ -639,7 +639,7 @@ def schemes():
     return render_template("schemes.html",
                            user=user,
                            section="schemes",
-                           date=datetime.datetime.now().strftime,
+                           date=datetime.datetime.now(),
                            schemes=sorted(schemes, key=lambda x: x["scheme"].lower()),
                            areas=sorted(areas, key=lambda x: x["area"].lower()),
                            districts=sorted(districts, key=lambda x: x["district"].lower()),
