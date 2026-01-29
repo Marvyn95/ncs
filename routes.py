@@ -849,6 +849,16 @@ def villages():
         village["district"] = next((item["district"] for item in districts if str(item["_id"]) == village.get("district_id")), None)
         village["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == village.get("scheme_id")), None)
 
+    if session.get("village_sort_by_scheme"):
+        villages = sorted(villages, key=lambda x: ((x.get("scheme") or "").lower(), x.get("village", "").lower()))
+        session.pop("village_sort_by_village", None)
+    else:
+        villages = sorted(villages, key=lambda x: (x.get("village") or "").lower())
+    
+    if session.get("village_sort_by_village"):
+        villages = sorted(villages, key=lambda x: (x.get("village") or "").lower())
+        session.pop("village_sort_by_scheme", None)
+
     # Pagination
     total = db.Villages.count_documents({})
     total_pages = (total + per_page - 1) // per_page
@@ -2437,3 +2447,16 @@ def download_es_reports():
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                      as_attachment=False,
                      download_name=attachment_name)
+
+
+@app.route("/village_sort_by_scheme")
+def village_sort_by_scheme():
+    session["village_sort_by_scheme"] = True
+    session.pop("village_sort_by_village", None)
+    return redirect(request.referrer or url_for("villages"))
+
+@app.route("/village_sort_by_village")
+def village_sort_by_village():
+    session["village_sort_by_village"] = True
+    session.pop("village_sort_by_scheme", None)
+    return redirect(request.referrer or url_for("villages"))

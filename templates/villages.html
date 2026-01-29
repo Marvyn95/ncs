@@ -113,11 +113,11 @@
     <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
       <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-primary">
-          <th>Village Name</th>
+          <th>Village Name <a href="{{ url_for('village_sort_by_village') }}"><i class="bi bi-arrow-down-up"></i></a></th>
           <th>District</th>
           <th>Subcounty</th>
           <th>Parish</th>
-          <th>Scheme</th>
+          <th>Scheme <a href="{{ url_for('village_sort_by_scheme') }}"><i class="bi bi-arrow-down-up"></i></a></th>
           <th>Actions</th>
         </tr>
       </thead>
