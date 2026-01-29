@@ -841,8 +841,6 @@ def villages():
     subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"])
     parishes = sorted(list(db.Parishes.find()), key=lambda x: x["parish"])
 
-    villages = villages[(page - 1) * per_page: page * per_page]
-
     for village in villages:
         village["parish"] = next((item["parish"] for item in parishes if str(item["_id"]) == village.get("parish_id")), None)
         village["subcounty"] = next((item["subcounty"] for item in subcounties if str(item["_id"]) == village.get("subcounty_id")), None)
@@ -859,6 +857,8 @@ def villages():
         villages = sorted(villages, key=lambda x: (x.get("village") or "").lower())
         session.pop("village_sort_by_scheme", None)
 
+    villages = villages[(page - 1) * per_page: page * per_page]
+    
     # Pagination
     total = db.Villages.count_documents({})
     total_pages = (total + per_page - 1) // per_page
