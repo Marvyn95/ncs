@@ -1351,7 +1351,9 @@ def customer_survey():
     wealth_assessment_form = request.files.get("wealth_assessment_form")
     survey_date = request.form.get("survey_date")
 
-    if datetime.datetime.strptime(survey_date, "%Y-%m-%d") < db.Customers.find_one({"_id": ObjectId(customer_id)}).get("date_applied"):
+    customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
+    
+    if datetime.datetime.strptime(survey_date, "%Y-%m-%d") < customer.get("date_applied"):
         flash("Survey date cannot be before application date!", "danger")
         return redirect(url_for("customers"))
 
@@ -1366,6 +1368,8 @@ def customer_survey():
     }
 
     if wealth_assessment_form and wealth_assessment_form.filename:
+        if customer.get("wealth_assessment_form"):
+            delete_file(customer.get("wealth_assessment_form"))
         update_data["wealth_assessment_form"] = save_file(wealth_assessment_form)
 
     db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
@@ -1437,6 +1441,8 @@ def customer_payment():
     }
 
     if proof_of_payment and proof_of_payment.filename:
+        if customer.get("proof_of_payment"):
+            delete_file(customer.get("proof_of_payment"))
         filename = save_file(proof_of_payment)
         update_data["proof_of_payment"] = filename
 
