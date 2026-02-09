@@ -794,7 +794,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-{% elif customer.status == 'approved' and user.role in ['administrator', 'area_manager'] %}
+{% elif customer.status == 'approved' and user.role in ['administrator', 'area_manager'] or customer.status == 'not_verified' and user.role in [ 'area_manager'] %}
 <form method="POST" action="{{ url_for('customer_payment') }}" enctype="multipart/form-data">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <div class="mb-2">
@@ -820,7 +820,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </form>
 
 
-{% elif customer.status == 'paid' and user.role in ['administrator', 'billing_officer', 'deputy_manager'] or customer.status == 'not verified' and user.role in ['administrator', 'area_manager']   %}
+{% elif customer.status == 'paid' and user.role in ['administrator', 'billing_officer', 'deputy_manager'] or customer.status == 'not verified' and user.role in ['administrator', 'billing_officer']   %}
 <form method="POST" action="{{ url_for('customer_verification') }}">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <div class="mb-2">
