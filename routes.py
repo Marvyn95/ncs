@@ -2200,6 +2200,7 @@ def download_customers():
             "Connection Fee": c.get("connection_fee"),
             "Connection Balance Payment Period (months)": c.get("payment_period"),
             "Initial Amount Paid for Connection": c.get("amount_paid"),
+            "Verification Date": c.get("verification_date").strftime("%d, %B, %Y") if isinstance(c.get("verification_date"), datetime.datetime) else c.get("verification_date"),
             "Initial Connection Payment Transaction ID": c.get("transaction_id"),
             "Date of Initial Connection Payment": c.get("date_paid").strftime("%d, %B, %Y") if isinstance(c.get("date_paid"), datetime.datetime) else c.get("date_paid"),
             "Connection Date": c.get("connection_date").strftime("%d, %B, %Y") if isinstance(c.get("connection_date"), datetime.datetime) else c.get("connection_date"),
