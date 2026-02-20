@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
 </div>
 {% endif %}
 
-            {% if customer.status in ['approved', 'paid', 'verified', 'not_verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
+            {% if customer.status in ['approved', 'paid', 'verified', 'not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
             {% if customer.status == 'approved' %}
             <div class="col-6 mb-1">
               <label for="approval_{{ customer._id }}" class="form-label">Approval</label>
@@ -493,7 +493,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
             </script>
             {% endif %}
 
-{% if customer.status in ["paid", "verified", "not_verified", "materials issued", "materials pending", "connected", 'not connected', 'confirmed'] %}
+{% if customer.status in ["paid", "verified", "not verified", "materials issued", "materials pending", "connected", 'not connected', 'confirmed'] %}
 <div class="col-6 mb-1">
   <label for="amount_paid_{{ customer._id }}" class="form-label">Initial connection deposit</label>
   <input type="number" class="form-control form-control-sm" id="amount_paid_{{ customer._id }}" name="amount_paid" value="{{ customer.amount_paid or '' }}" min="0" step="0.01" required>
@@ -516,7 +516,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
 </div>
 {% endif %}
 
-{% if customer.status in ["verified", "not_verified", "materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
+{% if customer.status in ["verified", "not verified", "materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
 <div class="col-6 mb-1">
   <label for="verification_date_{{ customer._id }}" class="form-label">Date of Verification</label>
   <input type="date" class="form-control form-control-sm" id="verification_date_{{ customer._id }}" name="verification_date"
@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
 {% endif %}
 
 
-{% if customer.status in ["verified", "not_verified", "materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
+{% if customer.status in ["verified", "not verified", "materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
 <div class="col-6 mb-1">
   <label for="connection_status_{{ customer._id }}" class="form-label">Status</label>
   <select class="form-select form-select-sm" id="connection_status_{{ customer._id }}" name="connection_status" required>
