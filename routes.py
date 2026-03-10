@@ -1816,8 +1816,12 @@ def add_monthly_billing_sheet():
     for customer in es_customers:
 
         customer_billing_data = df[df["MeterRef"] == customer.get("customer_reference")]
+
+        if customer_billing_data.empty:
+            continue
  
         bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
+        
         if bpb == []:
             db.Customers.update_one({"_id": customer.get("_id")}, {
                 "$set": {
