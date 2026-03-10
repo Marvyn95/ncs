@@ -1539,7 +1539,7 @@ def customer_confirmation():
 
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
-        {"$set": {"customer_reference": customer_reference, "status": "confirmed"}}
+        {"$set": {"customer_reference": int(customer_reference), "status": "confirmed"}}
     )
     
     session.pop("schemes_customers", None)
@@ -1777,8 +1777,6 @@ def reports():
 
 
 
-
-
 @app.route('/add_monthly_billing_sheet', methods=["POST"])
 @login_required
 def add_monthly_billing_sheet():
@@ -1813,12 +1811,11 @@ def add_monthly_billing_sheet():
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
         return redirect(url_for("reports"))
 
+
     es_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})
     for customer in es_customers:
-        customer_billing_data = df[df["MeterRef"] == customer.get("customer_reference")]
 
-        if customer_billing_data.empty:
-            continue
+        customer_billing_data = df[df["MeterRef"] == customer.get("customer_reference")]
  
         bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
         if bpb == []:
@@ -2299,7 +2296,7 @@ def upload_customers():
         status = "confirmed"
         type = "ES" if "ES-" in str(name) else "MS"
         meter_serial = str(meter_serial).strip() if not pd.isna(meter_serial) else None
-        customer_reference = meter_ref if not pd.isna(meter_ref) else None
+        customer_reference = int(meter_ref) if not pd.isna(meter_ref) else None
 
         # customercreation date info 
         creation_date_formatted = pd.to_datetime(creation_date)
