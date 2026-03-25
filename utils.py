@@ -23,9 +23,6 @@ def save_file(file, upload_folder='static/uploads'):
 def delete_file(filename, upload_folder='static/uploads'):
     file_path = os.path.join(os.getcwd(), upload_folder, filename)
 
-    if not os.path.isfile(file_path):
-        return
-    
     try:
         os.remove(file_path)
         print(f"Deleted file: {file_path}")

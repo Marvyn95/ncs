@@ -1571,10 +1571,14 @@ def delete_customer():
         flash("Cannot delete customer, payments have been made by customer!", "danger")
         return redirect(url_for("customers"))
 
-    delete_file(customer.get("id_document"))
-    delete_file(customer.get("recommendation_letter"))
-    delete_file(customer.get("wealth_assessment_form"))
-    delete_file(customer.get("proof_of_payment"))
+    if customer.get("customer_reference") is not None:
+        delete_file(customer.get("id_document"))
+    if customer.get("recommendation_letter"):
+        delete_file(customer.get("recommendation_letter"))
+    if customer.get("wealth_assessment_form"):
+        delete_file(customer.get("wealth_assessment_form"))
+    if customer.get("proof_of_payment"):
+        delete_file(customer.get("proof_of_payment"))
 
     db.Customers.delete_one({"_id": ObjectId(customer_id)})
     session.pop("schemes_customers", None)
