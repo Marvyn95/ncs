@@ -1648,6 +1648,7 @@ def edit_customer():
         if request.form.get("connection_status") == "connected" and customer.get("customer_reference") is not None:
             update_data["status"] = "confirmed"
         else:
+
             update_data["status"] = request.form.get("connection_status")
 
     if 'meter_serial' in request.form:
@@ -2103,6 +2104,14 @@ def reports():
     for customer in customers:
         customer["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == customer.get("scheme_id")), None)
         customer["village"] = next((item["village"] for item in villages if str(item["_id"]) == customer.get("village_id")), None)
+
+        bpb_filter_start_date_str = session.get("es_reports_start_date")
+        bpb_filter_end_date_str = session.get("es_reports_end_date")
+
+        if bpb_filter_start_date_str and bpb_filter_end_date_str:
+            bpb_filter_start_date = datetime.datetime.strptime(bpb_filter_start_date_str, "%Y-%m-%d")
+            bpb_filter_end_date = datetime.datetime.strptime(bpb_filter_end_date_str, "%Y-%m-%d")
+            customer["bpb"] = [entry for entry in customer.get("bpb", []) if bpb_filter_start_date <= entry.get("period") <= bpb_filter_end_date]
     
     total_pages = (total + per_page - 1) // per_page
 
@@ -2896,3 +2905,12 @@ def applicant_date_filter_data():
     session["customers_end_date"] = end_date_str
 
     return redirect(request.referrer or url_for("customers"))
+
+
+@app.route("/es_report_date_filter", methods=["POST"])
+def es_report_date_filter():
+    start_date_str = request.form.get("start_date")
+    end_date_str = request.form.get("end_date")
+    session["es_reports_start_date"] = start_date_str
+    session["es_reports_end_date"] = end_date_str
+    return redirect(request.referrer or url_for("reports"))

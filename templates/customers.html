@@ -8,9 +8,7 @@
     </div>
     <div class="col">
 
-
-
-      <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+      <div class="d-flex flex-wrap justify-content-start align-items-center gap-2">
 
 
       <form method="POST" action="{{ url_for('applicant_date_filter_data') }}" style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap;" class="me-4" id="dateFilterForm">
@@ -34,13 +32,16 @@
       <script>
         function toggleDateFields() {
           const filterSelect = document.getElementById('filter_select');
+          const dateGroup = document.querySelector('.input-group:has(#date_1)');
           const date1 = document.getElementById('date_1');
           const date2 = document.getElementById('date_2');
           
           if (filterSelect.value !== "") {
+            dateGroup.style.display = 'flex';
             date1.disabled = false;
             date2.disabled = false;
           } else {
+            dateGroup.style.display = 'none';
             date1.disabled = true;
             date2.disabled = true;
             date1.value = "";
@@ -120,21 +121,23 @@
         </div>
       </form>
 
-      {% if user.role in ['administrator', 'scheme_manager', 'commercial_officer', 'billing_officer'] %}
-      <button class="btn btn-primary btn-sm px-2 py-1" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
-        <i class="bi bi-plus-lg me-1"></i> Add Customer
-      </button>
-      {% endif %}
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        {% if user.role in ['administrator', 'scheme_manager', 'commercial_officer', 'billing_officer'] %}
+        <button class="btn btn-primary btn-sm px-2 py-1" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+          <i class="bi bi-plus-lg me-1"></i> Add Customer
+        </button>
+        {% endif %}
 
-      <a href="{{ url_for('download_customers') }}" class="btn btn-outline-secondary btn-sm" title="Download Records" style="padding:2px 6px;font-size:0.9em;">
-        <i class="bi bi-download"></i>
-      </a>
-      
-      {% if user.role in ["administrator", "billing_officer"] %}
-      <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadCustomersModal" style="padding:2px 6px;font-size:0.9em;">
-        <i class="bi bi-upload"></i>
-      </button>
-      {% endif %}
+        <a href="{{ url_for('download_customers') }}" class="btn btn-outline-secondary btn-sm" title="Download Records" style="padding:2px 6px;font-size:0.9em;">
+          <i class="bi bi-download"></i>
+        </a>
+        
+        {% if user.role in ["administrator", "billing_officer"] %}
+        <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadCustomersModal" style="padding:2px 6px;font-size:0.9em;">
+          <i class="bi bi-upload"></i>
+        </button>
+        {% endif %}
+      </div>
 
       <!-- Upload Customers Modal -->
       <div class="modal fade" id="uploadCustomersModal" tabindex="-1" aria-labelledby="uploadCustomersModalLabel" aria-hidden="true">
@@ -455,7 +458,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
               {% endif %}
             </div>
 
-{% if customer.status in ["surveyed", "approved", "disapproved", 'paid', 'verified','not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
+{% if customer.status in ["surveyed", "approved", "disapproved", "not approved", 'paid', 'verified','not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
 <div class="col-6 mb-1">
   <label for="survey_date_{{ customer._id }}" class="form-label">Survey Date</label>
   <input type="date" class="form-control form-control-sm" id="survey_date_{{ customer._id }}" name="survey_date"
@@ -525,32 +528,33 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
 {% endif %}
 
             {% if customer.status in ['approved', 'paid', 'verified', 'not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
-            {% if customer.status == 'approved' %}
-            <div class="col-6 mb-1">
+            <!-- <div class="col-6 mb-1">
               <label for="approval_{{ customer._id }}" class="form-label">Approval</label>
               <select class="form-select form-select-sm" id="approval_{{ customer._id }}" name="approval" required>
                 <option value="approved" {% if customer.approval == "approved" %}selected{% endif %}>Approved</option>
-                <option value="disapproved" {% if customer.approval == "disapproved" %}selected{% endif %}>Disapproved</option>
-              </select>s
-            </div>
-            {% endif %}
+                <option value="not approved" {% if customer.approval in ["not approved", "disapproved"] %}selected{% endif %}>Not Approved</option>
+              </select>
+            </div> -->
             <div class="col-6 mb-1">
               <label for="customer_type_{{ customer._id }}" class="form-label">Customer Type</label>
               <select class="form-select form-select-sm" id="customer_type_{{ customer._id }}" name="customer_type" required onchange="togglePaymentPeriodEdit_{{ customer._id }}(this)">
               <option value="MS" {% if customer.type == "MS" %}selected{% endif %}>MS</option>
               <option value="ES" {% if customer.type == "ES" %}selected{% endif %}>ES</option>
+              <option value="BP" {% if customer.type == "BP" %}selected{% endif %}>BP</option>
               </select>
             </div>
             <div class="col-6 mb-1" id="paymentPeriodEditField_{{ customer._id }}" style="{% if customer.type != 'ES' %}display:none;{% endif %}">
               <label for="payment_period_{{ customer._id }}" class="form-label">Payment Period (months)</label>
               <input type="number" class="form-control form-control-sm" id="payment_period_{{ customer._id }}" name="payment_period" min="1" step="1"
-              value="{{ customer.payment_period if customer.payment_period is not none and customer.payment_period != '' else 6 }}"
+              value="{{ customer.payment_period if customer.payment_period is not none and customer.payment_period != '' else None }}"
               {% if customer.type == 'ES' %}required{% endif %}>
             </div>
+
             <div class="col-6 mb-1">
               <label for="connection_fee_{{ customer._id }}" class="form-label">Connection Fee</label>
-              <input type="number" class="form-control form-control-sm" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" value="{{ customer.connection_fee or '' }}" required>
+              <input type="number" class="form-control form-control-sm" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" value="{{ customer.connection_fee or 0 }}" required>
             </div>
+
             <script>
             function togglePaymentPeriodEdit_{{ customer._id }}(select) {
               var field = document.getElementById('paymentPeriodEditField_{{ customer._id }}');
@@ -629,7 +633,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
 {% endif %}
 
 
-{% if customer.status in ["verified", "not verified", "materials issued", "materials pending", "connected", "confirmed", "not connected", "paid", "approved", "disapproved"] %}
+{% if customer.status in ["verified", "not verified", "materials issued", "materials pending", "connected", "confirmed", "not connected", "paid", "approved", "disapproved", "not approved"] %}
 <div class="col-6 mb-1">
   <label for="connection_status_{{ customer._id }}" class="form-label">Status</label>
   <select class="form-select form-select-sm" id="connection_status_{{ customer._id }}" name="connection_status" required>
@@ -642,7 +646,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
     <option value="not verified" {% if customer.status == "not verified" %}selected{% endif %}>Not Verified</option>
     <option value="paid" {% if customer.status == "paid" %}selected{% endif %}>Paid</option>
     <option value="approved" {% if customer.status == "approved" %}selected{% endif %}>Approved</option>
-    <option value="not approved" {% if customer.status == "disapproved" %}selected{% endif %}>Disapproved</option>
+    <option value="not approved" {% if customer.status == "not approved" %}selected{% endif %}>Not Approved</option>
   </select>
 </div>
 {% endif %}
@@ -803,7 +807,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
   </div>
 </form>
 
-{% elif customer.status == 'surveyed' and user.role in ['administrator', 'area_manager'] or customer.status == 'disapproved'  and user.role in ['administrator', 'area_manager'] %}
+{% elif customer.status == 'surveyed' and user.role in ['administrator', 'area_manager'] or customer.status in ['not approved', "disapproved"]  and user.role in ['administrator', 'area_manager'] %}
 <form method="POST" action="{{ url_for('customer_approval') }}">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <div class="mb-2">
@@ -811,7 +815,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
     <select class="form-select" id="approval_{{ customer._id }}" name="approval" required onchange="toggleApprovalFields_{{ customer._id }}(this)">
       <option value="" disabled selected>Select Approval</option>
       <option value="approved">Approved</option>
-      <option value="disapproved">Disapproved</option>
+      <option value="not approved">Not Approved</option>
     </select>
   </div>
   <div id="approvalFields_{{ customer._id }}">
@@ -821,6 +825,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
         <select class="form-select" id="customer_type_{{ customer._id }}" name="customer_type" required onchange="togglePaymentPeriod_{{ customer._id }}(this)">
           <option value="MS" selected>MS</option>
           <option value="ES">ES</option>
+          <option value="BP">BP</option>
         </select>
       </div>
       <div id="paymentPeriodField_{{ customer._id }}" style="display:none;">
