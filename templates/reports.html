@@ -136,11 +136,14 @@
               <th>Customer</th>
               <th class="d-none d-sm-table-cell">Reference No.</th>
               <th>Type</th>
-              <th class="d-none d-sm-table-cell">Connection Date</th>
-              <th>Connection Fee</th>
-              <th class="d-none d-sm-table-cell">Initial Connection Clearance</th>
-              <th>Connection Balance</th>
-              <th>Bill Balance</th>
+              <th class="d-none d-sm-table-cell">Conn Date</th>
+              <th>Conn Fee</th>
+              <th class="d-none d-sm-table-cell">First Conn Clearance</th>
+              <th>Conn Bal</th>
+              <th>Bill Bal</th>
+              <th>Total Cons</th>
+              <th>Total Bill</th>
+              <th>Total Amount</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -185,6 +188,29 @@
             -
           {% endif %}
               </td>
+
+              <td class="text-truncate" style="max-width: 120px;">
+          {% if customer.bpb %}
+            {{ "{:,}".format(customer.get("total_consumption", 0)|int) }}
+          {% else %}
+            -
+          {% endif %}
+              </td>
+              <td class="text-truncate" style="max-width: 120px;">
+          {% if customer.bpb %}
+            {{ "{:,}".format(customer.get("total_bill", 0)|int) }}
+          {% else %}
+            -
+          {% endif %}
+              </td>
+              <td class="text-truncate" style="max-width: 120px;">
+          {% if customer.bpb %}
+            {{ "{:,}".format(customer.get("total_payment", 0)|int) }}
+          {% else %}
+            -
+          {% endif %}
+              </td>
+
               <td>
           <form method="POST" action="{{ url_for('customer_history') }}" style="display:inline;">
             <input type="hidden" name="customer_id" value="{{ customer._id }}">

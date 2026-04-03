@@ -2112,6 +2112,13 @@ def reports():
             bpb_filter_start_date = datetime.datetime.strptime(bpb_filter_start_date_str, "%Y-%m-%d")
             bpb_filter_end_date = datetime.datetime.strptime(bpb_filter_end_date_str, "%Y-%m-%d")
             customer["bpb"] = [entry for entry in customer.get("bpb", []) if bpb_filter_start_date <= entry.get("period") <= bpb_filter_end_date]
+            customer["total_consumption"] = sum(entry.get("consumption", 0) for entry in customer.get("bpb", []))
+            customer["total_bill"] = sum(entry.get("bill", 0) for entry in customer.get("bpb", []))
+            customer["total_payment"] = sum(entry.get("payment", 0) for entry in customer.get("bpb", []))
+        else:
+                customer["total_consumption"] = sum(entry.get("consumption", 0) for entry in customer.get("bpb", []))
+                customer["total_bill"] = sum(entry.get("bill", 0) for entry in customer.get("bpb", []))
+                customer["total_payment"] = sum(entry.get("payment", 0) for entry in customer.get("bpb", []))
     
     total_pages = (total + per_page - 1) // per_page
 
