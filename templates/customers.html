@@ -2,12 +2,90 @@
 
 {% block content %}
 <div class="w-100 h-100">
-  <div class="row align-items-center mb-3">
+  <div class="row align-items-start mb-3">
     <div class="col-auto">
       <h5 class="fw-bold mb-0">Customers</h5>
     </div>
     <div class="col">
+
+
+
       <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+
+
+      <form method="POST" action="{{ url_for('applicant_date_filter_data') }}" style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap;" class="me-4" id="dateFilterForm">
+        <div class="input-group input-group-sm" style="flex: 1; min-width: 300px;">
+          <label class="input-group-text" for="filter_select">Date Filter</label>
+          <select class="form-select" id="filter_select" name="filter_field" required onchange="toggleDateFields(); handleFieldChange()">
+            <option value="" {% if not session.get("filter_field") or session.get("filter_field") == "" %}selected{% endif %}>Select Field</option>
+            <option value="application_period" {% if session.get("filter_field") == "date_applied" %}selected{% endif %}>Application Period</option>
+            <option value="survey_period" {% if session.get("filter_field") == "survey_date" %}selected{% endif %}>Survey Period</option>
+            <option value="payment_period" {% if session.get("filter_field") == "date_paid" %}selected{% endif %}>Payment Period</option>
+            <option value="verification_period" {% if session.get("filter_field") == "verification_date" %}selected{% endif %}>Verification Period</option>
+            <option value="material_issuance_period" {% if session.get("filter_field") == "issuance_date" %}selected{% endif %}>Material Issuance Period</option>
+            <option value="connection_period" {% if session.get("filter_field") == "connection_date" %}selected{% endif %}>Connection Period</option>
+          </select>
+        </div>
+        <div class="input-group input-group-sm">
+          <input type="date" class="form-control" id="date_1" name="start_date" required disabled placeholder="start date" onchange="handleFieldChange()" {% if session.get("customers_start_date") %}value="{{ session.get("customers_start_date") }}"{% endif %}>
+          <input type="date" class="form-control" id="date_2" name="end_date" required disabled placeholder="end date" onchange="handleFieldChange()" {% if session.get("customers_end_date") %}value="{{ session.get("customers_end_date") }}"{% endif %}>
+        </div>
+      </form>
+      <script>
+        function toggleDateFields() {
+          const filterSelect = document.getElementById('filter_select');
+          const date1 = document.getElementById('date_1');
+          const date2 = document.getElementById('date_2');
+          
+          if (filterSelect.value !== "") {
+            date1.disabled = false;
+            date2.disabled = false;
+          } else {
+            date1.disabled = true;
+            date2.disabled = true;
+            date1.value = "";
+            date2.value = "";
+          }
+        }
+        function handleFieldChange() {
+          const filterSelect = document.getElementById('filter_select');
+          const date1 = document.getElementById('date_1');
+          const date2 = document.getElementById('date_2');
+          
+          if (filterSelect.value === "") {
+            date1.value = "";
+            date2.value = "";
+          } else if (date1.value === "" || date2.value === "") {
+            return;
+          } else {
+            document.getElementById('dateFilterForm').submit();
+          }
+        }
+        toggleDateFields();
+      </script>
+
+
+      <form method="POST" action="{{ url_for('set_status') }}">
+        <div class="input-group input-group-sm">
+        <label class="input-group-text" for="status_select">Status</label>
+        <select class="form-select" id="status_select" name="status" required onchange="this.form.submit()">
+        <option value="all" {% if not session.get("selected_status_filter") or session.get("selected_status_filter") == "all" %}selected{% endif %}>All Statuses</option>
+          <option value="applied" {% if session.get("selected_status_filter") == "applied" %}selected{% endif %}>Applied</option>
+          <option value="surveyed" {% if session.get("selected_status_filter") == "surveyed" %}selected{% endif %}>Surveyed</option>
+          <option value="approved" {% if session.get("selected_status_filter") == "approved" %}selected{% endif %}>Approved</option>
+          <option value="disapproved" {% if session.get("selected_status_filter") == "disapproved" %}selected{% endif %}>Disapproved</option>
+          <option value="paid" {% if session.get("selected_status_filter") == "paid" %}selected{% endif %}>Paid</option>
+          <option value="verified" {% if session.get("selected_status_filter") == "verified" %}selected{% endif %}>Verified</option>
+          <option value="not verified" {% if session.get("selected_status_filter") == "not verified" %}selected{% endif %}>Not Verified</option>
+          <option value="materials issued" {% if session.get("selected_status_filter") == "materials issued" %}selected{% endif %}>Materials Issued</option>
+          <option value="materials pending" {% if session.get("selected_status_filter") == "materials pending" %}selected{% endif %}>Materials Pending</option>
+          <option value="connected" {% if session.get("selected_status_filter") == "connected" %}selected{% endif %}>Connected</option>
+          <option value="not connected" {% if session.get("selected_status_filter") == "not connected" %}selected{% endif %}>Not Connected</option>
+          <option value="confirmed" {% if session.get("selected_status_filter") == "confirmed" %}selected{% endif %}>Confirmed</option>
+        </select>
+        </div>
+      </form>
+      
       <form method="POST" action="{{ url_for('set_scheme') }}">
         <div class="input-group input-group-sm">
         <label class="input-group-text" for="scheme_select">Scheme</label>

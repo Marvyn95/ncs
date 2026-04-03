@@ -128,6 +128,7 @@
           <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
             <tr class="table-primary">
               <th>Month</th>
+              <th>Consumption (m3)</th>
               <th>Bill</th>
               <th>Payment</th>
               <th>Connection Balance</th>
@@ -147,6 +148,15 @@
                   -
                 {% endif %}
               </td>
+
+              <td class="text-truncate" style="max-width: 120px;">
+                {% if bpb.consumption %}
+                  {{ "{:,}".format(bpb.consumption|int) }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+
               <td class="text-truncate" style="max-width: 100px;">
                 {% if bpb.bill %}
                   {{ "{:,}".format(bpb.bill|int) }}
