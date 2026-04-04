@@ -2172,37 +2172,88 @@ def add_monthly_billing_sheet():
         return redirect(url_for("reports"))
 
 
-    es_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})
-    for customer in es_customers:
+    es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
+    for customer in es_bp_customers:
 
-        customer_billing_data = df[df["MeterRef"] == customer.get("customer_reference")]
+        if customer.get("type") == "ES":
 
-        if customer_billing_data.empty:
-            continue
- 
-        bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
-        
-        if bpb == []:
+            customer_billing_data = df[df["MeterRef"] == customer.get("customer_reference")]
 
-            due_amount = customer.get("connection_fee", 0) - customer.get("amount_paid", 0)
-
-            if due_amount >= 0:
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": [{
-                            "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                            "consumption": int(customer_billing_data["Consumption"].values[0]),
-                            "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                            "payment": 0,
-                            "balance_on_connection": int(due_amount),
-                            "balance_on_bill": int(customer_billing_data["TotalCharges"].values[0]),
-                            "prepayment_balance": 0
-                        }]
-                    }
-                })
+            if customer_billing_data.empty:
+                continue
+    
+            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
             
-            elif due_amount < 0:
+            if bpb == []:
 
+                due_amount = customer.get("connection_fee", 0) - customer.get("amount_paid", 0)
+
+                if due_amount >= 0:
+                    db.Customers.update_one({"_id": customer.get("_id")}, {
+                        "$set": {
+                            "bpb": [{
+                                "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                                "consumption": int(customer_billing_data["Consumption"].values[0]),
+                                "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                                "payment": 0,
+                                "balance_on_connection": int(due_amount),
+                                "balance_on_bill": int(customer_billing_data["TotalCharges"].values[0]),
+                                "prepayment_balance": 0
+                            }]
+                        }
+                    })
+                
+                elif due_amount < 0:
+
+                    db.Customers.update_one({"_id": customer.get("_id")}, {
+                        "$set": {
+                            "bpb": [{
+                                "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                                "consumption": int(customer_billing_data["Consumption"].values[0]),
+                                "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                                "payment": 0,
+                                "balance_on_connection": 0,
+                                "balance_on_bill": int(customer_billing_data["TotalCharges"].values[0]) + due_amount,
+                                "prepayment_balance": int(due_amount)*(-1)
+                            }]
+                        }
+                    })
+
+            elif bpb != []:
+                month_entry = next((entry for entry in bpb if entry["period"] == datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m")), None)
+                if not month_entry:
+                    bpb.append({
+                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                        "consumption": int(customer_billing_data["Consumption"].values[0]),
+                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                        "payment": 0,
+                    })
+                elif month_entry:
+                    bpb.remove(month_entry)
+                    bpb.append({
+                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                        "consumption": int(customer_billing_data["Consumption"].values[0]),
+                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                        "payment": month_entry.get("payment", 0),
+                    })
+
+                new_bpb = roll_down_balances(customer, bpb)
+
+                db.Customers.update_one({"_id": customer.get("_id")}, {
+                    "$set": {
+                        "bpb": new_bpb
+                    }
+                })
+
+        elif customer.get("type") == "BP":
+            customer_billing_data = df[df["MeterRef"] == customer.get("customer_reference")]
+
+            if customer_billing_data.empty:
+                continue
+
+            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
+
+            if bpb == []:
                 db.Customers.update_one({"_id": customer.get("_id")}, {
                     "$set": {
                         "bpb": [{
@@ -2210,41 +2261,37 @@ def add_monthly_billing_sheet():
                             "consumption": int(customer_billing_data["Consumption"].values[0]),
                             "bill": int(customer_billing_data["TotalCharges"].values[0]),
                             "payment": 0,
-                            "balance_on_connection": 0,
-                            "balance_on_bill": int(customer_billing_data["TotalCharges"].values[0]) + due_amount,
-                            "prepayment_balance": int(due_amount)*(-1)
                         }]
                     }
                 })
+            else:
+                month_entry = next((entry for entry in bpb if entry["period"] == datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m")), None)
+                if month_entry:
+                    bpb.remove(month_entry)
+                    bpb.append({
+                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                        "consumption": int(customer_billing_data["Consumption"].values[0]),
+                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                        "payment": month_entry.get("payment", 0),
+                    })
+                elif not month_entry:
+                    bpb.append({
+                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                        "consumption": int(customer_billing_data["Consumption"].values[0]),
+                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                        "payment": 0,
+                    })
 
-        elif bpb != []:
-            month_entry = next((entry for entry in bpb if entry["period"] == datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m")), None)
-            if not month_entry:
-                bpb.append({
-                    "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                    "consumption": int(customer_billing_data["Consumption"].values[0]),
-                    "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                    "payment": 0,
+                bpb = sorted(bpb, key=lambda x: x.get("period"))
+
+                db.Customers.update_one({"_id": customer.get("_id")}, {
+                    "$set": {
+                        "bpb": bpb
+                    }
                 })
-            elif month_entry:
-                bpb.remove(month_entry)
-                bpb.append({
-                    "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                    "consumption": int(customer_billing_data["Consumption"].values[0]),
-                    "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                    "payment": month_entry.get("payment", 0),
-                })
-
-            new_bpb = roll_down_balances(customer, bpb)
-
-            db.Customers.update_one({"_id": customer.get("_id")}, {
-                "$set": {
-                    "bpb": new_bpb
-                }
-            })
 
     flash("Monthly billing sheet processed successfully!", "success")
-    return redirect(url_for("reports"))
+    return redirect(request.referrer)
 
 
 @app.route('/add_monthly_payment_sheet', methods=["POST"])
@@ -2281,22 +2328,92 @@ def add_monthly_payment_sheet():
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
         return redirect(url_for("reports"))
 
-    es_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})
-    for customer in es_customers:
-        customer_payment_data = df[df["CustomerRef"] == customer.get("customer_reference")]
+    es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
+    for customer in es_bp_customers:
 
-        if customer_payment_data.empty:
-            continue
+        if customer.get("type") == "ES":
+            customer_payment_data = df[df["CustomerRef"] == customer.get("customer_reference")]
 
-        amount_paid = int(customer_payment_data["TranAmount"].sum())
-        payment_date = datetime.datetime.strptime(customer_payment_data["PaymentDate"].values[0].split("T")[0][:7], "%Y-%m")
+            if customer_payment_data.empty:
+                continue
 
-        bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
-        if bpb == []:
+            amount_paid = int(customer_payment_data["TranAmount"].sum())
+            payment_date = datetime.datetime.strptime(customer_payment_data["PaymentDate"].values[0].split("T")[0][:7], "%Y-%m")
 
-            due_amount = customer.get("connection_fee", 0) - customer.get("amount_paid", 0)
+            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
+            if bpb == []:
 
-            if due_amount >= 0:
+                due_amount = customer.get("connection_fee", 0) - customer.get("amount_paid", 0)
+
+                if due_amount >= 0:
+                    db.Customers.update_one({"_id": customer.get("_id")}, {
+                        "$set": {
+                            "bpb": [{
+                                "period": payment_date,
+                                "consumption": 0,
+                                "bill": 0,
+                                "payment": amount_paid,
+                                "balance_on_connection": int(due_amount),
+                                "balance_on_bill": 0,
+                                "prepayment_balance": 0
+                            }]
+                        }
+                    })
+                
+                elif due_amount < 0:
+                    db.Customers.update_one({"_id": customer.get("_id")}, {
+                        "$set": {
+                            "bpb": [{
+                                "period": payment_date,
+                                "consumption": 0,
+                                "bill": 0,
+                                "payment": amount_paid,
+                                "balance_on_connection": 0,
+                                "balance_on_bill": 0,
+                                "prepayment_balance": int(due_amount)*(-1)
+                            }]
+                        }
+                    })
+
+            elif bpb != []:
+                month_entry = next((entry for entry in bpb if entry["period"] == payment_date), None)
+                if not month_entry:
+                    bpb.append({
+                            "period": payment_date,
+                            "consumption": 0,
+                            "bill": 0,
+                            "payment": amount_paid,
+                    })
+                elif month_entry:
+                    bpb.remove(month_entry)
+                    bpb.append({
+                        "period": payment_date,
+                        "consumption": month_entry.get("consumption", 0),
+                        "bill": month_entry.get("bill", 0),
+                        "payment": amount_paid,
+                    })
+
+                new_bpb = roll_down_balances(customer, bpb)
+
+                db.Customers.update_one({"_id": customer.get("_id")}, {
+                    "$set": {
+                        "bpb": new_bpb
+                    }
+                })
+        
+        elif customer.get("type") == "BP":
+
+            customer_payment_data = df[df["CustomerRef"] == customer.get("customer_reference")]
+
+            if customer_payment_data.empty:
+                continue
+
+            amount_paid = int(customer_payment_data["TranAmount"].sum())
+            payment_date = datetime.datetime.strptime(customer_payment_data["PaymentDate"].values[0].split("T")[0][:7], "%Y-%m")
+
+            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
+
+            if bpb == []:
                 db.Customers.update_one({"_id": customer.get("_id")}, {
                     "$set": {
                         "bpb": [{
@@ -2304,56 +2421,39 @@ def add_monthly_payment_sheet():
                             "consumption": 0,
                             "bill": 0,
                             "payment": amount_paid,
-                            "balance_on_connection": int(due_amount),
-                            "balance_on_bill": 0,
-                            "prepayment_balance": 0
                         }]
                     }
                 })
             
-            elif due_amount < 0:
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": [{
-                            "period": payment_date,
-                            "consumption": 0,
-                            "bill": 0,
-                            "payment": amount_paid,
-                            "balance_on_connection": 0,
-                            "balance_on_bill": 0,
-                            "prepayment_balance": int(due_amount)*(-1)
-                        }]
-                    }
-                })
+            elif bpb != []:
+                month_entry = next((entry for entry in bpb if entry["period"] == payment_date), None)
+                if month_entry:
+                    bpb.remove(month_entry)
+                    bpb.append({
+                        "period": payment_date,
+                        "consumption": month_entry.get("consumption", 0),
+                        "bill": month_entry.get("bill", 0),
+                        "payment": amount_paid,
+                    })
 
-        elif bpb != []:
-            month_entry = next((entry for entry in bpb if entry["period"] == payment_date), None)
-            if not month_entry:
-                bpb.append({
+                elif not month_entry:
+                    bpb.append({
                         "period": payment_date,
                         "consumption": 0,
                         "bill": 0,
                         "payment": amount_paid,
-                })
-            elif month_entry:
-                bpb.remove(month_entry)
-                bpb.append({
-                    "period": payment_date,
-                    "consumption": month_entry.get("consumption", 0),
-                    "bill": month_entry.get("bill", 0),
-                    "payment": amount_paid,
-                })
+                    })
 
-            new_bpb = roll_down_balances(customer, bpb)
+                bpb = sorted(bpb, key=lambda x: x.get("period"))
 
-            db.Customers.update_one({"_id": customer.get("_id")}, {
-                "$set": {
-                    "bpb": new_bpb
-                }
-            })
+                db.Customers.update_one({"_id": customer.get("_id")}, {
+                    "$set": {
+                        "bpb": bpb
+                    }
+                })
     
     flash("Monthly payment sheet processed successfully!", "success")
-    return redirect(url_for("reports"))
+    return redirect(request.referrer)
 
 
 @app.route('/customer_history', methods=['POST'])
@@ -2978,6 +3078,7 @@ def BP_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+    villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
 
 
     query = {"umbrella_id": user.get("umbrella_id"), "type": "BP"}
@@ -2992,6 +3093,14 @@ def BP_reports():
         ]
     
     customers = list(db.Customers.find(query).sort("name", 1))
+    for c in customers:
+        c["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), 'N/A')
+        c["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), 'N/A')
+
+        c["total_consumption"] = sum(int(entry.get("consumption", 0)) for entry in c.get("bpb", []))
+        c["total_bill"] = sum(int(entry.get("bill", 0)) for entry in c.get("bpb", []))
+        c["total_payments"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
+        
     
     return render_template('BP_reports.html', user=user, date=datetime.datetime.now(), schemes=schemes, customers=customers)
 
