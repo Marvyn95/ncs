@@ -2825,33 +2825,79 @@ def download_es_reports():
     if reports_selected_scheme_id:
         customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": reports_selected_scheme_id, "type": "ES"}).sort("name", 1))
         scheme = db.Schemes.find_one({"_id": ObjectId(reports_selected_scheme_id)})
-        attachment_name = f"{scheme.get('scheme')}_es_report_{date}.xlsx"
+        if session.get("es_reports_start_date") and session.get("es_reports_end_date"):
+            start_date = datetime.datetime.strptime(session.get("es_reports_start_date"), "%Y-%m-%d").strftime("%d.%B.%Y")
+            end_date = datetime.datetime.strptime(session.get("es_reports_end_date"), "%Y-%m-%d").strftime("%d.%B.%Y")
+            attachment_name = f"{scheme.get('scheme')}_es_report_{start_date}_to_{end_date}.xlsx"
+        else:
+            attachment_name = f"{scheme.get('scheme')}_es_report_{date}.xlsx"
     else:
         customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "type": "ES"}).sort("name", 1))
-        attachment_name = f"es_report_{date}.xlsx"
+        if session.get("es_reports_start_date") and session.get("es_reports_end_date"):
+            start_date = datetime.datetime.strptime(session.get("es_reports_start_date"), "%Y-%m-%d").strftime("%d.%B.%Y")
+            end_date = datetime.datetime.strptime(session.get("es_reports_end_date"), "%Y-%m-%d").strftime("%d.%B.%Y")
+            attachment_name = f"es_report_{start_date}_to_{end_date}.xlsx"
+        else:
+            attachment_name = f"es_report_{date}.xlsx"
+    
     data = []
     villages = list(db.Villages.find())
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
     areas = list(db.Areas.find({"umbrella_id": user.get("umbrella_id")}))
+
     # districts = list(db.Districts.find())
     # subcounties = list(db.Subcounties.find())
     # parishes = list(db.Parishes.find())
-    for c in customers:
-        data.append({
-            "Name": c.get("name"),
-            "Type": c.get("type"),
-            "Contact": c.get("contact"),
-            "Customer Reference": c.get("customer_reference"),
-            "Scheme": next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), None),
-            "Area": next((a.get("area") for a in areas if str(a.get("_id")) == c.get("area_id")), None),
-            "Village": next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), None),
-            "Connection Fee": c.get("connection_fee"),
-            "Initial Amount Paid for Connection": c.get("amount_paid"),
-            "Payment Period": c.get("payment_period"),
-            "Connection Balance": c.get("bpb")[-1].get("balance_on_connection", 0) if c.get("bpb") else c.get("amount_due", 0),
-            "Bill Balance": c.get("bpb")[-1].get("balance_on_bill", 0) if c.get("bpb") else 0,
-            "Overall Balance": c.get("bpb")[-1].get("balance_on_connection", 0) + c.get("bpb")[-1].get("balance_on_bill", 0) if c.get("bpb") else c.get("amount_due", 0),
-        })
+
+    es_report_start_date_str = session.get("es_reports_start_date")
+    es_report_end_date_str = session.get("es_reports_end_date")
+
+    if es_report_start_date_str and es_report_end_date_str:
+        es_report_start_date = datetime.datetime.strptime(es_report_start_date_str, "%Y-%m-%d")
+        es_report_end_date = datetime.datetime.strptime(es_report_end_date_str, "%Y-%m-%d")
+
+        for c in customers:
+
+            c["bpb"] = [entry for entry in c.get("bpb", []) if es_report_start_date <= entry.get("period", datetime.datetime.min) <= es_report_end_date]
+
+            data.append({
+                "Name": c.get("name"),
+                "Type": c.get("type"),
+                "Contact": c.get("contact"),
+                "Customer Reference": c.get("customer_reference"),
+                "Scheme": next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), None),
+                "Area": next((a.get("area") for a in areas if str(a.get("_id")) == c.get("area_id")), None),
+                "Village": next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), None),
+                "Connection Fee": c.get("connection_fee"),
+                "Initial Amount Paid for Connection": c.get("amount_paid"),
+                "Payment Period": c.get("payment_period"),
+                "Connection Balance": 'n/a',
+                "Bill Balance": 'n/a',
+                "Overall Balance": 'n/a',
+                "Total Cumulative Consumption": sum(entry.get("consumption", 0) for entry in c.get("bpb", [])),
+                "Total Cumulative Bill": sum(entry.get("bill", 0) for entry in c.get("bpb", [])),
+                "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
+            })    
+    else:     
+        for c in customers:
+            data.append({
+                "Name": c.get("name"),
+                "Type": c.get("type"),
+                "Contact": c.get("contact"),
+                "Customer Reference": c.get("customer_reference"),
+                "Scheme": next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), None),
+                "Area": next((a.get("area") for a in areas if str(a.get("_id")) == c.get("area_id")), None),
+                "Village": next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), None),
+                "Connection Fee": c.get("connection_fee"),
+                "Initial Amount Paid for Connection": c.get("amount_paid"),
+                "Payment Period": c.get("payment_period"),
+                "Connection Balance": c.get("bpb")[-1].get("balance_on_connection", 0) if c.get("bpb") else c.get("amount_due", 0),
+                "Bill Balance": c.get("bpb")[-1].get("balance_on_bill", 0) if c.get("bpb") else 0,
+                "Overall Balance": c.get("bpb")[-1].get("balance_on_connection", 0) + c.get("bpb")[-1].get("balance_on_bill", 0) if c.get("bpb") else c.get("amount_due", 0),
+                "Total Cumulative Consumption": sum(entry.get("consumption", 0) for entry in c.get("bpb", [])),
+                "Total Cumulative Bill": sum(entry.get("bill", 0) for entry in c.get("bpb", [])),
+                "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
+            })
 
     df = pd.DataFrame(data)
     output = io.BytesIO()

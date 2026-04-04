@@ -143,7 +143,7 @@
               <th>Bill Bal</th>
               <th>Total Cons</th>
               <th>Total Bill</th>
-              <th>Total Amount</th>
+              <th>Total Payment</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -175,18 +175,27 @@
           {% endif %}
               </td>
               <td class="text-truncate" style="max-width: 120px;">
+
+        {% if session.get('es_reports_start_date') or session.get('es_reports_end_date') %}
+                n/a
+        {% else %}
           {% if customer.bpb %}
             {{ "{:,}".format(customer.bpb[-1].get('balance_on_connection', 0)|int) }}
           {% else %}
             {{"{:,}".format(customer.amount_due or 0|int) if customer.amount_due else '-'}}
           {% endif %}
+        {% endif %}
               </td>
               <td class="text-truncate" style="max-width: 120px;">
+        {% if session.get('es_reports_start_date') or session.get('es_reports_end_date') %}
+                n/a
+        {% else %}
           {% if customer.bpb %}
             {{ "{:,}".format(customer.bpb[-1].get('balance_on_bill', 0)|int) }}
           {% else %}
             -
           {% endif %}
+        {% endif %}
               </td>
 
               <td class="text-truncate" style="max-width: 120px;">
