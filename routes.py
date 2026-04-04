@@ -3170,7 +3170,6 @@ def bp_customer_history():
     customer_reference = request.form.get("customer_reference")
     customer = db.Customers.find_one({"_id": ObjectId(customer_id), "customer_reference": int(customer_reference)})
 
-
     customer["bpb"] = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
     customer["scheme"] = db.Schemes.find_one({"_id": ObjectId(customer.get("scheme_id"))}).get("scheme") if customer.get("scheme_id") else 'N/A'
     customer["village"] = db.Villages.find_one({"_id": ObjectId(customer.get("village_id"))}).get("village") if customer.get("village_id") else 'N/A'
