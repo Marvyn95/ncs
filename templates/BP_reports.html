@@ -172,14 +172,14 @@
 
                 <td class="text-truncate" style="max-width: 120px;">
             {% if customer.bpb %}
-              {{ "{:,}".format(customer.get("total_bill", 0)|int - customer.get("total_payment", 0)|int) }}
+              {{ "{:,}".format(customer.get("total_debt", 0)|int) }}
             {% else %}
               -
             {% endif %}
               </td>
 
               <td>
-          <form method="POST" action="{{ url_for('customer_history') }}" style="display:inline;">
+          <form method="POST" action="{{ url_for('bp_customer_history') }}" style="display:inline;">
             <input type="hidden" name="customer_id" value="{{ customer._id }}">
             <input type="hidden" name="customer_reference" value="{{ customer.customer_reference }}">
             <button type="submit" class="btn btn-outline-info btn-sm" title="View History">

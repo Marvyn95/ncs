@@ -3099,8 +3099,9 @@ def BP_reports():
 
         c["total_consumption"] = sum(int(entry.get("consumption", 0)) for entry in c.get("bpb", []))
         c["total_bill"] = sum(int(entry.get("bill", 0)) for entry in c.get("bpb", []))
-        c["total_payments"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
-        
+        c["total_payment"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
+        c["total_debt"] = c["total_bill"] - c["total_payment"]
+
     
     return render_template('BP_reports.html', user=user, date=datetime.datetime.now(), schemes=schemes, customers=customers)
 
@@ -3160,3 +3161,25 @@ def download_bp_reports():
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                      as_attachment=False,
                      download_name=attachment_name)
+
+
+
+@app.route("/bp_customer_history", methods=["POST"])
+def bp_customer_history():
+    customer_id = request.form.get("customer_id")
+    customer_reference = request.form.get("customer_reference")
+    customer = db.Customers.find_one({"_id": ObjectId(customer_id), "customer_reference": int(customer_reference)})
+
+
+    customer["bpb"] = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
+    customer["scheme"] = db.Schemes.find_one({"_id": ObjectId(customer.get("scheme_id"))}).get("scheme") if customer.get("scheme_id") else 'N/A'
+    customer["village"] = db.Villages.find_one({"_id": ObjectId(customer.get("village_id"))}).get("village") if customer.get("village_id") else 'N/A'
+    customer["total_consumption"] = sum(int(entry.get("consumption", 0)) for entry in customer.get("bpb", []))
+    customer["total_bill"] = sum(int(entry.get("bill", 0)) for entry in customer.get("bpb", []))
+    customer["total_payment"] = sum(int(entry.get("payment", 0)) for entry in customer.get("bpb", []))
+    customer["total_debt"] = customer["total_bill"] - customer["total_payment"]
+
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    
+    return render_template("bp_customer_history.html", customer=customer, date = datetime.datetime.now(), user=user)
