@@ -1,4 +1,5 @@
 from genericpath import exists
+import re
 from __init__ import app, db, bcrypt
 from flask import render_template, flash, request, url_for, session, redirect, send_file
 import json
@@ -2951,11 +2952,15 @@ def applicant_date_filter_data():
     elif filter_field == "connection_period":
         session["filter_field"] = "connection_date"
     elif filter_field == "":
+
         session.pop("filter_field", None)
-
-
-    session["customers_start_date"] = start_date_str
-    session["customers_end_date"] = end_date_str
+        session.pop("customers_start_date", None)
+        session.pop("customers_end_date", None)
+    
+    if session.get("filter_field") != "":
+        print("passed here")
+        session["customers_start_date"] = start_date_str
+        session["customers_end_date"] = end_date_str
 
     return redirect(request.referrer or url_for("customers"))
 
@@ -2967,3 +2972,82 @@ def es_report_date_filter():
     session["es_reports_start_date"] = start_date_str
     session["es_reports_end_date"] = end_date_str
     return redirect(request.referrer or url_for("reports"))
+
+@app.route('/BP_reports', methods=['GET'])
+def BP_reports():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+
+
+    query = {"umbrella_id": user.get("umbrella_id"), "type": "BP"}
+    if session.get("bp_reports_selected_scheme_id"):
+        query["scheme_id"] = session.get("bp_reports_selected_scheme_id")
+    if session.get("bp_reports_search_query"):
+        search_regex = re.compile(re.escape(session.get("bp_reports_search_query")), re.IGNORECASE)
+        query["$or"] = [
+            {"name": search_regex},
+            {"contact": search_regex},
+            {"customer_reference": search_regex}
+        ]
+    
+    customers = list(db.Customers.find(query).sort("name", 1))
+    
+    return render_template('BP_reports.html', user=user, date=datetime.datetime.now(), schemes=schemes, customers=customers)
+
+@app.route('/set_bp_reports_scheme', methods=['POST'])
+def set_bp_reports_scheme():
+    scheme_id = request.form.get("scheme_id")
+    if scheme_id:
+        session["bp_reports_selected_scheme_id"] = scheme_id
+        session.pop("bp_reports_search_query", None)
+    else:
+        session.pop("bp_reports_selected_scheme_id", None)
+    return redirect(url_for("BP_reports"))
+
+@app.route('/search_customers_3', methods=['POST'])
+def search_customers_3():
+    search_query = request.form.get("search", "").strip()
+    if search_query:
+        session["bp_reports_search_query"] = search_query
+    else:
+        session.pop("bp_reports_search_query", None)
+    return redirect(url_for("BP_reports"))
+
+
+
+@app.route('/download_bp_reports', methods=['POST'])
+def download_bp_reports():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    selected_scheme_id = session.get("bp_reports_selected_scheme_id")
+    date = datetime.datetime.now().strftime("%d.%B.%Y")
+
+    if selected_scheme_id:
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, "type": "BP"}).sort("name", 1))
+        scheme = db.Schemes.find_one({"_id": ObjectId(selected_scheme_id)})
+        attachment_name = f"{scheme.get('scheme')}_bp_report_{date}.xlsx"
+    else:
+        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "type": "BP"}).sort("name", 1))
+        attachment_name = f"bp_report_{date}.xlsx"
+    
+    data = []
+    for c in customers:
+        data.append({
+            "Name": c.get("name"),
+            "Contact": c.get("contact"),
+            "Customer Reference": c.get("customer_reference"),
+            "Scheme": next((s.get("scheme") for s in db.Schemes.find() if str(s.get("_id")) == c.get("scheme_id")), None),
+            "Connection Fee": c.get("connection_fee"),
+            "Payment Period": c.get("payment_period"),
+            "Monthly Payments": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
+        })
+
+    df = pd.DataFrame(data)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='BP SHEET')
+    output.seek(0)
+    return send_file(output,
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                     as_attachment=False,
+                     download_name=attachment_name)

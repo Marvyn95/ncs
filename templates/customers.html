@@ -15,7 +15,7 @@
         <div class="input-group input-group-sm" style="flex: 1; min-width: 300px;">
           <label class="input-group-text" for="filter_select">Date Filter</label>
           <select class="form-select" id="filter_select" name="filter_field" required onchange="toggleDateFields(); handleFieldChange()">
-            <option value="" {% if not session.get("filter_field") or session.get("filter_field") == "" %}selected{% endif %}>Select Field</option>
+            <option value="" {% if not session.get("filter_field") or session.get("filter_field") == "" %}selected{% endif %}>No Filter</option>
             <option value="application_period" {% if session.get("filter_field") == "date_applied" %}selected{% endif %}>Application Period</option>
             <option value="survey_period" {% if session.get("filter_field") == "survey_date" %}selected{% endif %}>Survey Period</option>
             <option value="payment_period" {% if session.get("filter_field") == "date_paid" %}selected{% endif %}>Payment Period</option>
@@ -56,6 +56,7 @@
           if (filterSelect.value === "") {
             date1.value = "";
             date2.value = "";
+            document.getElementById('dateFilterForm').submit();
           } else if (date1.value === "" || date2.value === "") {
             return;
           } else {

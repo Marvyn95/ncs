@@ -108,6 +108,12 @@
             <i class="bi bi-file-earmark-bar-graph-fill me-2"></i> ES Reports
           </a>
             </li>
+        <li class="nav-item mb-1 d-none d-lg-block">
+          <a class="nav-link text-white d-flex align-items-center {% if section == 'BP_reports' %}active bg-white bg-opacity-25{% endif %}" 
+             href="{{ url_for('BP_reports') }}" style="border-radius: 6px; font-size: 0.89rem; padding: 6px 8px;">
+            <i class="bi bi-file-earmark-bar-graph-fill me-2"></i> BP Reports
+          </a>
+        </li>
             <li class="nav-item mb-1">
           <a href="{{ url_for('logout') }}" class="btn btn-light w-100 d-flex align-items-center justify-content-center" 
              style="border-radius: 6px; font-size: 0.93rem;;">
@@ -202,7 +208,13 @@
                     <i class="bi bi-file-earmark-bar-graph-fill me-2"></i> ES Reports
                   </a>
                 </li>
-          </ul>
+        <li class="nav-item mb-1">
+          <a class="nav-link text-white d-flex align-items-center {% if section == 'BP_reports' %}active bg-white bg-opacity-25{% endif %}" 
+             href="{{ url_for('BP_reports') }}" style="border-radius: 6px; font-size: 0.89rem; padding: 6px 8px;">
+            <i class="bi bi-file-earmark-bar-graph-fill me-2"></i> BP Reports
+          </a>
+        </li>
+        </ul>
         </div>
         <div class="px-2 pb-2">
           <a href="{{ url_for('logout') }}" class="btn btn-light w-100 d-flex align-items-center justify-content-center" 
