@@ -3,16 +3,15 @@
 {% block content %}
 <div class="w-100 h-100">
   <div class="row align-items-start mb-3">
-    <div class="col-auto">
+    <div class="col-12 mb-2">
       <h5 class="fw-bold mb-0">Customers</h5>
     </div>
     <div class="col">
 
-      <div class="d-flex flex-wrap justify-content-start align-items-center gap-2">
+      <div class="d-flex flex-wrap justify-content-start align-items-center gap-1">
 
-
-      <form method="POST" action="{{ url_for('applicant_date_filter_data') }}" style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap;" class="me-4" id="dateFilterForm">
-        <div class="input-group input-group-sm" style="flex: 1; min-width: 300px;">
+      <form method="POST" action="{{ url_for('applicant_date_filter_data') }}" style="display: flex; align-items: center; flex-wrap: nowrap;" class="" id="dateFilterForm">
+        <div class="input-group input-group-sm" style="flex: 1; min-width: 250px;">
           <label class="input-group-text" for="filter_select">Date Filter</label>
           <select class="form-select" id="filter_select" name="filter_field" required onchange="toggleDateFields(); handleFieldChange()">
             <option value="" {% if not session.get("filter_field") or session.get("filter_field") == "" %}selected{% endif %}>No Filter</option>
@@ -29,6 +28,7 @@
           <input type="date" class="form-control" id="date_2" name="end_date" required disabled placeholder="end date" onchange="handleFieldChange()" {% if session.get("customers_end_date") %}value="{{ session.get("customers_end_date") }}"{% endif %}>
         </div>
       </form>
+
       <script>
         function toggleDateFields() {
           const filterSelect = document.getElementById('filter_select');
@@ -67,7 +67,7 @@
       </script>
 
 
-      <form method="POST" action="{{ url_for('set_status') }}">
+      <form method="POST" action="{{ url_for('set_status') }}" class="">
         <div class="input-group input-group-sm">
         <label class="input-group-text" for="status_select">Status</label>
         <select class="form-select" id="status_select" name="status" required onchange="this.form.submit()">
@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', filterVillages);
 </div>
 
 
-  <div class="table-responsive" style="max-height: 510px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
+  <div class="table-responsive" style="max-height: 470px; min-height: 470px;  overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
     <style>
       .table-responsive::-webkit-scrollbar { display: none; }
     </style>
