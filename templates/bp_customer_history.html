@@ -11,8 +11,8 @@
             <span class="text-muted small">History</span>
           </h4>
         </div>
-        <div class="col-auto text-end">
-          <form method="post" action="{{ url_for('customer_report_download') }}" class="d-inline">
+        <div class="col-auto text-end mb-2">
+          <form method="post" action="{{ url_for('bp_customer_report_download') }}" class="d-inline">
             <input type="hidden" name="customer_id" value="{{ customer._id }}">
             <input type="hidden" name="umbrella_id" value="{{ customer.umbrella_id }}">
             <button type="submit" class="btn btn-sm btn-outline-primary">
@@ -137,7 +137,7 @@
             {% if customer.bpb %}
             {% for bpb in customer.bpb %}
             <tr class="bg-dark-subtle my-1">
-              <td class="fw-semibold text-truncate" style="max-width: 120px;">
+              <td class="fw-semibold text-truncate" style="max-width: 100px;">
                 {% if bpb.period %}
                   {{ bpb.period.strftime('%b %Y') }}
                 {% else %}
@@ -145,7 +145,7 @@
                 {% endif %}
               </td>
 
-              <td class="text-truncate" style="max-width: 120px;">
+              <td class="text-truncate" style="max-width: 100px;">
                 {% if bpb.consumption %}
                   {{ "{:,}".format(bpb.consumption|int) }}
                 {% else %}
@@ -160,7 +160,7 @@
                   -
                 {% endif %}
               </td>
-              <td class="text-truncate" style="max-width: 120px;">
+              <td class="text-truncate" style="max-width: 100px;">
                 {% if bpb.payment %}
                   {{ "{:,}".format(bpb.payment|int) }}
                 {% else %}
@@ -171,7 +171,7 @@
             {% endfor %}
             {% else %}
             <tr>
-              <td colspan="7" class="text-center text-muted">No payment history found.</td>
+              <td colspan="4" class="text-center text-muted">No payment history found.</td>
             </tr>
             {% endif %}
           </tbody>
@@ -179,5 +179,9 @@
       </div>
     </div>
   </div>
+
 </div>
+
+
+
 {% endblock %}

@@ -1476,6 +1476,7 @@ def set_scheme():
     flash("Scheme set.", "success")
     return redirect(request.referrer)
 
+
 @app.route('/set_reports_scheme', methods=['POST'])
 @login_required
 def set_reports_scheme():
@@ -2466,7 +2467,7 @@ def customer_history():
     schemes = list(db.Schemes.find())
     customer["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == customer.get("village_id")), 'N/A')
     customer["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == customer.get("scheme_id")), 'N/A')
-    return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now())
+    return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now(), section="customers")
 
 
 @app.route("/subcounties")
@@ -2503,6 +2504,7 @@ def subcounties():
         s["district"] = next((d.get("district") for d in districts if str(d.get("_id")) == s.get("district_id")), 'N/A')
 
     return render_template('subcounties.html',
+                           section="subcounties",
                            user=user,
                            districts=districts,
                            subcounties=subcounties,
@@ -2604,6 +2606,7 @@ def parishes():
         p["district"] = next((d.get("district") for d in districts if str(d["_id"]) == p.get("district_id")), 'N/A')
 
     return render_template('parishes.html',
+                            section="parishes",
                            user=user,
                            subcounties=subcounties,
                            parishes=parishes,
@@ -3092,7 +3095,16 @@ def BP_reports():
             {"customer_reference": search_regex}
         ]
     
-    customers = list(db.Customers.find(query).sort("name", 1))
+    # Pagination
+    page = request.args.get("page", 1, type=int)
+    per_page = 200
+    total_customers = db.Customers.count_documents(query)
+    skip = (page - 1) * per_page
+    
+    customers = list(db.Customers.find(query).sort("name", 1).skip(skip).limit(per_page))
+
+    overall_sum_paid = 0
+    
     for c in customers:
         c["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), 'N/A')
         c["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), 'N/A')
@@ -3102,8 +3114,21 @@ def BP_reports():
         c["total_payment"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
         c["total_debt"] = c["total_bill"] - c["total_payment"]
 
+        overall_sum_paid += c["total_payment"]
+
+    total_pages = (total_customers + per_page - 1) // per_page
     
-    return render_template('BP_reports.html', user=user, date=datetime.datetime.now(), schemes=schemes, customers=customers)
+    return render_template(
+        'BP_reports.html',
+        user=user, date=datetime.datetime.now(),
+        schemes=schemes,
+        customers=customers,
+        page=page,
+        total_pages=total_pages,
+        section="BP_reports",
+        overall_sum_paid=overall_sum_paid
+        )
+
 
 @app.route('/set_bp_reports_scheme', methods=['POST'])
 def set_bp_reports_scheme():
@@ -3114,6 +3139,7 @@ def set_bp_reports_scheme():
     else:
         session.pop("bp_reports_selected_scheme_id", None)
     return redirect(url_for("BP_reports"))
+
 
 @app.route('/search_customers_3', methods=['POST'])
 def search_customers_3():
@@ -3126,7 +3152,7 @@ def search_customers_3():
 
 
 
-@app.route('/download_bp_reports', methods=['POST'])
+@app.route('/download_bp_reports', methods=['GET'])
 def download_bp_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     selected_scheme_id = session.get("bp_reports_selected_scheme_id")
@@ -3139,6 +3165,8 @@ def download_bp_reports():
     else:
         customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "type": "BP"}).sort("name", 1))
         attachment_name = f"bp_report_{date}.xlsx"
+
+    schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
     
     data = []
     for c in customers:
@@ -3146,10 +3174,12 @@ def download_bp_reports():
             "Name": c.get("name"),
             "Contact": c.get("contact"),
             "Customer Reference": c.get("customer_reference"),
-            "Scheme": next((s.get("scheme") for s in db.Schemes.find() if str(s.get("_id")) == c.get("scheme_id")), None),
+            "Scheme": next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), None),
             "Connection Fee": c.get("connection_fee"),
-            "Payment Period": c.get("payment_period"),
-            "Monthly Payments": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
+            "Total Consumption": sum(int(entry.get("consumption", 0)) for entry in c.get("bpb", [])),
+            "Total Bill": sum(int(entry.get("bill", 0)) for entry in c.get("bpb", [])),
+            "Total Payments": sum(int(entry.get("payment", 0)) for entry in c.get("bpb", [])),
+            "Total Debt": sum(int(entry.get("bill", 0)) for entry in c.get("bpb", [])) - sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
         })
 
     df = pd.DataFrame(data)
@@ -3182,3 +3212,23 @@ def bp_customer_history():
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     
     return render_template("bp_customer_history.html", customer=customer, date = datetime.datetime.now(), user=user)
+
+
+@app.route("/bp_customer_report_download", methods=["POST"])
+def bp_customer_report_download():
+    customer_id = request.form.get("customer_id")
+    umbrella_id = request.form.get("umbrella_id")
+    customer = db.Customers.find_one({"_id": ObjectId(customer_id), "umbrella_id": umbrella_id})
+
+    if not customer:
+        flash("Customer not found.", "danger")
+        return redirect(url_for("customers"))
+
+    report_path = generate_customer_report(customer)
+    return send_file(
+        report_path,
+        section="BP_reports",
+        as_attachment=False,
+        download_name=f"{customer.get('name', 'customer')}_report.pdf",
+        mimetype="application/pdf"
+    )

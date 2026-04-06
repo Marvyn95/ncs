@@ -48,7 +48,7 @@
         </button>
           {% endif %}
 
-        <a href="{{ url_for('download_es_reports') }}" class="btn btn-outline-secondary btn-sm" title="Download Records" style="padding:2px 6px;font-size:0.9em;">
+        <a href="{{ url_for('download_bp_reports') }}" class="btn btn-outline-secondary btn-sm" title="Download Records" style="padding:2px 6px;font-size:0.9em;">
         <i class="bi bi-download"></i>
         </a>
         
@@ -106,7 +106,7 @@
       </div>
 
       <!-- Customer Reports Table -->
-      <div class="table-responsive" style="max-height: 510px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
+      <div class="table-responsive" style="max-height: 560px; min-height: 560px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
         <style>
           .table-responsive::-webkit-scrollbar {
         display: none;
@@ -192,6 +192,55 @@
           </tbody>
         </table>
       </div>
+
+
+<!-- Pagination Section -->
+
+<div class="row">
+
+    <nav aria-label="Page navigation" class="pagination-nav col-8">
+        <ul class="pagination pagination-sm justify-content-center">
+          <!-- Previous button -->
+          {% if page > 1 %}
+            <li class="page-item">
+              <a class="page-link" href="{{ url_for('BP_reports', page=page-1) }}">Prev</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link">Prev</span>
+            </li>
+          {% endif %}
+
+          <!-- Page numbers -->
+          {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+              <li class="page-item active">
+                <span class="page-link">{{ p }}</span>
+              </li>
+            {% else %}
+              <li class="page-item">
+                <a class="page-link" href="{{ url_for('BP_reports', page=p) }}">{{ p }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          <!-- Next button -->
+          {% if page < total_pages %}
+            <li class="page-item">
+              <a class="page-link" href="{{ url_for('BP_reports', page=page+1) }}">Next</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link">Next</span>
+            </li>
+          {% endif %}
+        </ul>
+    </nav>
+
+  <div class="text-end col-4">
+    <small class="text-muted">Total Amount Paid: </small>
+    <span class="fw-semibold">{{ "{:,}".format(overall_sum_paid|int) if overall_sum_paid else '0' }}</span>
+  </div>
 
     </div>
   </div>

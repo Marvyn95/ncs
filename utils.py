@@ -154,14 +154,20 @@ def generate_customer_report(customer):
     ]
     right_labels = [
         ("Connection Fee", f"{customer.get('connection_fee', 0):,}"),
-        ("Initial Connection Fee Deposit", f"{customer.get('amount_paid', 0):,}"),
-        ("Payment Period", customer.get('payment_period', '')),
         ("Customer Category", customer.get('type', '')),
         ("First Meter Reading", f"{float(customer.get('first_meter_reading', 0)):,}"),
         ("Meter Serial", f"{customer.get('meter_serial', '')}"),
         ("Application ID", f"{customer.get('application_id', '')}"),
         ("Contact", f"{customer.get('contact', '')}"),
     ]
+
+    if customer.get("type") == "ES":
+        right_labels.append(("Initial Connection Fee Deposit", f"{customer.get('amount_paid', 0):,}"))
+        right_labels.append(("Payment Period (months)", customer.get('payment_period', '')))
+
+    elif customer.get("type") == "BP":
+        right_labels.append(("Amount Paid for connection", f"{customer.get('amount_paid', 0):,}"))
+        right_labels.append(("Total Debt", f"{sum(int(i.get('bill', 0)) for i in customer.get('bpb', [])) - sum(int(i.get('payment', 0)) for i in customer.get('bpb', [])):,}"))
 
     max_rows = max(len(left_labels), len(right_labels))
     col_width = pdf.w / 2 - 20
@@ -187,28 +193,50 @@ def generate_customer_report(customer):
     pdf.cell(0, 10, "Monthly Bills and Payments History", ln=True, align="L")
     pdf.ln(3)
 
-
-    # Table header
-    col_widths = [30, 20, 20, 35, 40, 40]
-    headers = ["Month", "Bills", "Payments", "Balance on Bill", "Balance on Connection", "Prepayment Balance"]
-    pdf.set_font("Arial", "B", 9)
-    for i, header in enumerate(headers):
-        pdf.cell(col_widths[i], 6, header, border='T', align="L")
-    pdf.set_font("Arial", "", 9)
-    pdf.ln()
-
-    # Table rows
-    bpb_object = customer.get("bpb", [])
-    for row in bpb_object:
-        period_str = str(datetime.strptime(str(row.get("period", "")), "%Y-%m-%d %H:%M:%S").strftime("%B, %Y"))
-        pdf.cell(col_widths[0], 7, period_str, border='T')
-        pdf.cell(col_widths[1], 7, f"{row.get('bill', 0):,}", border='T')
-        pdf.cell(col_widths[2], 7, f"{row.get('payment', 0):,}", border='T')
-        pdf.cell(col_widths[3], 7, f"{int(row.get('balance_on_bill', 0)):,}", border='T')
-        pdf.cell(col_widths[4], 7, f"{int(row.get('balance_on_connection', 0)):,}", border='T')
-        pdf.cell(col_widths[5], 7, f"{int(row.get('prepayment_balance', 0)):,}", border='T')
+    if customer.get("type") == "ES":
+        # Table header
+        col_widths = [30, 20, 20, 35, 40, 40]
+        headers = ["Month", "Bills", "Payments", "Balance on Bill", "Balance on Connection", "Prepayment Balance"]
+        pdf.set_font("Arial", "B", 9)
+        for i, header in enumerate(headers):
+            pdf.cell(col_widths[i], 6, header, border='T', align="L")
+        pdf.set_font("Arial", "", 9)
         pdf.ln()
 
+        # Table rows
+        bpb_object = customer.get("bpb", [])
+        for row in bpb_object:
+            period_str = str(datetime.strptime(str(row.get("period", "")), "%Y-%m-%d %H:%M:%S").strftime("%B, %Y"))
+            pdf.cell(col_widths[0], 7, period_str, border='T')
+            pdf.cell(col_widths[1], 7, f"{row.get('bill', 0):,}", border='T')
+            pdf.cell(col_widths[2], 7, f"{row.get('payment', 0):,}", border='T')
+            pdf.cell(col_widths[3], 7, f"{int(row.get('balance_on_bill', 0)):,}", border='T')
+            pdf.cell(col_widths[4], 7, f"{int(row.get('balance_on_connection', 0)):,}", border='T')
+            pdf.cell(col_widths[5], 7, f"{int(row.get('prepayment_balance', 0)):,}", border='T')
+            pdf.ln()
+
+    elif customer.get("type") == "BP":
+        # Table header
+        col_widths = [40, 40, 40]
+        headers = ["Month", "Bills", "Payments"]
+        pdf.set_font("Arial", "B", 9)
+        for i, header in enumerate(headers):
+            pdf.cell(col_widths[i], 6, header, border='T', align="L")
+        pdf.set_font("Arial", "", 9)
+        pdf.ln()
+
+        # Table rows
+        bpb_object = customer.get("bpb", [])
+        for row in bpb_object:
+            period_str = str(datetime.strptime(str(row.get("period", "")), "%Y-%m-%d %H:%M:%S").strftime("%B, %Y"))
+            pdf.cell(col_widths[0], 7, period_str, border='T')
+            pdf.cell(col_widths[1], 7, f"{row.get('bill', 0):,}", border='T')
+            pdf.cell(col_widths[2], 7, f"{row.get('payment', 0):,}", border='T')
+            pdf.ln()
+
+
+
+        
     # Output PDF to memory and return as Flask response
     pdf_output = io.BytesIO()
     pdf_bytes = pdf.output(dest='S').encode('latin1')

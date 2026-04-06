@@ -11,7 +11,7 @@
             <span class="text-muted small">Payment History</span>
           </h4>
         </div>
-        <div class="col-auto text-end">
+        <div class="col-auto text-end mb-2">
           <form method="post" action="{{ url_for('customer_report_download') }}" class="d-inline">
             <input type="hidden" name="customer_id" value="{{ customer._id }}">
             <input type="hidden" name="umbrella_id" value="{{ customer.umbrella_id }}">
