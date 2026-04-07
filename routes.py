@@ -972,476 +972,58 @@ def customers():
         user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
     
     page = request.args.get('page', None)
-    if page:
-        page = int(page)
-    else:
-        page = session.get("customers_page", 1)
-        page = int(page)
+    page = int(page) if page != None else int(session.get("customers_page", 1))
+
     session['customers_page'] = page
 
     per_page = 50
 
-    selected_scheme_id = session.get("selected_scheme_id")
-    selected_status_filter = session.get("selected_status_filter")
+    # working on customers query to the database based on user role and filters
 
-    date_filter_field = session.get("filter_field")
-    customers_start_date_str = session.get("customers_start_date")
-    customers_end_date_str = session.get("customers_end_date")
-    customers_start_date = datetime.datetime.strptime(customers_start_date_str, "%Y-%m-%d") if customers_start_date_str else None
-    customers_end_date = datetime.datetime.strptime(customers_end_date_str, "%Y-%m-%d") if customers_end_date_str else None
+    query = {"umbrella_id": user.get("umbrella_id")}
+    schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
 
-    area_id = user.get("area_id")
-    scheme_id = user.get("scheme_id")
+    if user.get("area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
 
-    search_query = session.get("search_query", "")
+    if user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
 
-    if scheme_id:
-        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
-        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
-        
-        if not search_query:
-            if selected_status_filter and selected_status_filter != "all":
-                if date_filter_field != None:
-                    customers = list(db.Customers.find({
-                        "umbrella_id": user.get("umbrella_id"),
-                        "scheme_id": user.get("scheme_id"),
-                        "status": selected_status_filter,
-                        date_filter_field: {
-                            "$gte": customers_start_date,
-                            "$lte": customers_end_date
-                        }
-                    }))
-                else:
-                    customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id"), "status": selected_status_filter}))
-            else:
-                if date_filter_field != None:
-                    customers = list(db.Customers.find({
-                        "umbrella_id": user.get("umbrella_id"),
-                        "scheme_id": user.get("scheme_id"),
-                        date_filter_field: {
-                            "$gte": customers_start_date,
-                            "$lte": customers_end_date
-                        }
-                    }))
-                else:
-                    customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
-        else:
-            if selected_status_filter and selected_status_filter != "all":
-                if date_filter_field != None:
-                    customers = list(db.Customers.find({
-                        "umbrella_id": user.get("umbrella_id"),
-                        "scheme_id": user.get("scheme_id"),
-                        "status": selected_status_filter,
-                        date_filter_field: {
-                            "$gte": customers_start_date,
-                            "$lte": customers_end_date
-                        },
-                        "$or": [
-                            {"name": {"$regex": search_query, "$options": "i"}},
-                            {"contact": {"$regex": search_query, "$options": "i"}},
-                        ]
-                    }))
-                else:
-                    customers = list(db.Customers.find({
-                        "umbrella_id": user.get("umbrella_id"),
-                        "scheme_id": user.get("scheme_id"),
-                        "status": selected_status_filter,
-                        "$or": [
-                            {"name": {"$regex": search_query, "$options": "i"}},
-                            {"contact": {"$regex": search_query, "$options": "i"}},
-                        ]
-                    }))
-            else:
-                if date_filter_field != None:
-                    customers = list(db.Customers.find({
-                        "umbrella_id": user.get("umbrella_id"),
-                        "scheme_id": user.get("scheme_id"),
-                        date_filter_field: {
-                            "$gte": customers_start_date,
-                            "$lte": customers_end_date
-                        },
-                        "$or": [
-                            {"name": {"$regex": search_query, "$options": "i"}},
-                            {"contact": {"$regex": search_query, "$options": "i"}},
-                        ]
-                    }))
-                else:
-                    customers = list(db.Customers.find({
-                        "umbrella_id": user.get("umbrella_id"),
-                        "scheme_id": user.get("scheme_id"),
-                        "$or": [
-                            {"name": {"$regex": search_query, "$options": "i"}},
-                            {"contact": {"$regex": search_query, "$options": "i"}},
-                        ]
-                    }))
-        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
-        
-        customers = sorted(
-            customers,
-            key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-        )
-        total = len(customers)
-        customers = customers[(page - 1) * per_page : (page) * per_page]
-    else:
-        if area_id:
-            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
-            scheme_ids_in_area = [str(scheme["_id"]) for scheme in schemes]
-            
-            if selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
+    if session.get("selected_scheme_id"):
+        query["scheme_id"] = session.get("selected_scheme_id")
 
-                if not search_query:
-                    if selected_status_filter and selected_status_filter != "all":
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, "status": selected_status_filter, date_filter_field: {"$gte": customers_start_date, "$lte": customers_end_date}})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, "status": selected_status_filter})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                    else:
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, date_filter_field: {"$gte": customers_start_date, "$lte": customers_end_date}})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                else:
-                    if selected_status_filter and selected_status_filter != "all":
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": selected_scheme_id,
-                                    "status": selected_status_filter,
-                                    date_filter_field: {
-                                        "$gte": customers_start_date,
-                                        "$lte": customers_end_date
-                                    },
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": selected_scheme_id,
-                                    "status": selected_status_filter,
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                    else:
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": selected_scheme_id,
-                                    date_filter_field: {
-                                        "$gte": customers_start_date,
-                                        "$lte": customers_end_date
-                                    },
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": selected_scheme_id,
-                                    "$or": [
-                                    {"name": {"$regex": search_query, "$options": "i"}},
-                                    {"contact": {"$regex": search_query, "$options": "i"}},
-                                ]
-                            })),
-                            key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                        )
-                total = len(customers)
-                customers = customers[(page - 1) * per_page : (page) * per_page]
-            
-            elif not selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
+    if session.get("selected_status_filter") and session.get("selected_status_filter") != "all":
+        query["status"] = session.get("selected_status_filter")
 
-                if not search_query:
-                    if selected_status_filter and selected_status_filter != "all":
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}, "status": selected_status_filter, date_filter_field: {"$gte": customers_start_date, "$lte": customers_end_date}})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}, "status": selected_status_filter})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                    else:
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}, date_filter_field: {"$gte": customers_start_date, "$lte": customers_end_date}})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                else:
-                    if selected_status_filter and selected_status_filter != "all":
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": {"$in": scheme_ids_in_area},
-                                    "status": selected_status_filter,
-                                    date_filter_field: {
-                                        "$gte": customers_start_date,
-                                        "$lte": customers_end_date
-                                    },
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": {"$in": scheme_ids_in_area},
-                                    "status": selected_status_filter,
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                    else:
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": {"$in": scheme_ids_in_area},
-                                    date_filter_field: {
-                                        "$gte": customers_start_date,
-                                        "$lte": customers_end_date
-                                    },
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": {"$in": scheme_ids_in_area},
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                total = len(customers)
-                customers = customers[(page - 1) * per_page : (page) * per_page]
-        elif area_id is None:
-            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
-            if selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
+    if session.get("filter_field") and session.get("customers_start_date") and session.get("customers_end_date"):
+        customers_start_date = datetime.datetime.strptime(session.get("customers_start_date"), "%Y-%m-%d")
+        customers_end_date = datetime.datetime.strptime(session.get("customers_end_date"), "%Y-%m-%d")
 
-                if not search_query:
-                    if selected_status_filter and selected_status_filter != "all":
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, "status": selected_status_filter, date_filter_field: {"$gte": customers_start_date, "$lte": customers_end_date}})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, "status": selected_status_filter})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                    else:
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, date_filter_field: {"$gte": customers_start_date, "$lte": customers_end_date}})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                else:
-                    if selected_status_filter and selected_status_filter != "all":
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": selected_scheme_id,
-                                    "status": selected_status_filter,
-                                    date_filter_field: {
-                                        "$gte": customers_start_date,
-                                        "$lte": customers_end_date
-                                    },
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": selected_scheme_id,
-                                    "status": selected_status_filter,
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                    else:
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": selected_scheme_id,
-                                    date_filter_field: {
-                                        "$gte": customers_start_date,
-                                        "$lte": customers_end_date
-                                    },
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "scheme_id": selected_scheme_id,
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                total = len(customers)
-                customers = customers[(page - 1) * per_page : (page) * per_page]
-            elif not selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
+        query[session.get("filter_field")] = {
+            "$gte": customers_start_date,
+            "$lte": customers_end_date
+        }
+    
+    if session.get("search_query"):
+        query["$or"] = [
+            {"name": {"$regex": session.get("search_query"), "$options": "i"}},
+            {"contact": {"$regex": session.get("search_query"), "$options": "i"}},
+        ]
 
-                if not search_query:
-                    if selected_status_filter and selected_status_filter != "all":
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "status": selected_status_filter, date_filter_field: {"$gte": customers_start_date, "$lte": customers_end_date}})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "status": selected_status_filter})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                    else:
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), date_filter_field: {"$gte": customers_start_date, "$lte": customers_end_date}})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({"umbrella_id": user.get("umbrella_id")})),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                else:
-                    if selected_status_filter and selected_status_filter != "all":
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "status": selected_status_filter,
-                                    date_filter_field: {
-                                        "$gte": customers_start_date,
-                                        "$lte": customers_end_date
-                                    },
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "status": selected_status_filter,
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                    else:
-                        if date_filter_field != None:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    date_filter_field: {
-                                        "$gte": customers_start_date,
-                                        "$lte": customers_end_date
-                                    },
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                        else:
-                            customers = sorted(
-                                list(db.Customers.find({
-                                    "umbrella_id": user.get("umbrella_id"),
-                                    "$or": [
-                                        {"name": {"$regex": search_query, "$options": "i"}},
-                                        {"contact": {"$regex": search_query, "$options": "i"}},
-                                    ]
-                                })),
-                                key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                            )
-                total = len(customers)
-                customers = customers[(page - 1) * per_page : (page) * per_page]
+    customers = list(db.Customers.find(query))
+    
+    status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
+    
+    customers = sorted(
+        customers,
+        key=lambda x: status_order.get(x.get("status"), 12)
+    )
+    
+    total = len(customers)
+    
+    customers = customers[(page - 1) * per_page : (page) * per_page]
 
     villages = sorted(list(db.Villages.find()), key=lambda x: x["village"].lower())
 
@@ -2675,20 +2257,46 @@ def download_customers():
     selected_scheme_id = session.get("selected_scheme_id")
     date = datetime.datetime.now().strftime("%d.%B.%Y")
 
-    if selected_scheme_id:
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id}))
-        scheme = db.Schemes.find_one({"_id": ObjectId(selected_scheme_id)})
-        attachment_name = f"{scheme.get('scheme')}_customers_{date}.xlsx"
-    else:
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
-        attachment_name = f"all_customers_{date}.xlsx"
+    query = {"umbrella_id": user.get("umbrella_id")}
+    
+    if user.get("area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
+
+    if user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
+
+    if session.get("selected_scheme_id"):
+        query["scheme_id"] = session.get("selected_scheme_id")
+
+    if session.get("selected_status_filter") and session.get("selected_status_filter") != "all":
+        query["status"] = session.get("selected_status_filter")
+
+    if session.get("filter_field") and session.get("customers_start_date") and session.get("customers_end_date"):
+        customers_start_date = datetime.datetime.strptime(session.get("customers_start_date"), "%Y-%m-%d")
+        customers_end_date = datetime.datetime.strptime(session.get("customers_end_date"), "%Y-%m-%d")
+
+        query[session.get("filter_field")] = {
+            "$gte": customers_start_date,
+            "$lte": customers_end_date
+        }
+    
+    if session.get("search_query"):
+        query["$or"] = [
+            {"name": {"$regex": session.get("search_query"), "$options": "i"}},
+            {"contact": {"$regex": session.get("search_query"), "$options": "i"}},
+        ]
+
+    customers = list(db.Customers.find(query))
+    
+    attachment_name = f"customers_{date}_{query.get('status') if query.get('status') else ''}.xlsx"
+
     data = []
     villages = list(db.Villages.find())
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
     areas = list(db.Areas.find({"umbrella_id": user.get("umbrella_id")}))
-    # districts = list(db.Districts.find())
-    # subcounties = list(db.Subcounties.find())
-    # parishes = list(db.Parishes.find())
+
     for c in customers:
         data.append({
             "Name": c.get("name"),
