@@ -9,6 +9,23 @@
         <h4 class="fw-bold mb-0 me-3 flex-shrink-0">BP Report</h4>
         <div class="d-flex align-items-center ms-auto flex-wrap gap-2">
 
+      <form method="POST" action="{{ url_for('BP_report_date_filter') }}" id="dateFilterForm">
+        <div class="input-group input-group-sm">
+          <input type="date" class="form-control" id="date_1" name="start_date" {% if session.get(" bp_reports_start_date") %} value="{{ session.get("bp_reports_start_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
+          <input type="date" class="form-control" id="date_2" name="end_date" {% if session.get("bp_reports_end_date") %} value="{{ session.get("bp_reports_end_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
+        </div>
+      </form>
+
+      <script>
+        function checkAndSubmitDateForm() {
+          const startDate = document.getElementById('date_1').value;
+          const endDate = document.getElementById('date_2').value;
+          if ((startDate && endDate) || (!startDate && !endDate)) {
+            document.getElementById('dateFilterForm').submit();
+          }
+        }
+      </script>
+
           <form method="POST" action="{{ url_for('set_bp_reports_scheme') }}" class="d-flex align-items-center me-1 flex-wrap gap-1">
         <div class="input-group input-group-sm me-1">
           <label class="input-group-text" for="scheme_select">Scheme</label>

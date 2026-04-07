@@ -2684,6 +2684,14 @@ def es_report_date_filter():
     session["es_reports_end_date"] = end_date_str
     return redirect(request.referrer or url_for("reports"))
 
+@app.route("/BP_report_date_filter", methods=["POST"])
+def BP_report_date_filter():
+    start_date_str = request.form.get("start_date")
+    end_date_str = request.form.get("end_date")
+    session["bp_reports_start_date"] = start_date_str
+    session["bp_reports_end_date"] = end_date_str
+    return redirect(request.referrer or url_for("BP_reports"))
+
 @app.route('/BP_reports', methods=['GET'])
 def BP_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
@@ -2693,8 +2701,10 @@ def BP_reports():
 
 
     query = {"umbrella_id": user.get("umbrella_id"), "type": "BP", "status": "confirmed", "customer_reference": {"$ne": None}}
+    
     if session.get("bp_reports_selected_scheme_id"):
         query["scheme_id"] = session.get("bp_reports_selected_scheme_id")
+    
     if session.get("bp_reports_search_query"):
         search_regex = re.compile(re.escape(session.get("bp_reports_search_query")), re.IGNORECASE)
         query["$or"] = [
@@ -2702,6 +2712,7 @@ def BP_reports():
             {"contact": search_regex},
             {"customer_reference": search_regex}
         ]
+    
     
     # Pagination
     page = request.args.get("page", 1, type=int)
@@ -2717,10 +2728,20 @@ def BP_reports():
         c["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), 'N/A')
         c["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), 'N/A')
 
-        c["total_consumption"] = sum(int(entry.get("consumption", 0)) for entry in c.get("bpb", []))
-        c["total_bill"] = sum(int(entry.get("bill", 0)) for entry in c.get("bpb", []))
-        c["total_payment"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
-        c["total_debt"] = c["total_bill"] - c["total_payment"]
+        if session.get("bp_reports_start_date") and session.get("bp_reports_end_date"):
+            bp_report_start_date = datetime.datetime.strptime(session.get("bp_reports_start_date"), "%Y-%m-%d")
+            bp_report_end_date = datetime.datetime.strptime(session.get("bp_reports_end_date"), "%Y-%m-%d")
+
+            c["bpb"] = [entry for entry in c.get("bpb", []) if bp_report_start_date <= entry.get("period", datetime.datetime.min) <= bp_report_end_date]
+            c["total_consumption"] = sum(int(entry.get("consumption", 0)) for entry in c.get("bpb", []))
+            c["total_bill"] = sum(int(entry.get("bill", 0)) for entry in c.get("bpb", []))
+            c["total_payment"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
+            c["total_debt"] = "n/a"
+        else:
+            c["total_consumption"] = sum(int(entry.get("consumption", 0)) for entry in c.get("bpb", []))
+            c["total_bill"] = sum(int(entry.get("bill", 0)) for entry in c.get("bpb", []))
+            c["total_payment"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
+            c["total_debt"] = c["total_bill"] - c["total_payment"]
 
         overall_sum_paid += c["total_payment"]
 
