@@ -3084,7 +3084,7 @@ def BP_reports():
     villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
 
 
-    query = {"umbrella_id": user.get("umbrella_id"), "type": "BP"}
+    query = {"umbrella_id": user.get("umbrella_id"), "type": "BP", "status": "confirmed", "customer_reference": {"$ne": None}}
     if session.get("bp_reports_selected_scheme_id"):
         query["scheme_id"] = session.get("bp_reports_selected_scheme_id")
     if session.get("bp_reports_search_query"):
