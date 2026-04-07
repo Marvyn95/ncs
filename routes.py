@@ -2699,7 +2699,6 @@ def BP_reports():
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
     villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
 
-
     query = {"umbrella_id": user.get("umbrella_id"), "type": "BP", "status": "confirmed", "customer_reference": {"$ne": None}}
     
     if session.get("bp_reports_selected_scheme_id"):
@@ -2712,7 +2711,6 @@ def BP_reports():
             {"contact": search_regex},
             {"customer_reference": search_regex}
         ]
-    
     
     # Pagination
     page = request.args.get("page", 1, type=int)
