@@ -71,7 +71,7 @@
         <div class="input-group input-group-sm">
         <label class="input-group-text" for="status_select">Status</label>
         <select class="form-select" id="status_select" name="status" required onchange="this.form.submit()">
-        <option value="all" {% if not session.get("selected_status_filter") or session.get("selected_status_filter") == "all" %}selected{% endif %}>All Statuses</option>
+        <option value="" {% if not session.get("selected_status_filter") or session.get("selected_status_filter") == "" %}selected{% endif %}>All Statuses</option>
           <option value="applied" {% if session.get("selected_status_filter") == "applied" %}selected{% endif %}>Applied</option>
           <option value="surveyed" {% if session.get("selected_status_filter") == "surveyed" %}selected{% endif %}>Surveyed</option>
           <option value="approved" {% if session.get("selected_status_filter") == "approved" %}selected{% endif %}>Approved</option>

@@ -1054,9 +1054,12 @@ def customers():
 def set_scheme():
     scheme_id = request.form.get('scheme_id')
     session['selected_scheme_id'] = str(scheme_id)
+
     session.pop('search_query', None)
+    session.pop('customers_page', None)
+
     flash("Scheme set.", "success")
-    return redirect(request.referrer)
+    return redirect(url_for("customers"))
 
 
 @app.route('/set_reports_scheme', methods=['POST'])
@@ -1064,9 +1067,12 @@ def set_scheme():
 def set_reports_scheme():
     scheme_id = request.form.get('scheme_id')
     session['reports_selected_scheme_id'] = str(scheme_id)
-    session.pop('search_query', None)
+    session.pop('reports_search_query', None)
+    
+    session['reports_page'] = 1
+
     flash("Scheme set.", "success")
-    return redirect(request.referrer)
+    return redirect(url_for("reports"))
 
 
 @app.route('/add_customer', methods=["POST"])
@@ -1522,168 +1528,52 @@ def reports():
         return redirect(url_for("logout"))
 
     if user.get("umbrella_id"):
-        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
-        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
+        umbrella = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
+        user["umbrella"] = umbrella.get("umbrella") if umbrella else None
     else:
         user["umbrella"] = None
 
     if user.get("area_id"):
-        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
-        user["area"] = area_doc.get("area") if area_doc else None
+        area = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
+        user["area"] = area.get("area") if area else None
     
     if user.get("scheme_id"):
-        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
-        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
+        scheme = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
+        user["scheme"] = scheme.get("scheme") if scheme else None
     
     page = request.args.get('page', None)
-    if page:
-        page = int(page)
-    else:
-        page = session.get("customers_page", 1)
-        page = int(page)
-    session['customers_page'] = page
+
+    page = int(page) if page is not None else int(session.get("reports_page", 1))
+    session['reports_page'] = page
 
     per_page = 50
 
-    selected_scheme_id = session.get("reports_selected_scheme_id")
-    area_id = user.get("area_id")
-    scheme_id = user.get("scheme_id")
+    query = {"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"}
 
-    search_query = session.get("reports_search_query", "")
+    if user.get("area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
+    
+    if session.get("reports_selected_scheme_id"):
+        query["scheme_id"] = session.get("reports_selected_scheme_id")
 
-    if scheme_id:
-        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
-        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-        
-        if not search_query:
-            customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"}))
-        else:
-            customers = list(db.Customers.find({
-                "umbrella_id": user.get("umbrella_id"),
-                "scheme_id": user.get("scheme_id"),
-                "customer_reference": {"$exists": True, "$ne": None},
-                "status": "confirmed",
-                "type": "ES",
-                "$or": [
-                    {"name": {"$regex": search_query, "$options": "i"}},
-                    {"contact": {"$regex": search_query, "$options": "i"}},
-                ]
-            }))
-        status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-        
-        customers = sorted(
-            customers,
-            key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-        )
-        total = len(customers)
-        customers = customers[(page - 1) * per_page : (page) * per_page]
-    else:
-        if area_id:
-            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": area_id})), key=lambda x: x["scheme"].lower())
-            scheme_ids_in_area = [str(scheme["_id"]) for scheme in schemes]
-            if selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
+    if user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
+    
+    if session.get("reports_search_query"):
+        query["$or"] = [
+            {"name": {"$regex": session.get("reports_search_query"), "$options": "i"}},
+            {"contact": {"$regex": session.get("reports_search_query"), "$options": "i"}},
+        ]
 
-                if not search_query:
-                    customers = sorted(
-                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})),
-                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                    )
-                else:
-                    customers = sorted(
-                        list(db.Customers.find({
-                            "umbrella_id": user.get("umbrella_id"),
-                            "scheme_id": selected_scheme_id,
-                            "customer_reference": {"$exists": True, "$ne": None},
-                            "status": "confirmed",
-                            "type": "ES",
-                            "$or": [
-                                {"name": {"$regex": search_query, "$options": "i"}},
-                                {"contact": {"$regex": search_query, "$options": "i"}},
-                            ]
-                        })),
-                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                    )
-                total = len(customers)
-                customers = customers[(page - 1) * per_page : (page) * per_page]
-            elif not selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-
-                if not search_query:
-                    customers = sorted(
-                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids_in_area}, "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})),
-                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                    )
-                else:
-                    customers = sorted(
-                        list(db.Customers.find({
-                            "umbrella_id": user.get("umbrella_id"),
-                            "scheme_id": {"$in": scheme_ids_in_area},
-                            "customer_reference": {"$exists": True, "$ne": None},
-                            "status": "confirmed",
-                            "type": "ES",
-                            "$or": [
-                                {"name": {"$regex": search_query, "$options": "i"}},
-                                {"contact": {"$regex": search_query, "$options": "i"}},
-                            ]
-                        })),
-                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                    )
-                total = len(customers)
-                customers = customers[(page - 1) * per_page : (page) * per_page]
-        elif area_id is None:
-            schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
-            if selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-
-                if not search_query:
-                    customers = sorted(
-                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})),
-                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                    )
-                else:
-                    customers = sorted(
-                        list(db.Customers.find({
-                            "umbrella_id": user.get("umbrella_id"),
-                            "scheme_id": selected_scheme_id,
-                            "customer_reference": {"$exists": True, "$ne": None},
-                            "status": "confirmed",
-                            "type": "ES",
-                            "$or": [
-                                {"name": {"$regex": search_query, "$options": "i"}},
-                                {"contact": {"$regex": search_query, "$options": "i"}},
-                            ]
-                        })),
-                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                    )
-                total = len(customers)
-                customers = customers[(page - 1) * per_page : (page) * per_page]
-            elif not selected_scheme_id:
-                status_order = {"applied": 0, "surveyed": 1, "approved": 2, "paid": 3, "connected": 4, "confirmed": 5}
-
-                if not search_query:
-                    customers = sorted(
-                        list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"})),
-                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                    )
-                else:
-                    customers = sorted(
-                        list(db.Customers.find({
-                            "umbrella_id": user.get("umbrella_id"),
-                            "customer_reference": {"$exists": True, "$ne": None},
-                            "status": "confirmed",
-                            "type": "ES",
-                            "$or": [
-                                {"name": {"$regex": search_query, "$options": "i"}},
-                                {"contact": {"$regex": search_query, "$options": "i"}},
-                            ]
-                        })),
-                        key=lambda x: (status_order.get(x.get("status"), 99), x.get("name", "").lower())
-                    )
-                total = len(customers)
-                customers = customers[(page - 1) * per_page : (page) * per_page]
+    customers = sorted(list(db.Customers.find(query)), key=lambda x: x.get("name", "").lower())
+    total = len(customers)
+    customers = customers[(page - 1) * per_page : (page) * per_page]
 
     villages = sorted(list(db.Villages.find()), key=lambda x: x["village"].lower())
+    schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
+
 
     for customer in customers:
         customer["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == customer.get("scheme_id")), None)
@@ -2506,24 +2396,17 @@ def upload_customers():
 @app.route("/search_customers", methods=["POST"])
 def search_customers():
     search_query = request.form.get("search", "").strip()
-    if search_query:
-        session["search_query"] = search_query
-        session["customers_page"] = 1
-    else:
-        session.pop("search_query", None)
-        session["customers_page"] = 1
+    session ["search_query"] = search_query if search_query else None
+    session["customers_page"] = 1
     return redirect(url_for("customers"))
 
 
 @app.route("/search_customers_2", methods=["POST"])
 def search_customers_2():
     search_query = request.form.get("search", "").strip()
-    if search_query:
-        session["reports_search_query"] = search_query
-        session["reports_page"] = 1
-    else:
-        session.pop("reports_search_query", None)
-        session["reports_page"] = 1
+    session["reports_search_query"] = search_query if search_query else None
+    session["reports_page"] = 1
+
     return redirect(url_for("reports"))
 
 
@@ -2637,15 +2520,15 @@ def village_sort_by_village():
 @app.route("/set_status", methods=["POST"])
 def set_status():
     status = request.form.get("status")
-    if status:
-        session["selected_status_filter"] = status
-    else:
-        session.pop("selected_status_filter", None)
-    return redirect(request.referrer or url_for("customers"))
+    session["selected_status_filter"] = status if status != "" else None
+    session["customers_page"] = 1
+
+    return redirect(url_for("customers"))
 
 
 @app.route("/applicant_date_filter_data", methods=["POST"])
 def applicant_date_filter_data():
+
     filter_field = request.form.get("filter_field")
     start_date_str = request.form.get("start_date")
     end_date_str = request.form.get("end_date")
@@ -2663,26 +2546,30 @@ def applicant_date_filter_data():
     elif filter_field == "connection_period":
         session["filter_field"] = "connection_date"
     elif filter_field == "":
-
         session.pop("filter_field", None)
         session.pop("customers_start_date", None)
         session.pop("customers_end_date", None)
     
     if session.get("filter_field") != "":
-        print("passed here")
         session["customers_start_date"] = start_date_str
         session["customers_end_date"] = end_date_str
 
-    return redirect(request.referrer or url_for("customers"))
+        session["customers_page"] = 1
+
+    return redirect(url_for("customers"))
 
 
 @app.route("/es_report_date_filter", methods=["POST"])
 def es_report_date_filter():
     start_date_str = request.form.get("start_date")
     end_date_str = request.form.get("end_date")
+
     session["es_reports_start_date"] = start_date_str
     session["es_reports_end_date"] = end_date_str
-    return redirect(request.referrer or url_for("reports"))
+
+    session["reports_page"] = 1
+    
+    return redirect(url_for("reports"))
 
 @app.route("/BP_report_date_filter", methods=["POST"])
 def BP_report_date_filter():
@@ -2690,7 +2577,8 @@ def BP_report_date_filter():
     end_date_str = request.form.get("end_date")
     session["bp_reports_start_date"] = start_date_str
     session["bp_reports_end_date"] = end_date_str
-    return redirect(request.referrer or url_for("BP_reports"))
+    session["BP_reports_page"] = 1
+    return redirect(url_for("BP_reports"))
 
 @app.route('/BP_reports', methods=['GET'])
 def BP_reports():
@@ -2713,7 +2601,12 @@ def BP_reports():
         ]
     
     # Pagination
-    page = request.args.get("page", 1, type=int)
+    page = request.args.get("page")
+
+    page = int(page) if page else session.get("BP_reports_page", 1)
+
+    session["BP_reports_page"] = page
+
     per_page = 200
     total_customers = db.Customers.count_documents(query)
     skip = (page - 1) * per_page
@@ -2760,21 +2653,19 @@ def BP_reports():
 @app.route('/set_bp_reports_scheme', methods=['POST'])
 def set_bp_reports_scheme():
     scheme_id = request.form.get("scheme_id")
-    if scheme_id:
-        session["bp_reports_selected_scheme_id"] = scheme_id
-        session.pop("bp_reports_search_query", None)
-    else:
-        session.pop("bp_reports_selected_scheme_id", None)
+    session["bp_reports_selected_scheme_id"] = scheme_id if scheme_id else None
+    session.pop("bp_reports_search_query", None)
+    session["BP_reports_page"] = 1
+
     return redirect(url_for("BP_reports"))
 
 
 @app.route('/search_customers_3', methods=['POST'])
 def search_customers_3():
     search_query = request.form.get("search", "").strip()
-    if search_query:
-        session["bp_reports_search_query"] = search_query
-    else:
-        session.pop("bp_reports_search_query", None)
+    session["bp_reports_search_query"] = search_query if search_query else None
+    session["BP_reports_page"] = 1
+
     return redirect(url_for("BP_reports"))
 
 
