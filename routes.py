@@ -106,8 +106,10 @@ def home():
         schemes_customers = []
         for scheme in schemes:
             count = len([c for c in customers if c.get("scheme_id") == str(scheme["_id"])])
-            es_cust = len([e for e in customers if e.get("scheme_id") == str(scheme["_id"]) and e.get("type") == "ES"])
-            schemes_customers.append({"scheme": scheme["scheme"], "number_of_customers": count, "es_customers": es_cust})
+            es_cust = len([e for e in customers if e.get("scheme_id") == str(scheme["_id"]) and e.get("type") == "ES" and e.get("status") in ["confirmed"]])
+            bp_cust = len([b for b in customers if b.get("scheme_id") == str(scheme["_id"]) and b.get("type") == "BP" and b.get("status") in ["confirmed"]])
+            schemes_customers.append({"scheme": scheme["scheme"], "number_of_customers": count, "es_customers": es_cust, "bp_customers": bp_cust})
+    
         schemes_customers = sorted(schemes_customers, key=lambda x: x["scheme"].lower())
         session["schemes_customers"] = schemes_customers
 
@@ -2762,3 +2764,27 @@ def bp_customer_report_download():
         download_name=f"{customer.get('name', 'customer')}_report.pdf",
         mimetype="application/pdf"
     )
+
+
+@app.route("/upload_customers_reference", methods=["POST"])
+def upload_customers_reference():
+    file = request.files.get("customers_file")
+
+    if not file or file.filename == "":
+        flash("No file selected!", "danger")
+        return redirect(url_for("customers"))
+    
+    if file.filename.endswith(".xls"):
+        flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
+        return redirect(url_for("customers"))
+    
+    if file.filename.endswith(".csv"):
+        df = pd.read_csv(file)
+    elif file.filename.endswith((".xlsx")):
+        df = pd.read_excel(file)
+    else:
+        flash("Unsupported file format, upload a CSV or Excel file!", "danger")
+        return redirect(url_for("customers"))
+
+    flash(f"Customer references updated successfully!", "success")
+    return redirect(url_for("customers"))
