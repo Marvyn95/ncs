@@ -812,6 +812,10 @@ def villages():
     if user is None:
         flash("User not found!", "danger")
         return redirect(url_for("logout"))
+    
+    if user.get("role") not in ["administrator", "area_manager"]:
+        flash("You do not have permission to access villages!", "danger")
+        return redirect(url_for("home"))
 
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
@@ -1949,6 +1953,10 @@ def subcounties():
     if user is None:
         flash("User not found!", "danger")
         return redirect(url_for("logout"))
+    
+    if user.get("role") not in ["administrator", "area_manager"]:
+        flash("You do not have permission to access this page.", "danger")
+        return redirect(url_for("home"))
 
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
@@ -2048,6 +2056,10 @@ def parishes():
     if user is None:
         flash("User not found!", "danger")
         return redirect(url_for("logout"))
+    
+    if user.get("role") not in ["administrator", "area_manager"]:
+        flash("You do not have permission to access this page.", "danger")
+        return redirect(url_for("home"))
 
     if user.get("umbrella_id"):
         umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
