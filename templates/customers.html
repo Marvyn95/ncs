@@ -129,43 +129,43 @@
 
 <div class="d-flex flex-wrap justify-content-end align-items-center gap-1 me-4 mb-2">
 
-<div class="d-flex justify-content-center align-items-center gap-1" style="margin-right: auto;">
-  <span class="me-3 align-self-center text-muted" style="font-size:0.85em;">
-    Total: <strong>{{ total }}</strong>
-  </span>
-  <nav>
-    <ul class="pagination pagination-sm mb-0">
-      <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-        <a class="page-link" href="?page={{ page - 1 }}">«</a>
-      </li>
-      {% set start_page = page - 2 if page - 2 > 1 else 1 %}
-      {% set end_page = start_page + 5 if start_page + 5 < total_pages else total_pages %}
-      {% if end_page - start_page < 5 %}
-        {% set start_page = end_page - 5 if end_page - 5 > 1 else 1 %}
-      {% endif %}
-      {% if start_page > 1 %}
-        <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
-        {% if start_page > 2 %}
-          <li class="page-item disabled"><span class="page-link">…</span></li>
-        {% endif %}
-      {% endif %}
-      {% for p in range(start_page, end_page + 1) %}
-        <li class="page-item {% if p == page %}active{% endif %}">
-          <a class="page-link" href="?page={{ p }}">{{ p }}</a>
-        </li>
-      {% endfor %}
-      {% if end_page < total_pages %}
-        {% if end_page < total_pages - 1 %}
-          <li class="page-item disabled"><span class="page-link">…</span></li>
-        {% endif %}
-        <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
-      {% endif %}
-      <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-        <a class="page-link" href="?page={{ page + 1 }}">»</a>
-      </li>
-    </ul>
-  </nav>
-</div>
+      <div class="d-flex justify-content-center align-items-center gap-1" style="margin-right: auto;">
+        <span class="me-3 align-self-center text-muted" style="font-size:0.85em;">
+          Total: <strong>{{ total }}</strong>
+        </span>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+              <a class="page-link" href="?page={{ page - 1 }}">«</a>
+            </li>
+            {% set start_page = page - 2 if page - 2 > 1 else 1 %}
+            {% set end_page = start_page + 5 if start_page + 5 < total_pages else total_pages %}
+            {% if end_page - start_page < 5 %}
+              {% set start_page = end_page - 5 if end_page - 5 > 1 else 1 %}
+            {% endif %}
+            {% if start_page > 1 %}
+              <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+              {% if start_page > 2 %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+              {% endif %}
+            {% endif %}
+            {% for p in range(start_page, end_page + 1) %}
+              <li class="page-item {% if p == page %}active{% endif %}">
+                <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+              </li>
+            {% endfor %}
+            {% if end_page < total_pages %}
+              {% if end_page < total_pages - 1 %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+              {% endif %}
+              <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
+            {% endif %}
+            <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+              <a class="page-link" href="?page={{ page + 1 }}">»</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
 
       <div style="display:flex; gap:8px;">
         {% if user.role in ['administrator', 'scheme_manager', 'commercial_officer', 'billing_officer', 'area_manager'] %}
@@ -237,89 +237,88 @@
       </div>
 
 
-<!-- Add Customer Modal -->
-<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <form method="POST" action="{{ url_for('add_customer') }}" enctype="multipart/form-data">
-        <div class="modal-header">
-          <h5 class="modal-title" id="addCustomerModalLabel">Add New Customer</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row g-2">
+      <!-- Add Customer Modal -->
+      <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_customer') }}" enctype="multipart/form-data">
+              <div class="modal-header">
+                <h5 class="modal-title" id="addCustomerModalLabel">Add New Customer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="row g-2">
+                  <div class="col-md-6 mb-2">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <label for="contact" class="form-label">Contact</label>
+                    <input type="text" class="form-control" id="contact" name="contact" required>
+                  </div>
             <div class="col-md-6 mb-2">
-              <label for="name" class="form-label">Name</label>
-              <input type="text" class="form-control" id="name" name="name" required>
+              <label for="scheme_id" class="form-label">Scheme</label>
+              <select name="scheme_id" class="form-select" id="scheme_id" required onchange="filterVillages()">
+                <option value="" disabled selected>Select Scheme</option>
+                {% for scheme in schemes %}
+                  <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
+                {% endfor %}
+              </select>
             </div>
             <div class="col-md-6 mb-2">
-              <label for="contact" class="form-label">Contact</label>
-              <input type="text" class="form-control" id="contact" name="contact" required>
+              <label for="village_id" class="form-label">Village</label>
+              <select name="village_id" class="form-select" id="village_id" required>
+                <option value="" disabled selected>Select Village</option>
+                {% for village in villages %}
+                  <option value="{{ village._id }}" data-scheme="{{ village.scheme_id }}">{{ village.village }}</option>
+                {% endfor %}
+              </select>
             </div>
-<div class="col-md-6 mb-2">
-  <label for="scheme_id" class="form-label">Scheme</label>
-  <select name="scheme_id" class="form-select" id="scheme_id" required onchange="filterVillages()">
-    <option value="" disabled selected>Select Scheme</option>
-    {% for scheme in schemes %}
-      <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
-    {% endfor %}
-  </select>
-</div>
-<div class="col-md-6 mb-2">
-  <label for="village_id" class="form-label">Village</label>
-  <select name="village_id" class="form-select" id="village_id" required>
-    <option value="" disabled selected>Select Village</option>
-    {% for village in villages %}
-      <option value="{{ village._id }}" data-scheme="{{ village.scheme_id }}">{{ village.village }}</option>
-    {% endfor %}
-  </select>
-</div>
 
-<script>
-function filterVillages() {
-  var schemeSelect = document.getElementById('scheme_id');
-  var villageSelect = document.getElementById('village_id');
-  var selectedScheme = schemeSelect.value;
-  Array.from(villageSelect.options).forEach(function(option) {
-    if (!option.value) return; // Skip 'Select Village'
-    option.style.display = (option.getAttribute('data-scheme') === selectedScheme) ? '' : 'none';
-  });
-  // Reset village selection if not matching
-  if (villageSelect.selectedOptions[0] && villageSelect.selectedOptions[0].style.display === 'none') {
-    villageSelect.value = '';
-  }
-}
-document.getElementById('scheme_id').addEventListener('change', filterVillages);
-document.addEventListener('DOMContentLoaded', filterVillages);
-</script>
+        <script>
+        function filterVillages() {
+          var schemeSelect = document.getElementById('scheme_id');
+          var villageSelect = document.getElementById('village_id');
+          var selectedScheme = schemeSelect.value;
+          Array.from(villageSelect.options).forEach(function(option) {
+            if (!option.value) return; // Skip 'Select Village'
+            option.style.display = (option.getAttribute('data-scheme') === selectedScheme) ? '' : 'none';
+          });
+          // Reset village selection if not matching
+          if (villageSelect.selectedOptions[0] && villageSelect.selectedOptions[0].style.display === 'none') {
+            villageSelect.value = '';
+          }
+        }
+        document.getElementById('scheme_id').addEventListener('change', filterVillages);
+        document.addEventListener('DOMContentLoaded', filterVillages);
+        </script>
 
-            <div class="col-md-6 mb-2">
-              <label for="application_id" class="form-label">Application ID</label>
-              <input type="text" class="form-control" id="application_id" name="application_id" required>
-            </div>
-            <div class="col-md-6 mb-2">
-              <label for="date_applied" class="form-label">Date Applied</label>
-              <input type="date" class="form-control" id="date_applied" name="date_applied" value="{{ now().strftime('%Y-%m-%d') }}" required>
-            </div>
-            <div class="col-md-6 mb-2">
-              <label for="id_document" class="form-label">Identification Document</label>
-              <input type="file" class="form-control" id="id_document" name="id_document" accept="application/pdf,image/*" required>
-            </div>
-            <div class="col-md-6 mb-2">
-              <label for="recommendation_letter" class="form-label">Recommendation Letter</label>
-              <input type="file" class="form-control" id="recommendation_letter" name="recommendation_letter" accept="application/pdf,image/*" required>
-            </div>
+                  <div class="col-md-6 mb-2">
+                    <label for="application_id" class="form-label">Application ID</label>
+                    <input type="text" class="form-control" id="application_id" name="application_id" required>
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <label for="date_applied" class="form-label">Date Applied</label>
+                    <input type="date" class="form-control" id="date_applied" name="date_applied" value="{{ now().strftime('%Y-%m-%d') }}" required>
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <label for="id_document" class="form-label">Identification Document</label>
+                    <input type="file" class="form-control" id="id_document" name="id_document" accept="application/pdf,image/*" required>
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <label for="recommendation_letter" class="form-label">Recommendation Letter</label>
+                    <input type="file" class="form-control" id="recommendation_letter" name="recommendation_letter" accept="application/pdf,image/*" required>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer py-2">
+                <button type="submit" class="btn btn-success btn-sm">Add Customer</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+              </div>
+            </form>
           </div>
         </div>
-        <div class="modal-footer py-2">
-          <button type="submit" class="btn btn-success btn-sm">Add Customer</button>
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
+      </div>
 
 </div>
 
@@ -1080,7 +1079,6 @@ document.addEventListener('DOMContentLoaded', function() {
       </tbody>
     </table>
   </div>
-
 
 </div>
 {% endblock %}
