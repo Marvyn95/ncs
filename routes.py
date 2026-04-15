@@ -625,10 +625,12 @@ def schemes():
         scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
         user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
 
-    if session.get("selected_umbrella_id"):
-        schemes = list(db.Schemes.find({"umbrella_id": session.get("selected_umbrella_id")}))
-    else:
-        schemes = list(db.Schemes.find())
+    query = {"umbrella_id": user.get("umbrella_id")}
+    
+    if user.get("area_id"):
+        query["area_id"] = user.get("area_id")
+        
+    schemes = list(db.Schemes.find(query))
 
     areas = list(db.Areas.find())
     districts = list(db.Districts.find())
@@ -833,6 +835,17 @@ def villages():
         scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
         user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
 
+    query = {"umbrella_id": user.get("umbrella_id")}
+
+    if user.get("area_id"):
+        schemes = list(db.Schemes.find({"area_id": user.get("area_id")}))
+        schemes = sorted(schemes, key=lambda x: x["scheme"])
+        scheme_ids = [str(scheme["_id"]) for scheme in schemes]
+        query["scheme_id"] = {"$in": scheme_ids}
+    else:
+        schemes = list(db.Schemes.find())
+        schemes = sorted(schemes, key=lambda x: x["scheme"])
+
     page = request.args.get('page', None)
     if page:
         page = int(page)
@@ -842,8 +855,7 @@ def villages():
     session['villages_page'] = page
     per_page = 120
 
-    villages = sorted(list(db.Villages.find()), key=lambda x: x["village"])
-    schemes = sorted(list(db.Schemes.find()), key=lambda x: x["scheme"])
+    villages = sorted(list(db.Villages.find(query)), key=lambda x: x["village"])
     districts = sorted(list(db.Districts.find()), key=lambda x: x["district"])
     subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"])
     parishes = sorted(list(db.Parishes.find()), key=lambda x: x["parish"])
@@ -2785,6 +2797,35 @@ def upload_customers_reference():
     else:
         flash("Unsupported file format, upload a CSV or Excel file!", "danger")
         return redirect(url_for("customers"))
+
+    if df.columns[0] != "MeterRef" or df.columns[1] != "MeterSerial" or df.columns[3] != "Name" or df.columns[4] != "Phone" or df.columns[5] != "VillageName":
+        flash("Unexpected file column structure!", "danger")
+        return redirect(url_for("customers"))
+    
+
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if not user:
+        flash("User not found!", "danger")
+        return redirect(url_for("customers"))
+    
+    customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "status": "connected"}))
+    villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
+    schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+
+    matches = 1
+    for cust in customers:
+
+        cust["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == cust.get("village_id")), None)
+        cust["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == cust.get("scheme_id")), None)
+
+        matching_row = df[
+            (df["Name"].str.lower().isin([cust.get("name").lower(), f'ES-{cust.get("name")}'.lower(), f'ES {cust.get("name")}'.lower(), f'ES- {cust.get("name")}'.lower(), cust.get("name")[3:].lower()])) &
+            (df["Phone"].isin([cust.get("contact"), cust.get("contact")[1:]]))
+            ]
+
+    print(matches)
+
 
     flash(f"Customer references updated successfully!", "success")
     return redirect(url_for("customers"))

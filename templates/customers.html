@@ -168,7 +168,7 @@
 </div>
 
       <div style="display:flex; gap:8px;">
-        {% if user.role in ['administrator', 'scheme_manager', 'commercial_officer', 'billing_officer'] %}
+        {% if user.role in ['administrator', 'scheme_manager', 'commercial_officer', 'billing_officer', 'area_manager'] %}
         <button class="btn btn-primary btn-sm px-2 py-1" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
           <i class="bi bi-plus-lg me-1"></i> Add Customer
         </button>
@@ -380,7 +380,7 @@ document.addEventListener('DOMContentLoaded', filterVillages);
           <button class="btn btn-outline-info btn-sm p-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ customer._id }}">
         <i class="bi bi-eye"></i>
         </button>
-        {% if user.role in ["administrator"] or user.role in ["area_manager"] and customer.status == "applied" %}
+        {% if user.role in ["administrator"] or user.role in ["area_manager"] and customer.status in ["applied", "surveyed"] %}
         <button class="btn btn-outline-primary btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">
           <i class="bi bi-pencil"></i>
         </button>
