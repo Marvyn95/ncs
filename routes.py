@@ -2443,23 +2443,20 @@ def download_es_reports():
     reports_selected_scheme_id = session.get("reports_selected_scheme_id")
     date = datetime.datetime.now().strftime("%d.%B.%Y")
 
-    if reports_selected_scheme_id:
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": reports_selected_scheme_id, "type": "ES"}).sort("name", 1))
-        scheme = db.Schemes.find_one({"_id": ObjectId(reports_selected_scheme_id)})
-        if session.get("es_reports_start_date") and session.get("es_reports_end_date"):
-            start_date = datetime.datetime.strptime(session.get("es_reports_start_date"), "%Y-%m-%d").strftime("%d.%B.%Y")
-            end_date = datetime.datetime.strptime(session.get("es_reports_end_date"), "%Y-%m-%d").strftime("%d.%B.%Y")
-            attachment_name = f"{scheme.get('scheme')}_es_report_{start_date}_to_{end_date}.xlsx"
-        else:
-            attachment_name = f"{scheme.get('scheme')}_es_report_{date}.xlsx"
-    else:
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "type": "ES"}).sort("name", 1))
-        if session.get("es_reports_start_date") and session.get("es_reports_end_date"):
-            start_date = datetime.datetime.strptime(session.get("es_reports_start_date"), "%Y-%m-%d").strftime("%d.%B.%Y")
-            end_date = datetime.datetime.strptime(session.get("es_reports_end_date"), "%Y-%m-%d").strftime("%d.%B.%Y")
-            attachment_name = f"es_report_{start_date}_to_{end_date}.xlsx"
-        else:
-            attachment_name = f"es_report_{date}.xlsx"
+    query = {"umbrella_id": user.get("umbrella_id"), "type": "ES"}
+
+    if session.get("reports_selected_scheme_id"):
+        query["scheme_id"] = session.get("reports_selected_scheme_id")
+    
+
+    if session.get("reports_search_query"):
+        query["$or"] = [
+            {"name": {"$regex": session.get("reports_search_query"), "$options": "i"}},
+            {"contact": {"$regex": session.get("reports_search_query"), "$options": "i"}},
+            {"customer_reference": {"$regex": session.get("reports_search_query"), "$options": "i"}},
+        ]    
+    
+    customers = list(db.Customers.find(query).sort("name", 1))
     
     data = []
     villages = list(db.Villages.find())
@@ -2498,7 +2495,10 @@ def download_es_reports():
                 "Total Cumulative Consumption": sum(entry.get("consumption", 0) for entry in c.get("bpb", [])),
                 "Total Cumulative Bill": sum(entry.get("bill", 0) for entry in c.get("bpb", [])),
                 "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
-            })    
+            })  
+
+        attachment_name = f"es_report_{es_report_start_date.strftime('%d.%B.%Y')}_to_{es_report_end_date.strftime('%d.%B.%Y')}.xlsx"
+
     else:     
         for c in customers:
             data.append({
@@ -2519,6 +2519,8 @@ def download_es_reports():
                 "Total Cumulative Bill": sum(entry.get("bill", 0) for entry in c.get("bpb", [])),
                 "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
             })
+        
+        attachment_name = f"es_report_{date}.xlsx"
 
     df = pd.DataFrame(data)
     output = io.BytesIO()
