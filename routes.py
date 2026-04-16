@@ -1963,6 +1963,12 @@ def customer_history():
     schemes = list(db.Schemes.find())
     customer["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == customer.get("village_id")), 'N/A')
     customer["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == customer.get("scheme_id")), 'N/A')
+
+    new_bpb = roll_down_balances(customer, customer.get("bpb", []))
+    customer["bpb"] = new_bpb
+
+    db.Customers.update_one({"_id": ObjectId(customer_id), "umbrella_id": user.get("umbrella_id")}, {"$set": {"bpb": new_bpb}})
+
     return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now(), section="customers")
 
 

@@ -43,6 +43,8 @@ def login_required(f):
 def roll_down_balances(customer, bpb_object):
     if bpb_object:
         bpb = sorted(bpb_object, key=lambda x: x["period"])
+    else:
+        bpb = []
     if customer:
         if customer.get("connection_fee", 0) >= customer.get("amount_paid", 0):
             due_amount = int(customer.get("connection_fee", 0)) - int(customer.get("amount_paid", 0))
