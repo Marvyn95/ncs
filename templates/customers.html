@@ -435,6 +435,7 @@
           <li class="list-group-item py-1"><strong>Date of Verification:</strong> {{ customer.verification_date.strftime('%d %b %Y') if customer.verification_date else '-' }}</li>
           <li class="list-group-item py-1"><strong>Date Materials were Issued:</strong> {{ customer.issuance_date.strftime('%d %b %Y') if customer.issuance_date else '-' }}</li>
           <li class="list-group-item py-1"><strong>Date of Connection:</strong> {{ customer.connection_date.strftime('%d %b %Y') if customer.connection_date else '-' }}</li>
+          <li class="list-group-item py-1"><strong>Customer Category:</strong> {{ customer.category or '-' }}</li>
           <li class="list-group-item py-1"><strong>Customer Reference:</strong> {{ customer.customer_reference or '-' }}</li>
         </ul>
       </div>
@@ -702,6 +703,18 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
   <input type="number" class="form-control form-control-sm" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
     value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
 </div>
+
+<div>
+  <label for="customer_category_{{ customer._id }}" class="form-label">Customer Category</label>
+  <select class="form-select" id="customer_category_{{ customer._id }}" name="customer_category" required>
+    <option value="" disabled>Select Category</option>
+    <option value="domestic" {% if customer.category == 'domestic' or not customer.category %}selected{% endif %}>Domestic</option>
+    <option value="institutional" {% if customer.category == 'institutional' %}selected{% endif %}>Institutional</option>
+    <option value="commercial" {% if customer.category == 'commercial' %}selected{% endif %}>Commercial</option>
+    <option value="psp" {% if customer.category == 'psp' %}selected{% endif %}>PSP</option>
+  </select>
+</div>
+
 {% endif %}
 
 
@@ -1035,6 +1048,18 @@ document.addEventListener('DOMContentLoaded', function() {
     <input type="number" class="form-control" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
       value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
   </div>
+  
+  <div class="mb-2">
+    <label for="customer_category_{{ customer._id }}" class="form-label">Customer Category</label>
+    <select class="form-select" id="customer_category_{{ customer._id }}" name="customer_category" required>
+      <option value="" disabled>Select Category</option>
+      <option value="domestic" {% if customer.category == 'domestic' %}selected{% endif %}>Domestic</option>
+      <option value="institutional" {% if customer.category == 'institutional' %}selected{% endif %}>Institutional</option>
+      <option value="commercial" {% if customer.category == 'commercial' %}selected{% endif %}>Commercial</option>
+      <option value="psp" {% if customer.category == 'psp' %}selected{% endif %}>PSP</option>
+    </select>
+  </div>
+  
   <div class="mb-2">
     <p>Are you sure you want to confirm connection for <strong class="text-primary">{{ customer.name }}</strong>?</p>
   </div>

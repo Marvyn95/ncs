@@ -1193,6 +1193,9 @@ def edit_customer():
     if "tap_pipe_type" in request.form:
         update_data["tap_pipe_type"] = request.form.get("tap_pipe_type")
 
+    if "customer_category" in request.form:
+        update_data["category"] = request.form.get("customer_category")
+
     if "survey_date" in request.form:
         if request.form.get("survey_date"):
             update_data["survey_date"] = datetime.datetime.strptime(request.form.get("survey_date"), "%Y-%m-%d")
@@ -1439,6 +1442,7 @@ def customer_connection():
     connection_date = request.form.get("connection_date")
     meter_serial = request.form.get("meter_serial")
     first_meter_reading = request.form.get("first_meter_reading")
+    customer_category = request.form.get("customer_category")
 
     if float(first_meter_reading) > 2**63 - 1:
         flash("First meter reading is too large!", "danger")
@@ -1455,7 +1459,8 @@ def customer_connection():
             "status": "confirmed",
             "connection_date": datetime.datetime.strptime(connection_date, "%Y-%m-%d"),
             "meter_serial": meter_serial,
-            "first_meter_reading": float(first_meter_reading) if first_meter_reading else 0
+            "first_meter_reading": float(first_meter_reading) if first_meter_reading else 0,
+            "category": customer_category
         }
         db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
         return redirect(url_for("customers"))
@@ -1464,7 +1469,8 @@ def customer_connection():
         "status": "connected",
         "connection_date": datetime.datetime.strptime(connection_date, "%Y-%m-%d"),
         "meter_serial": meter_serial,
-        "first_meter_reading": first_meter_reading if first_meter_reading else 0
+        "first_meter_reading": first_meter_reading if first_meter_reading else 0,
+        "category": customer_category
     }
 
     db.Customers.update_one(
