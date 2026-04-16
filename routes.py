@@ -2443,7 +2443,7 @@ def download_es_reports():
     reports_selected_scheme_id = session.get("reports_selected_scheme_id")
     date = datetime.datetime.now().strftime("%d.%B.%Y")
 
-    query = {"umbrella_id": user.get("umbrella_id"), "type": "ES"}
+    query = {"umbrella_id": user.get("umbrella_id"), "type": "ES", "status": "confirmed"}
 
     if session.get("reports_selected_scheme_id"):
         query["scheme_id"] = session.get("reports_selected_scheme_id")
