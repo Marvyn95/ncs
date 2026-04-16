@@ -2815,7 +2815,7 @@ def upload_customers_reference():
     villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
 
-    matches = 1
+    matches = 0
     for cust in customers:
 
         cust["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == cust.get("village_id")), None)
@@ -2823,11 +2823,13 @@ def upload_customers_reference():
 
         matching_row = df[
             (df["Name"].str.lower().isin([cust.get("name").lower(), f'ES-{cust.get("name")}'.lower(), f'ES {cust.get("name")}'.lower(), f'ES- {cust.get("name")}'.lower(), cust.get("name")[3:].lower()])) &
-            (df["Phone"].isin([cust.get("contact"), cust.get("contact")[1:]]))
+            (df["Phone"].astype(str).str.strip().isin([str(cust.get("contact")).strip(), str(cust.get("contact")).strip()[1:]])) &
+            (df["MeterSerial"].str.lower().isin([cust.get("meter_serial", "").lower()]))
             ]
-
-    print(matches)
-
-
-    flash(f"Customer references updated successfully!", "success")
+        
+        if not matching_row.empty:
+            matches += 1
+            db.Customers.update_one({"_id": ObjectId(cust.get("_id")), "umbrella_id": user.get("umbrella_id")}, {"$set": {"customer_reference": int(matching_row["MeterRef"].values[0]), "status": "confirmed"}})
+            
+    flash(f"{matches} Customer references updated successfully!", "success")
     return redirect(url_for("customers"))
