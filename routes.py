@@ -2851,3 +2851,19 @@ def upload_customers_reference():
             
     flash(f"{matches} Customer references updated successfully!", "success")
     return redirect(url_for("customers"))
+
+
+@app.route("/reload_es_reports")
+def reload_es_reports():
+
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "type": "ES", "status": "confirmed"}))
+
+    cust_no = 0
+    for c in customers:
+        new_bpb = roll_down_balances(c, c.get("bpb", []))
+        db.Customers.update_one({"_id": ObjectId(c.get("_id"))}, {"$set": {"bpb": new_bpb}})
+        cust_no += 1
+
+    flash(f"ES reports reloaded successfully for {cust_no} customers!", "success")
+    return redirect(url_for("reports"))
