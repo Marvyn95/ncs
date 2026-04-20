@@ -22,52 +22,41 @@ def home():
         flash("User not found!", "danger")
         return redirect(url_for("logout"))
     
-    if user.get("area_id") == None and user.get("scheme_id") == None:
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
-        customers_count = len(customers)
-        
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    user["area"] = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))}).get("area") if user.get("area_id") else None
+    user["scheme"] = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))}).get("scheme") if user.get("scheme_id") else None
+
+    customer_query = {"umbrella_id": user.get("umbrella_id")}
+    
+    if user.get("area_id") is None and user.get("scheme_id") is None:
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
         scheme_count = len(schemes)
-        
+
         villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
         villages_count = len(villages)
 
-    elif user.get("area_id") != None and user.get("scheme_id") == None:
+    if user.get("area_id"):
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
         scheme_count = len(schemes)
-        scheme_ids = [str(scheme["_id"]) for scheme in schemes]
 
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}))
-        customers_count = len(customers)
-        
-        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}))
+        scheme_ids = [str(scheme["_id"]) for scheme in schemes]
+        customer_query["scheme_id"] = {"$in": scheme_ids}
+
+        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
         villages_count = len(villages)
 
-    if user.get("scheme_id") != None:
+    if user.get("scheme_id"):
+        customer_query["scheme_id"] = user.get("scheme_id")
+        
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(user.get("scheme_id"))}))
         scheme_count = len(schemes)
-        scheme_ids = [str(scheme["_id"]) for scheme in schemes]
-
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}))
-        customers_count = len(customers)
-
-        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}))
+        
+        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
         villages_count = len(villages)
 
-    if user.get("umbrella_id"):
-        umbrella_doc = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))})
-        user["umbrella"] = umbrella_doc.get("umbrella") if umbrella_doc else None
-    else:
-        user["umbrella"] = None
+    customers = list(db.Customers.find(customer_query))
+    customers_count = len(customers)
 
-    if user.get("area_id"):
-        area_doc = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))})
-        user["area"] = area_doc.get("area") if area_doc else None
-    
-    if user.get("scheme_id"):
-        scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
-        user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
-    
 
     application_count = len([a for a in customers if a.get("status") == "applied"])
     survey_count = len([s for s in customers if s.get("status") == "surveyed"])
@@ -77,7 +66,7 @@ def home():
     pending_connection_count = len([c for c in customers if c.get("status") == "materials issued"])
     connected_count = len([c for c in customers if c.get("status") == "connected"])
     confirmed_count = len([c for c in customers if c.get("status") == "confirmed"])
-    es_customers = len([e for e in customers if e.get("type") == "ES"])
+    es_customers = len([e for e in customers if e.get("type") == "ES" and e.get("status") in ["confirmed"]])
 
 
     total_disapprovals = len([d for d in customers if d.get("status") == "disapproved"])
@@ -100,18 +89,16 @@ def home():
     current_year = date.strftime("%Y")
     timezone = 'East Africa time (EAT), UTC +3'
 
-    if session.get("schemes_customers"):
-        schemes_customers = session.get("schemes_customers")
-    else:
-        schemes_customers = []
-        for scheme in schemes:
-            count = len([c for c in customers if c.get("scheme_id") == str(scheme["_id"])])
-            es_cust = len([e for e in customers if e.get("scheme_id") == str(scheme["_id"]) and e.get("type") == "ES" and e.get("status") in ["confirmed"]])
-            bp_cust = len([b for b in customers if b.get("scheme_id") == str(scheme["_id"]) and b.get("type") == "BP" and b.get("status") in ["confirmed"]])
-            schemes_customers.append({"scheme": scheme["scheme"], "number_of_customers": count, "es_customers": es_cust, "bp_customers": bp_cust})
-    
-        schemes_customers = sorted(schemes_customers, key=lambda x: x["scheme"].lower())
-        session["schemes_customers"] = schemes_customers
+    schemes_customers = []
+    for scheme in schemes:
+
+        count = len([c for c in customers if c.get("scheme_id") == str(scheme["_id"])])
+        es_cust = len([e for e in customers if e.get("scheme_id") == str(scheme["_id"]) and e.get("type") == "ES" and e.get("status") in ["confirmed"]])
+        bp_cust = len([b for b in customers if b.get("scheme_id") == str(scheme["_id"]) and b.get("type") == "BP" and b.get("status") in ["confirmed"]])
+
+        schemes_customers.append({"scheme": scheme["scheme"], "number_of_customers": count, "es_customers": es_cust, "bp_customers": bp_cust})
+
+    schemes_customers = sorted(schemes_customers, key=lambda x: x["scheme"].lower())
 
     return render_template("home.html",
                            section="home",
