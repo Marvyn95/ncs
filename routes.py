@@ -2333,7 +2333,7 @@ def upload_customers():
         status = "confirmed"
         type = "ES" if "ES-" in str(name) else "MS"
         meter_serial = str(meter_serial).strip() if not pd.isna(meter_serial) else None
-        customer_reference = int(meter_ref) if not pd.isna(meter_ref) else None
+        customer_reference = int(re.sub(r'\D', '', str(meter_ref))) if not pd.isna(meter_ref) else None
 
         # customercreation date info 
         creation_date_formatted = pd.to_datetime(creation_date)
