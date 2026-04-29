@@ -42,7 +42,7 @@ def home():
         scheme_ids = [str(scheme["_id"]) for scheme in schemes]
         customer_query["scheme_id"] = {"$in": scheme_ids}
 
-        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
+        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}))
         villages_count = len(villages)
 
     if user.get("scheme_id"):
@@ -612,12 +612,14 @@ def schemes():
         scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
         user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
 
-    query = {"umbrella_id": user.get("umbrella_id")}
-    
-    if user.get("area_id"):
-        query["area_id"] = user.get("area_id")
-        
-    schemes = list(db.Schemes.find(query))
+    if not user.get("area_id") and not user.get("scheme_id"):
+       schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+
+    if user.get("area_id") and not user.get("scheme_id"):
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
+
+    if user.get("scheme_id"):
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(user.get("scheme_id"))})) 
 
     areas = list(db.Areas.find())
     districts = list(db.Districts.find())
@@ -822,16 +824,21 @@ def villages():
         scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
         user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
 
-    query = {"umbrella_id": user.get("umbrella_id")}
+    if user.get("area_id") == None and user.get("scheme_id") == None:
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
 
-    if user.get("area_id"):
-        schemes = list(db.Schemes.find({"area_id": user.get("area_id")}))
+    if user.get("area_id") and user.get("scheme_id") == None:
+        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
+
         schemes = sorted(schemes, key=lambda x: x["scheme"])
         scheme_ids = [str(scheme["_id"]) for scheme in schemes]
-        query["scheme_id"] = {"$in": scheme_ids}
-    else:
-        schemes = list(db.Schemes.find())
-        schemes = sorted(schemes, key=lambda x: x["scheme"])
+
+        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}))
+
+    if user.get("scheme_id"):
+        schemes = list(db.Schemes.find({"_id": ObjectId(user.get("scheme_id"))}))
+        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
 
     page = request.args.get('page', None)
     if page:
@@ -842,7 +849,6 @@ def villages():
     session['villages_page'] = page
     per_page = 120
 
-    villages = sorted(list(db.Villages.find(query)), key=lambda x: x["village"])
     districts = sorted(list(db.Districts.find()), key=lambda x: x["district"])
     subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"])
     parishes = sorted(list(db.Parishes.find()), key=lambda x: x["parish"])
@@ -866,7 +872,7 @@ def villages():
     villages = villages[(page - 1) * per_page: page * per_page]
     
     # Pagination
-    total = db.Villages.count_documents({})
+    total = len(villages)
     total_pages = (total + per_page - 1) // per_page
 
     return render_template("villages.html",
