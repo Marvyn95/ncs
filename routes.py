@@ -796,6 +796,13 @@ def delete_district():
 
 
 
+@app.route('/search_villages', methods=["POST"])
+def search_villages():
+    village_search_query = request.form.get("village_search_query", "").strip()
+    session['village_search_query'] = village_search_query
+    return redirect(url_for("villages"))
+
+
 # villages
 @app.route('/villages', methods=["GET"])
 @login_required
@@ -839,6 +846,10 @@ def villages():
     if user.get("scheme_id"):
         schemes = list(db.Schemes.find({"_id": ObjectId(user.get("scheme_id"))}))
         villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
+
+    if session.get('village_search_query'):
+        village_search_query = session.get('village_search_query').lower()
+        villages = [v for v in villages if village_search_query in v.get("village", "").lower()]
 
     page = request.args.get('page', None)
     if page:
