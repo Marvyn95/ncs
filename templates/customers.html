@@ -806,7 +806,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body py-1">
-{% if customer.status == 'applied' and user.role in ['administrator', 'scheme_manager'] %}
+{% if customer.status == 'applied' and user.role in ['administrator', 'scheme_manager', 'area_manager'] %}
 <form method="POST" action="{{ url_for('customer_survey') }}" enctype="multipart/form-data">
   <input type="hidden" name="customer_id" value="{{ customer._id }}">
   <div class="mb-2">
