@@ -53,11 +53,15 @@
             <div class="col">
               <span class="fw-semibold text-dark">Monthly Installment:</span>
               <span class="text-primary">
+              {% if customer.connection_fee >= customer.amount_paid %}
                 {% if customer.connection_fee and customer.payment_period %}
                   {{ "{:,}".format((customer.amount_due|int // customer.payment_period|int)) }} ugx
                 {% else %}
                   -
                 {% endif %}
+              {% else %}
+                -
+              {% endif %}
               </span>
             </div>
             <div class="col">
@@ -84,8 +88,15 @@
               <span class="fw-semibold text-dark">Initial Deficit:</span>
               <span class="text-primary">
                 {% if customer.connection_fee and customer.amount_paid %}
-                  {{ "{:,}".format(customer.connection_fee|int - customer.amount_paid|int) }} ugx
+
+                  {% if customer.connection_fee >= customer.amount_paid %}
+                    {{ "{:,}".format(customer.connection_fee|int - customer.amount_paid|int) }} ugx
+                  {% else %}
+                    0
+                  {% endif %}
+
                 {% else %}
+
                   -
                 {% endif %}
               </span>
