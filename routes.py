@@ -1259,7 +1259,10 @@ def edit_customer():
             update_data["verification_date"] = datetime.datetime.strptime(request.form.get("verification_date"), "%Y-%m-%d")
         else:
             update_data["verification_date"] = None
-    
+
+    if 'verification_query' in request.form:
+        update_data["verification_query"] = request.form.get("verification_query")
+
     if 'connection_status' in request.form:
         if request.form.get("connection_status") == "connected" and customer.get("customer_reference") is not None:
             update_data["status"] = "confirmed"
@@ -1418,10 +1421,19 @@ def customer_verification():
     verification_date = request.form.get("verification_date")
     verification_status = request.form.get("verification_status")
 
+    update_data = {
+        "status": verification_status,
+        "verification_date": datetime.datetime.strptime(verification_date, "%Y-%m-%d") if verification_date else None
+    }
+
+    if verification_status == "not verified":
+        update_data["verification_query"] = request.form.get("verification_query")
+
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
-        {"$set": {"status": verification_status, "verification_date": datetime.datetime.strptime(verification_date, "%Y-%m-%d")}}
+        {"$set": update_data}
     )
+
     flash("Customer status updated!", "success")
     return redirect(url_for("customers"))
 
@@ -2241,21 +2253,21 @@ def download_customers():
             "Application ID": c.get("application_id"),
             "Status": c.get("status"),
             "Category": c.get("category"),
-            "Application Date": c.get("date_applied").strftime("%d, %B, %Y") if isinstance(c.get("date_applied"), datetime.datetime) else c.get("date_applied"),
+            "Application Date": c.get("date_applied").strftime("%d/%m/%Y") if isinstance(c.get("date_applied"), datetime.datetime) else c.get("date_applied"),
             "Pipe Diameter": c.get("pipe_diameter"),
             "Pipe Length": c.get("pipe_length"),
             "Tap Pipe Size": c.get("tap_pipe_size"),
             "Tap Pipe Type": c.get("tap_pipe_type"),
             "Pipe Type": c.get("pipe_type"),
-            "Survey Date": c.get("survey_date").strftime("%d, %B, %Y") if isinstance(c.get("survey_date"), datetime.datetime) else c.get("survey_date"),
+            "Survey Date": c.get("survey_date").strftime("%d/%m/%Y") if isinstance(c.get("survey_date"), datetime.datetime) else c.get("survey_date"),
             "Initial Connection Balance": c.get("amount_due"),
             "Connection Fee": c.get("connection_fee"),
             "Connection Balance Payment Period (months)": c.get("payment_period"),
             "Initial Amount Paid for Connection": c.get("amount_paid"),
-            "Verification Date": c.get("verification_date").strftime("%d, %B, %Y") if isinstance(c.get("verification_date"), datetime.datetime) else c.get("verification_date"),
+            "Verification Date": c.get("verification_date").strftime("%d/%m/%Y") if isinstance(c.get("verification_date"), datetime.datetime) else c.get("verification_date"),
             "Initial Connection Payment Transaction ID": c.get("transaction_id"),
-            "Date of Initial Connection Payment": c.get("date_paid").strftime("%d, %B, %Y") if isinstance(c.get("date_paid"), datetime.datetime) else c.get("date_paid"),
-            "Connection Date": c.get("connection_date").strftime("%d, %B, %Y") if isinstance(c.get("connection_date"), datetime.datetime) else c.get("connection_date"),
+            "Date of Initial Connection Payment": c.get("date_paid").strftime("%d/%m/%Y") if isinstance(c.get("date_paid"), datetime.datetime) else c.get("date_paid"),
+            "Connection Date": c.get("connection_date").strftime("%d/%m/%Y") if isinstance(c.get("connection_date"), datetime.datetime) else c.get("connection_date"),
             "Meter Serial": c.get("meter_serial"),
             "First Meter Reading": c.get("first_meter_reading"),
             "Customer Reference": c.get("customer_reference"),
@@ -2502,13 +2514,13 @@ def download_es_reports():
                 "Contact": c.get("contact"),
                 "Category": c.get("category"),
                 "Customer Reference": c.get("customer_reference"),
-                "connection_date": c.get("connection_date").strftime("%d/%B/%Y") if c.get("connection_date") else None,
+                "connection_date": c.get("connection_date").strftime("%d/%m/%Y") if c.get("connection_date") else None,
                 "Scheme": next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), None),
                 "Area": next((a.get("area") for a in areas if str(a.get("_id")) == c.get("area_id")), None),
                 "Village": next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), None),
                 "Connection Fee": c.get("connection_fee"),
                 "Initial Amount Paid for Connection": c.get("amount_paid"),
-                "Date of Initial Connection Payment": c.get("date_paid").strftime("%d, %B, %Y") if c.get("date_paid") else None,
+                "Date of Initial Connection Payment": c.get("date_paid").strftime("%d/%m/%Y") if c.get("date_paid") else None,
                 "Payment Period": c.get("payment_period"),
                 "Connection Balance": 'n/a',
                 "Bill Balance": 'n/a',
@@ -2528,13 +2540,13 @@ def download_es_reports():
                 "Contact": c.get("contact"),
                 "Category": c.get("category"),
                 "Customer Reference": c.get("customer_reference"),
-                "connection_date": c.get("connection_date").strftime("%d/%B/%Y") if c.get("connection_date") else None,
+                "connection_date": c.get("connection_date").strftime("%d/%m/%Y") if c.get("connection_date") else None,
                 "Scheme": next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), None),
                 "Area": next((a.get("area") for a in areas if str(a.get("_id")) == c.get("area_id")), None),
                 "Village": next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), None),
                 "Connection Fee": c.get("connection_fee"),
                 "Initial Amount Paid for Connection": c.get("amount_paid"),
-                "Date of Initial Connection Payment": c.get("date_paid").strftime("%d, %B, %Y") if c.get("date_paid") else None,
+                "Date of Initial Connection Payment": c.get("date_paid").strftime("%d/%m/%Y") if c.get("date_paid") else None,
                 "Payment Period": c.get("payment_period"),
                 "Connection Balance": c.get("bpb")[-1].get("balance_on_connection", 0) if c.get("bpb") else c.get("amount_due", 0),
                 "Bill Balance": c.get("bpb")[-1].get("balance_on_bill", 0) if c.get("bpb") else 0,
@@ -2747,7 +2759,7 @@ def download_bp_reports():
             "Customer Reference": c.get("customer_reference"),
             "Scheme": next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), None),
             "Connection Fee": c.get("connection_fee"),
-            "Date of Initial Connection Payment": c.get("date_paid").strftime("%d, %B, %Y") if c.get("date_paid") else None,
+            "Date of Initial Connection Payment": c.get("date_paid").strftime("%d/%m/%Y") if c.get("date_paid") else None,
             "Total Consumption": sum(int(entry.get("consumption", 0)) for entry in c.get("bpb", [])),
             "Total Bill": sum(int(entry.get("bill", 0)) for entry in c.get("bpb", [])),
             "Total Payments": sum(int(entry.get("payment", 0)) for entry in c.get("bpb", [])),

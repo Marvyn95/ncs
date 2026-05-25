@@ -413,6 +413,9 @@
           <li class="list-group-item py-1"><strong>Scheme:</strong> {{ customer.scheme or '-' }}</li>
           <li class="list-group-item py-1"><strong>Village:</strong> {{ customer.village or '-' }}</li>
           <li class="list-group-item py-1"><strong>Status:</strong> {{ customer.status or '-' }}</li>
+          {% if customer.status == 'not verified' %}
+            <li class="list-group-item py-1"><strong>Verification Query:</strong> {{ customer.verification_query or '-' }}</li>
+          {% endif %}
           <li class="list-group-item py-1"><strong>Application ID:</strong> {{ customer.application_id or '-' }}</li>
           <li class="list-group-item py-1"><strong>Pipe:</strong> {{ customer.pipe_type or '-' }}, DN {{ customer.pipe_diameter or '-' }}mm, Length: {{ customer.pipe_length or '-' }}m</li>
           <li class="list-group-item py-1"><strong>Date Applied:</strong> {{ customer.date_applied.strftime('%d %b %Y') if customer.date_applied else '-' }}</li>
@@ -437,6 +440,7 @@
           <li class="list-group-item py-1"><strong>Date of Connection:</strong> {{ customer.connection_date.strftime('%d %b %Y') if customer.connection_date else '-' }}</li>
           <li class="list-group-item py-1"><strong>Customer Category:</strong> {{ customer.category or '-' }}</li>
           <li class="list-group-item py-1"><strong>Customer Reference:</strong> {{ customer.customer_reference or '-' }}</li>
+
         </ul>
       </div>
       <div class="modal-footer py-1">
@@ -676,6 +680,13 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
   <label for="verification_date_{{ customer._id }}" class="form-label">Date of Verification</label>
   <input type="date" class="form-control form-control-sm" id="verification_date_{{ customer._id }}" name="verification_date"
     value="{{ customer.verification_date.strftime('%Y-%m-%d') if customer.verification_date else '' }}">
+</div>
+{% endif %}
+
+{% if customer.status == "not verified" %}
+<div class="col-6 mb-1">
+  <label for="verification_query_{{ customer._id }}" class="form-label">Verification Query</label>
+  <input type="text" class="form-control form-control-sm" id="verification_query_{{ customer._id }}" name="verification_query" value="{{ customer.verification_query or '' }}">
 </div>
 {% endif %}
 
@@ -928,6 +939,7 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
   </div>
 </form>
+
 <script>
 function toggleApprovalFields_{{ customer._id }}(select) {
   var fields = document.getElementById('approvalFields_{{ customer._id }}');
@@ -1002,15 +1014,34 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
   <div class="mb-2">
     <label for="customer_reference_{{ customer._id }}" class="form-label">Verification Status</label>
-    <select class="form-select" id="customer_reference_{{ customer._id }}" name="verification_status" required>
-      <option value="verified">Verified</option>
+    <select class="form-select" id="customer_reference_{{ customer._id }}" name="verification_status" required onchange="toggleVerificationQuery('{{ customer._id }}')">
+      <option value="verified" selected>Verified</option>
       <option value="not verified">Not Verified</option>
     </select>
+  </div>
+  <div class="mb-2" id="verification_query_field_{{ customer._id }}" style="display:none;">
+    <label for="verification_query_{{ customer._id }}" class="form-label">Verification Query</label>
+    <textarea class="form-control" id="verification_query_{{ customer._id }}" name="verification_query" rows="3" placeholder="Enter verification query or reason for not verified status"></textarea>
   </div>
   <div class="modal-footer py-1">
     <button type="submit" class="btn btn-primary btn-sm">Update</button>
     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
   </div>
+  <script>
+    function toggleVerificationQuery(customerId) {
+      const select = document.getElementById('customer_reference_' + customerId);
+      const field = document.getElementById('verification_query_field_' + customerId);
+      const textarea = document.getElementById('verification_query_' + customerId);
+      if (select.value === 'not verified') {
+        field.style.display = 'block';
+        textarea.required = true;
+      } else {
+        field.style.display = 'none';
+        textarea.required = false;
+        textarea.value = '';
+      }
+    }
+  </script>
 </form>
 
 {% elif customer.status == 'verified' and user.role in ['administrator', 'stores_officer'] or customer.status == 'materials pending' and user.role in ['administrator', 'stores_officer'] %}
