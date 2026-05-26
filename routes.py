@@ -301,6 +301,7 @@ def umbrellas():
 @app.route('/add_umbrella', methods=["POST"])
 def add_umbrella():
     umbrella_name = request.form.get("umbrella")
+    umbrella_name = str(umbrella_name).strip().upper()  # Convert to uppercase for consistency
 
     if db.Umbrellas.find_one({"umbrella": umbrella_name}) is not None:
         flash("Umbrella already exists!", "danger")
@@ -316,6 +317,7 @@ def add_umbrella():
 def edit_umbrella():
     umbrella_id = request.form.get("umbrella_id")
     new_umbrella_name = request.form.get("umbrella")
+    new_umbrella_name = str(new_umbrella_name).strip().upper()  # Convert to uppercase for consistency
 
     umbrella_info = db.Umbrellas.find_one({"_id": ObjectId(umbrella_id)})
 
@@ -543,6 +545,7 @@ def areas():
 @app.route('/add_area', methods=["POST"])
 def add_area():
     area_name = request.form.get("area")
+    area_name = str(area_name).strip().upper()  # Convert to uppercase for consistency
     umbrella_id = request.form.get("umbrella_id")
 
     if db.Areas.find_one({"area": area_name, "umbrella_id": umbrella_id}) is not None:
@@ -558,6 +561,7 @@ def add_area():
 def edit_area():
     area_id = request.form.get("area_id")
     new_area_name = request.form.get("area")
+    new_area_name = str(new_area_name).strip().upper()  # Convert to uppercase for consistency
     new_umbrella_id = request.form.get("umbrella_id")
 
     area_info = db.Areas.find_one({"_id": ObjectId(area_id)})
@@ -653,6 +657,7 @@ def umbrella_selection():
 def add_scheme():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     scheme_name = request.form.get("scheme")
+    scheme_name = str(scheme_name).strip().upper()  # Convert to uppercase for consistency
     area_id = request.form.get("area_id")
     district_id = request.form.get("district_id")
     umbrella_id = request.form.get("umbrella_id")
@@ -676,6 +681,7 @@ def add_scheme():
 def edit_scheme():
     scheme_id = request.form.get("scheme_id")
     new_scheme_name = request.form.get("scheme")
+    new_scheme_name = str(new_scheme_name).strip().upper()  # Convert to uppercase for consistency
     new_area_id = request.form.get("area_id")
     new_district_id = request.form.get("district_id")
     new_umbrella_id = request.form.get("umbrella_id")
@@ -757,6 +763,7 @@ def districts():
 @app.route('/add_district', methods=["POST"])
 def add_district():
     district_name = request.form.get("district")
+    district_name = str(district_name).strip().upper()  # Convert to uppercase for consistency
 
     if db.Districts.find_one({"district": district_name}) is not None:
         flash("District already exists!", "danger")
@@ -770,7 +777,7 @@ def add_district():
 def edit_district():
     district_id = request.form.get("district_id")
     new_district_name = request.form.get("district")
-
+    new_district_name = str(new_district_name).strip().upper()  # Convert to uppercase for consistency
     district_info = db.Districts.find_one({"_id": ObjectId(district_id)})
 
     if new_district_name != district_info['district'] and db.Districts.find_one({"district": new_district_name}) is not None:
@@ -905,6 +912,7 @@ def villages():
 def add_village():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     village = request.form.get("village")
+    village = str(village).strip().upper()  # Convert to uppercase for consistency
     district_id = request.form.get("district_id")
     subcounty_id = request.form.get("subcounty_id")
     parish_id = request.form.get("parish_id")
@@ -933,6 +941,7 @@ def add_village():
 def edit_village():
     village_id = request.form.get("village_id")
     new_village_name = request.form.get("village")
+    new_village_name = str(new_village_name).strip().upper()  # Convert to uppercase for consistency
     new_district_id = request.form.get("district_id")
     new_subcounty_id = request.form.get("subcounty_id")
     new_parish_id = request.form.get("parish_id")
@@ -1103,6 +1112,7 @@ def set_reports_scheme():
 def add_customer():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     name = request.form.get("name")
+    name = str(name).strip().upper()  # Convert to uppercase for consistency
     contact = request.form.get("contact")
     scheme_id = request.form.get("scheme_id")
     area_id = db.Schemes.find_one({"_id": ObjectId(scheme_id)}).get("area_id") if scheme_id else None
@@ -1151,7 +1161,7 @@ def edit_customer():
     customers = list(db.Customers.find())
 
     update_data = {
-        "name": request.form.get("name"),
+        "name": request.form.get("name").strip().upper(),
         "contact": request.form.get("contact"),
         "scheme_id": request.form.get("scheme_id"),
         "area_id": db.Schemes.find_one({"_id": ObjectId(request.form.get("scheme_id"))}).get("area_id") if request.form.get("scheme_id") else None,
@@ -2037,7 +2047,8 @@ def subcounties():
 
 @app.route('/add_subcounty', methods=['POST'])
 def add_subcounty():
-    subcounty = request.form.get('subcounty').strip()
+    subcounty = request.form.get('subcounty')
+    subcounty = subcounty.strip().upper()
     district_id = request.form.get('district_id')
     existing_subcounty = db.Subcounties.find_one({"subcounty": subcounty, "district_id": district_id})
 
@@ -2057,7 +2068,8 @@ def add_subcounty():
 @app.route('/edit_subcounty', methods=['POST'])
 def edit_subcounty():
     subcounty_id = request.form.get('subcounty_id')
-    new_name = request.form.get('subcounty').strip()
+    new_name = request.form.get('subcounty')
+    new_name = new_name.strip().upper()
     district_id = request.form.get('district_id')
 
     old_subcounty = db.Subcounties.find_one({"_id": ObjectId(subcounty_id)})
@@ -2144,11 +2156,12 @@ def parishes():
 
 @app.route('/add_parish', methods=['POST'])
 def add_parish():
-    parish = request.form.get('parish').strip()
+    parish = request.form.get('parish')
+    parish = parish.strip().upper()
     subcounty_id = request.form.get('subcounty_id')
     district_id = request.form.get('district_id')
 
-    existing_parish = db.Parishes.find_one({"name": parish, "subcounty_id": subcounty_id, "district_id": district_id})
+    existing_parish = db.Parishes.find_one({"parish": parish, "subcounty_id": subcounty_id, "district_id": district_id})
     if existing_parish:
         flash("Parish already exists in the selected subcounty.", "warning")
         return redirect(url_for("parishes"))
@@ -2165,7 +2178,8 @@ def add_parish():
 @app.route('/edit_parish', methods=['POST'])
 def edit_parish():
     parish_id = request.form.get('parish_id')
-    new_name = request.form.get('parish').strip()
+    new_name = request.form.get('parish')
+    new_name = new_name.strip().upper()
     subcounty_id = request.form.get('subcounty_id')
     district_id = request.form.get('district_id')
 
@@ -2358,7 +2372,7 @@ def upload_customers():
         if pd.isna(meter_ref) or pd.isna(name) or pd.isna(scheme_name) or pd.isna(umbrella_name) or pd.isna(creation_date) or pd.isna(village_name):
             continue
 
-        name = str(name).strip() if not pd.isna(name) else None
+        name = str(name).strip().upper() if not pd.isna(name) else None
         contact = str(phone).strip() if not pd.isna(phone) else None
         status = "confirmed"
         type = "ES" if "ES-" in str(name) else "MS"
@@ -2379,7 +2393,7 @@ def upload_customers():
         if umbrella is not None:
             umbrella_id = str(umbrella.get("_id"))
         else:
-            db.Umbrellas.insert_one({"umbrella": umbrella_name})
+            db.Umbrellas.insert_one({"umbrella": str(umbrella_name).strip().upper()})
             umbrellas = list(db.Umbrellas.find())
             umbrella = next((u for u in umbrellas if u.get("umbrella", "").lower() == str(umbrella_name).lower()), None)
             umbrella_id = str(umbrella.get("_id"))
@@ -2398,7 +2412,7 @@ def upload_customers():
         if scheme is not None:
             scheme_id = str(scheme.get("_id"))
         else:
-            db.Schemes.insert_one({"scheme": str(scheme_name), "umbrella_id": str(umbrella_id)})
+            db.Schemes.insert_one({"scheme": str(scheme_name).strip().upper(), "umbrella_id": str(umbrella_id)})
             schemes = list(db.Schemes.find())
             scheme = next((s for s in schemes if s.get("scheme", "").lower() == str(scheme_name).lower() and s.get("umbrella_id") == str(umbrella_id)), None)
             scheme_id = str(scheme.get("_id"))
@@ -2408,7 +2422,7 @@ def upload_customers():
         if village is not None:
             village_id = str(village.get("_id"))
         else:
-            db.Villages.insert_one({"village": str(village_name), "scheme_id": str(scheme_id), "umbrella_id": str(umbrella_id)})
+            db.Villages.insert_one({"village": str(village_name).strip().upper(), "scheme_id": str(scheme_id), "umbrella_id": str(umbrella_id)})
             villages = list(db.Villages.find())
             village = next((v for v in villages if v.get("village", "").lower() == str(village_name).lower() and v.get("scheme_id") == str(scheme_id)), None)
             village_id = str(village.get("_id")) if village else None
