@@ -2875,7 +2875,7 @@ def upload_customers_reference():
         cust["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == cust.get("scheme_id")), None)
 
         matching_row = df[
-            (df["Name"].str.lower().isin([cust.get("name").lower(), f'ES-{cust.get("name")}'.lower(), f'ES {cust.get("name")}'.lower(), f'ES- {cust.get("name")}'.lower(), cust.get("name")[3:].lower()])) &
+            (df["Name"].str.lower().isin([cust.get("name").lower(), f'ES-{cust.get("name")}'.lower(), f'BP-{cust.get("name")}'.lower(), f'ES {cust.get("name")}'.lower(), f'BP {cust.get("name")}'.lower(), f'ES- {cust.get("name")}'.lower(), f'BP- {cust.get("name")}'.lower(), f'', cust.get("name")[3:].lower()])) &
             (df["Phone"].astype(str).str.strip().isin([str(cust.get("contact")).strip(), str(cust.get("contact")).strip()[1:]])) &
             (df["MeterSerial"].str.lower().isin([cust.get("meter_serial", "").lower()]))
             ]
