@@ -1286,6 +1286,10 @@ def edit_customer():
         update_data["first_meter_reading"] = request.form.get("first_meter_reading")
 
     if 'customer_reference' in request.form:
+        existing_customer = db.Customers.find_one({"customer_reference": int(request.form.get("customer_reference"))})
+        if existing_customer and str(existing_customer.get("_id")) != customer_id:
+            flash("Customer reference already exists!", "danger")
+            return redirect(url_for("customers"))
         update_data["customer_reference"] = int(request.form.get("customer_reference"))
     
     if 'transaction_id' in request.form:
