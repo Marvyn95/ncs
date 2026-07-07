@@ -1274,11 +1274,10 @@ def edit_customer():
         update_data["verification_query"] = request.form.get("verification_query")
 
     if 'connection_status' in request.form:
-        if request.form.get("connection_status") == "connected" and customer.get("customer_reference") is not None:
-            update_data["status"] = "confirmed"
-        else:
-
-            update_data["status"] = request.form.get("connection_status")
+        # if request.form.get("connection_status") == "connected" and customer.get("customer_reference") is not None:
+        #     update_data["status"] = "confirmed"
+        # else:
+        update_data["status"] = request.form.get("connection_status")
 
     if 'meter_serial' in request.form:
         update_data["meter_serial"] = request.form.get("meter_serial")
@@ -1516,6 +1515,11 @@ def customer_confirmation():
 
     if abs(int(customer_reference)) > 2**63 - 1:
         flash("Customer reference is too large!", "danger")
+        return redirect(url_for("customers"))
+    
+    existing_customer = db.Customers.find_one({"customer_reference": int(customer_reference)})
+    if existing_customer and str(existing_customer.get("_id")) != customer_id:
+        flash("Customer reference already exists!", "danger")
         return redirect(url_for("customers"))
 
     db.Customers.update_one(
