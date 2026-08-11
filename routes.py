@@ -1703,13 +1703,12 @@ def add_monthly_billing_sheet():
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
         return redirect(url_for("reports"))
 
-
     es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
     for customer in es_bp_customers:
 
         if customer.get("type") == "ES":
 
-            customer_billing_data = df[df["MeterRef"] == customer.get("customer_reference")]
+            customer_billing_data = df[df["MeterRef"].astype(str) == str(customer.get("customer_reference"))]
 
             if customer_billing_data.empty:
                 continue
@@ -1778,10 +1777,13 @@ def add_monthly_billing_sheet():
                 })
 
         elif customer.get("type") == "BP":
-            customer_billing_data = df[df["MeterRef"] == customer.get("customer_reference")]
+
+            customer_billing_data = df[df["MeterRef"].astype(str) == str(customer.get("customer_reference"))]
 
             if customer_billing_data.empty:
                 continue
+
+            print(f"Processing BP customer: {customer.get('name')} with reference: {customer.get('customer_reference')}")
 
             bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
 
@@ -1864,7 +1866,7 @@ def add_monthly_payment_sheet():
     for customer in es_bp_customers:
 
         if customer.get("type") == "ES":
-            customer_payment_data = df[df["CustomerRef"] == customer.get("customer_reference")]
+            customer_payment_data = df[df["CustomerRef"].astype(str) == str(customer.get("customer_reference"))]
 
             if customer_payment_data.empty:
                 continue
@@ -1935,7 +1937,7 @@ def add_monthly_payment_sheet():
         
         elif customer.get("type") == "BP":
 
-            customer_payment_data = df[df["CustomerRef"] == customer.get("customer_reference")]
+            customer_payment_data = df[df["CustomerRef"].astype(str) == str(customer.get("customer_reference"))]
 
             if customer_payment_data.empty:
                 continue
@@ -2672,6 +2674,9 @@ def BP_reports():
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
     villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
+
+    schemes = sorted(schemes, key=lambda x: x["scheme"].lower())
+    # villages = sorted(villages, key=lambda x: x["village"].lower())
 
     query = {"umbrella_id": user.get("umbrella_id"), "type": "BP", "status": "confirmed", "customer_reference": {"$ne": None}}
     
