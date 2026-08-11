@@ -2885,7 +2885,7 @@ def upload_customers_reference():
         matching_row = df[
             (df["Name"].str.lower().isin([cust.get("name").lower(), f'ES-{cust.get("name")}'.lower(), f'BP-{cust.get("name")}'.lower(), f'ES {cust.get("name")}'.lower(), f'BP {cust.get("name")}'.lower(), f'ES- {cust.get("name")}'.lower(), f'BP- {cust.get("name")}'.lower(), f'', cust.get("name")[3:].lower()])) &
             (df["Phone"].astype(str).str.strip().isin([str(cust.get("contact")).strip(), str(cust.get("contact")).strip()[1:]])) &
-            (df["MeterSerial"].str.lower().isin([cust.get("meter_serial", "").lower()]))
+            (df["MeterSerial"].str.lower().str.replace(" ", "").str.replace("-", "").isin([cust.get("meter_serial", "").lower().replace(" ", "").replace("-", "")]))
             ]
         
         if not matching_row.empty:
