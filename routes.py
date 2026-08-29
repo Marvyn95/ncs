@@ -616,14 +616,14 @@ def schemes():
         scheme_doc = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))})
         user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
 
+
     if not user.get("area_id") and not user.get("scheme_id"):
-       schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+       scheme_search_query = {"umbrella_id": user.get("umbrella_id")}
 
-    if user.get("area_id") and not user.get("scheme_id"):
-        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
+    if session.get("selected_umbrella_id"):
+        scheme_search_query = {"umbrella_id": session.get("selected_umbrella_id")}
 
-    if user.get("scheme_id"):
-        schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(user.get("scheme_id"))})) 
+    schemes = list(db.Schemes.find(scheme_search_query))
 
     areas = list(db.Areas.find())
     districts = list(db.Districts.find())

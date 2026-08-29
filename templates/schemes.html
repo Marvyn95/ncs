@@ -1,25 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="w-100 h-100">
-  <div class="d-flex justify-content-between align-items-start mb-3">
+<div class="w-100 h-100 d-flex flex-column overflow-hidden px-3 py-2">
+
+  <!-- Header Section -->
+  <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
     <div>
-      <h5 class="fw-bold mb-1">Schemes</h5>
-      <p class="mb-0">Manage schemes</p>
+      <h4 class="fw-bold mb-0">Schemes</h4>
+      <p class="text-muted mb-0 small">Manage Schemes</p>
     </div>
-    {% if user.role in ["administrator"] %}
-    <form method="GET" action="{{ url_for('umbrella_selection') }}" class="d-flex align-items-center gap-2">
-      <label for="filter_umbrella" class="form-label mb-0">Umbrella:</label>
-      <select class="form-select form-select-sm" id="filter_umbrella" name="umbrella_id" onchange="this.form.submit()">
-        <option value="">All Umbrellas</option>
-        {% for umbrella in umbrellas %}
-          <option value="{{ umbrella._id }}" {% if session.get('selected_umbrella_id') == umbrella._id|string %}selected{% endif %}>{{ umbrella.umbrella }}</option>
-        {% endfor %}
-      </select>
-    </form>
-    {% endif %}
     <div>
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSchemeModal">
+      <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#addSchemeModal">
         <i class="bi bi-plus-lg me-1"></i> Add Scheme
       </button>
     </div>
@@ -42,44 +33,21 @@
             <div class="mb-3">
               <label for="umbrella_id" class="form-label">Umbrella</label>
               <select class="form-select" id="umbrella_id" name="umbrella_id" required onchange="filterAreas()">
-              <option value="" disabled selected>Select Umbrella</option>
-              {% for umbrella in umbrellas %}
-                <option value="{{ umbrella._id }}">{{ umbrella.umbrella }}</option>
-              {% endfor %}
+                <option value="" disabled selected>Select Umbrella</option>
+                {% for umbrella in umbrellas %}
+                  <option value="{{ umbrella._id }}">{{ umbrella.umbrella }}</option>
+                {% endfor %}
               </select>
             </div>
             <div class="mb-3">
               <label for="area_id" class="form-label">Area</label>
               <select class="form-select" id="area_id" name="area_id" required>
-              <option value="" disabled selected>Select Area</option>
-              {% for area in areas %}
-                <option value="{{ area._id }}" data-umbrella="{{ area.umbrella_id }}">{{ area.area }}</option>
-              {% endfor %}
+                <option value="" disabled selected>Select Area</option>
+                {% for area in areas %}
+                  <option value="{{ area._id }}" data-umbrella="{{ area.umbrella_id }}">{{ area.area }}</option>
+                {% endfor %}
               </select>
             </div>
-            <script>
-              function filterAreas() {
-              var umbrellaSelect = document.getElementById('umbrella_id');
-              var areaSelect = document.getElementById('area_id');
-              var selectedUmbrella = umbrellaSelect.value;
-              for (var i = 0; i < areaSelect.options.length; i++) {
-                var opt = areaSelect.options[i];
-                if (!opt.value) continue;
-                if (!selectedUmbrella || opt.getAttribute('data-umbrella') === selectedUmbrella) {
-                opt.style.display = '';
-                } else {
-                opt.style.display = 'none';
-                }
-              }
-              // Reset selection if current area is not visible
-              if (
-                areaSelect.selectedIndex > 0 &&
-                areaSelect.options[areaSelect.selectedIndex].style.display === 'none'
-              ) {
-                areaSelect.selectedIndex = 0;
-              }
-              }
-            </script>
             <div class="mb-3">
               <label for="district_id" class="form-label">District</label>
               <select class="form-select" id="district_id" name="district_id" required>
@@ -99,25 +67,43 @@
     </div>
   </div>
 
-  <div class="table-responsive" style="max-height: 520px; min-height: 520px; overflow-y: auto;">
-    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
-      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
-        <tr class="table-primary">
-            <th>Scheme Name</th>
-          <th>Area</th>
-          <th>Umbrella</th>
-          <th>District</th>
-          <th>Actions</th>
+  <!-- Filter Bar -->
+  {% if user.role in ["administrator"] %}
+  <div class="row mb-3 mx-0">
+    <div class="col-md-3 px-0">
+      <form method="GET" action="{{ url_for('umbrella_selection') }}" class="d-flex align-items-center gap-2">
+        <label for="filter_umbrella" class="form-label mb-0 small fw-bold">Umbrella:</label>
+        <select class="form-select form-select-sm" id="filter_umbrella" name="umbrella_id" onchange="this.form.submit()">
+          <option value="">All Umbrellas</option>
+          {% for umbrella in umbrellas %}
+            <option value="{{ umbrella._id }}" {% if session.get('selected_umbrella_id') == umbrella._id|string %}selected{% endif %}>{{ umbrella.umbrella }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Table Section -->
+  <div class="table-responsive flex-grow-1" style="overflow-y: auto; overscroll-behavior: contain;">
+    <table class="table table-secondary table-hover table-sm align-middle mb-0" style="font-size:0.75rem;">
+      <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+        <tr class="table-secondary">
+          <th class="ps-3 py-2">Scheme Name</th>
+          <th class="py-2">Area</th>
+          <th class="py-2">Umbrella</th>
+          <th class="py-2">District</th>
+          <th class="pe-3 py-2">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for scheme in schemes %}
-        <tr class="bg-dark-subtle my-1">
-          <td class="fw-normal text-truncate" style="max-width: 200px;">{{ scheme.scheme }}</td>
-          <td class="fw-normal text-truncate" style="max-width: 200px;">{{ scheme.area }}</td>
-          <td class="fw-normal text-truncate" style="max-width: 200px;">{{ scheme.umbrella }}</td>
-          <td class="fw-normal text-truncate" style="max-width: 200px;">{{ scheme.district }}</td>
-          <td>
+        <tr class="table-light" style="font-size:0.65rem;">
+          <td class="fw-normal text-truncate ps-3 py-2" style="max-width: 200px;">{{ scheme.scheme }}</td>
+          <td class="fw-normal text-truncate py-2" style="max-width: 200px;">{{ scheme.area }}</td>
+          <td class="fw-normal text-truncate py-2" style="max-width: 200px;">{{ scheme.umbrella }}</td>
+          <td class="fw-normal text-truncate py-2" style="max-width: 200px;">{{ scheme.district }}</td>
+          <td class="pe-3 py-2">
             <div class="d-flex gap-1">
               <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ scheme._id }}">
                 <i class="bi bi-pencil fs-6"></i>
@@ -128,84 +114,58 @@
             </div>
           </td>
         </tr>
+
         <!-- Edit Modal -->
         <div class="modal fade" id="editModal-{{ scheme._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ scheme._id }}" aria-hidden="true">
           <div class="modal-dialog">
             <div class="modal-content">
               <form method="POST" action="{{ url_for('edit_scheme') }}">
-          <div class="modal-header">
-            <h5 class="modal-title" id="editModalLabel-{{ scheme._id }}">Edit Scheme</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <input type="hidden" name="scheme_id" value="{{ scheme._id }}">
-            <div class="mb-3">
-              <label for="scheme_{{ scheme._id }}" class="form-label">Scheme Name</label>
-              <input type="text" class="form-control" id="scheme_{{ scheme._id }}" name="scheme" value="{{ scheme.scheme }}">
-            </div>
-            <div class="mb-3">
-              <label for="umbrella_id_{{ scheme._id }}" class="form-label">Umbrella</label>
-              <select class="form-select" id="umbrella_id_{{ scheme._id }}" name="umbrella_id" required onchange="filterAreasEdit('{{ scheme._id }}')">
-              {% for umbrella in umbrellas %}
-                <option value="{{ umbrella._id }}" {% if umbrella._id|string == scheme.umbrella_id|string %}selected{% endif %}>{{ umbrella.umbrella }}</option>
-              {% endfor %}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label for="area_id_{{ scheme._id }}" class="form-label">Area</label>
-              <select class="form-select" id="area_id_{{ scheme._id }}" name="area_id" required>
-              {% for area in areas %}
-                <option value="{{ area._id }}" data-umbrella="{{ area.umbrella_id }}"
-                {% if area._id|string == scheme.area_id|string %}selected{% endif %}>
-                {{ area.area }}
-                </option>
-              {% endfor %}
-              </select>
-            </div>
-            <script>
-              function filterAreasEdit(schemeId) {
-              var umbrellaSelect = document.getElementById('umbrella_id_' + schemeId);
-              var areaSelect = document.getElementById('area_id_' + schemeId);
-              var selectedUmbrella = umbrellaSelect.value;
-              for (var i = 0; i < areaSelect.options.length; i++) {
-                var opt = areaSelect.options[i];
-                if (!opt.value) continue;
-                if (!selectedUmbrella || opt.getAttribute('data-umbrella') === selectedUmbrella) {
-                opt.style.display = '';
-                } else {
-                opt.style.display = 'none';
-                }
-              }
-              // Reset selection if current area is not visible
-              if (
-                areaSelect.selectedIndex > 0 &&
-                areaSelect.options[areaSelect.selectedIndex].style.display === 'none'
-              ) {
-                areaSelect.selectedIndex = 0;
-              }
-              }
-              // Initial filter on modal open
-              document.getElementById('editModal-{{ scheme._id }}').addEventListener('shown.bs.modal', function () {
-              filterAreasEdit('{{ scheme._id }}');
-              });
-            </script>
-            <div class="mb-3">
-              <label for="district_id_{{ scheme._id }}" class="form-label">District</label>
-              <select class="form-select" id="district_id_{{ scheme._id }}" name="district_id" required>
-                {% for district in districts %}
-            <option value="{{ district._id }}" {% if district._id|string == scheme.district_id|string %}selected{% endif %}>{{ district.district }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          </div>
+                <div class="modal-header">
+                  <h5 class="modal-title" id="editModalLabel-{{ scheme._id }}">Edit Scheme</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="hidden" name="scheme_id" value="{{ scheme._id }}">
+                  <div class="mb-3">
+                    <label for="scheme_{{ scheme._id }}" class="form-label">Scheme Name</label>
+                    <input type="text" class="form-control" id="scheme_{{ scheme._id }}" name="scheme" value="{{ scheme.scheme }}">
+                  </div>
+                  <div class="mb-3">
+                    <label for="umbrella_id_{{ scheme._id }}" class="form-label">Umbrella</label>
+                    <select class="form-select" id="umbrella_id_{{ scheme._id }}" name="umbrella_id" required onchange="filterAreasEdit('{{ scheme._id }}')">
+                      {% for umbrella in umbrellas %}
+                        <option value="{{ umbrella._id }}" {% if umbrella._id|string == scheme.umbrella_id|string %}selected{% endif %}>{{ umbrella.umbrella }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="area_id_{{ scheme._id }}" class="form-label">Area</label>
+                    <select class="form-select" id="area_id_{{ scheme._id }}" name="area_id" required>
+                      {% for area in areas %}
+                        <option value="{{ area._id }}" data-umbrella="{{ area.umbrella_id }}" {% if area._id|string == scheme.area_id|string %}selected{% endif %}>
+                          {{ area.area }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="district_id_{{ scheme._id }}" class="form-label">District</label>
+                    <select class="form-select" id="district_id_{{ scheme._id }}" name="district_id" required>
+                      {% for district in districts %}
+                        <option value="{{ district._id }}" {% if district._id|string == scheme.district_id|string %}selected{% endif %}>{{ district.district }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
               </form>
             </div>
           </div>
         </div>
+
         <!-- Delete Modal -->
         <div class="modal fade" id="deleteModal-{{ scheme._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ scheme._id }}" aria-hidden="true">
           <div class="modal-dialog">
@@ -231,14 +191,42 @@
       </tbody>
     </table>
   </div>
-<div class="d-flex justify-content-end my-3">
 
-  <span class="me-3 align-self-center text-muted" style="font-size:0.95em;">
-    Total: <strong>{{ total }}</strong>
-  </span>
-  
+  <!-- Footer Total -->
+  <div class="d-flex justify-content-end my-2">
+    <span class="me-3 align-self-center text-muted" style="font-size:0.85em;">
+      Total: <strong>{{ total }}</strong>
+    </span>
+  </div>
+
 </div>
 
+<!-- Global Filter Scripts -->
+<script>
+function filterAreas() {
+  var umbrellaSelect = document.getElementById('umbrella_id');
+  var areaSelect = document.getElementById('area_id');
+  var selectedUmbrella = umbrellaSelect.value;
+  Array.from(areaSelect.options).forEach(function(opt) {
+    if (!opt.value) return;
+    opt.style.display = (!selectedUmbrella || opt.getAttribute('data-umbrella') === selectedUmbrella) ? '' : 'none';
+  });
+  if (areaSelect.selectedIndex > 0 && areaSelect.options[areaSelect.selectedIndex].style.display === 'none') {
+    areaSelect.selectedIndex = 0;
+  }
+}
 
-</div>
+function filterAreasEdit(schemeId) {
+  var umbrellaSelect = document.getElementById('umbrella_id_' + schemeId);
+  var areaSelect = document.getElementById('area_id_' + schemeId);
+  var selectedUmbrella = umbrellaSelect.value;
+  Array.from(areaSelect.options).forEach(function(opt) {
+    if (!opt.value) return;
+    opt.style.display = (!selectedUmbrella || opt.getAttribute('data-umbrella') === selectedUmbrella) ? '' : 'none';
+  });
+  if (areaSelect.selectedIndex > 0 && areaSelect.options[areaSelect.selectedIndex].style.display === 'none') {
+    areaSelect.selectedIndex = 0;
+  }
+}
+</script>
 {% endblock %}

@@ -1,786 +1,55 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="w-100 h-100">
-  <div class="row align-items-start mb-3">
-    <div class="col-12 mb-2">
-      <h5 class="fw-bold mb-0">Customers</h5>
+<div class="w-100 h-100 d-flex flex-column overflow-hidden">
+
+  <div class="row align-items-start mb-3 mt-4">
+    
+    <div class="col-4 mb-2">
+      <h4 class="fw-bold mb-0 mt-0">New Connections</h4>
+      <p class="text-muted">Manage New Applicant information</p>
     </div>
-    <div class="col">
 
-      <div class="d-flex flex-wrap justify-content-center align-items-center gap-1">
-
-      <form method="POST" action="{{ url_for('applicant_date_filter_data') }}" style="display: flex; align-items: center; flex-wrap: nowrap;" class="" id="dateFilterForm">
-        <div class="input-group input-group-sm" style="flex: 1; min-width: 250px;">
-          <label class="input-group-text" for="filter_select">Date Filter</label>
-          <select class="form-select" id="filter_select" name="filter_field" required onchange="toggleDateFields(); handleFieldChange()">
-            <option value="" {% if not session.get("filter_field") or session.get("filter_field") == "" %}selected{% endif %}>No Filter</option>
-            <option value="application_period" {% if session.get("filter_field") == "date_applied" %}selected{% endif %}>Application Period</option>
-            <option value="survey_period" {% if session.get("filter_field") == "survey_date" %}selected{% endif %}>Survey Period</option>
-            <option value="payment_period" {% if session.get("filter_field") == "date_paid" %}selected{% endif %}>Payment Period</option>
-            <option value="verification_period" {% if session.get("filter_field") == "verification_date" %}selected{% endif %}>Verification Period</option>
-            <option value="material_issuance_period" {% if session.get("filter_field") == "issuance_date" %}selected{% endif %}>Material Issuance Period</option>
-            <option value="connection_period" {% if session.get("filter_field") == "connection_date" %}selected{% endif %}>Connection Period</option>
-          </select>
-        </div>
-        <div class="input-group input-group-sm">
-          <input type="date" class="form-control" id="date_1" name="start_date" required disabled placeholder="start date" onchange="handleFieldChange()" {% if session.get("customers_start_date") %}value="{{ session.get("customers_start_date") }}"{% endif %}>
-          <input type="date" class="form-control" id="date_2" name="end_date" required disabled placeholder="end date" onchange="handleFieldChange()" {% if session.get("customers_end_date") %}value="{{ session.get("customers_end_date") }}"{% endif %}>
-        </div>
-      </form>
-
-      <script>
-        function toggleDateFields() {
-          const filterSelect = document.getElementById('filter_select');
-          const dateGroup = document.querySelector('.input-group:has(#date_1)');
-          const date1 = document.getElementById('date_1');
-          const date2 = document.getElementById('date_2');
+    <div class="col-8">
+      <div class="d-flex flex-wrap justify-content-end align-items-center gap-1 me-4 mb-2">
+        <div style="display:flex; gap:8px;">
+          <a href="{{ url_for('download_customers') }}" class="btn btn-outline-secondary btn-sm" title="Download Records" style="padding:2px 6px;font-size:0.9em;">
+            <i class="bi bi-download"></i>
+          </a>
           
-          if (filterSelect.value !== "") {
-            dateGroup.style.display = 'flex';
-            date1.disabled = false;
-            date2.disabled = false;
-          } else {
-            dateGroup.style.display = 'none';
-            date1.disabled = true;
-            date2.disabled = true;
-            date1.value = "";
-            date2.value = "";
-          }
-        }
-        function handleFieldChange() {
-          const filterSelect = document.getElementById('filter_select');
-          const date1 = document.getElementById('date_1');
-          const date2 = document.getElementById('date_2');
-          
-          if (filterSelect.value === "") {
-            date1.value = "";
-            date2.value = "";
-            document.getElementById('dateFilterForm').submit();
-          } else if (date1.value === "" || date2.value === "") {
-            return;
-          } else {
-            document.getElementById('dateFilterForm').submit();
-          }
-        }
-        toggleDateFields();
-      </script>
-
-
-      <form method="POST" action="{{ url_for('set_status') }}" class="">
-        <div class="input-group input-group-sm">
-        <label class="input-group-text" for="status_select">Status</label>
-        <select class="form-select" id="status_select" name="status" required onchange="this.form.submit()">
-        <option value="" {% if not session.get("selected_status_filter") or session.get("selected_status_filter") == "" %}selected{% endif %}>All Statuses</option>
-          <option value="applied" {% if session.get("selected_status_filter") == "applied" %}selected{% endif %}>Applied</option>
-          <option value="surveyed" {% if session.get("selected_status_filter") == "surveyed" %}selected{% endif %}>Surveyed</option>
-          <option value="approved" {% if session.get("selected_status_filter") == "approved" %}selected{% endif %}>Approved</option>
-          <option value="disapproved" {% if session.get("selected_status_filter") == "disapproved" %}selected{% endif %}>Disapproved</option>
-          <option value="paid" {% if session.get("selected_status_filter") == "paid" %}selected{% endif %}>Paid</option>
-          <option value="verified" {% if session.get("selected_status_filter") == "verified" %}selected{% endif %}>Verified</option>
-          <option value="not verified" {% if session.get("selected_status_filter") == "not verified" %}selected{% endif %}>Not Verified</option>
-          <option value="materials issued" {% if session.get("selected_status_filter") == "materials issued" %}selected{% endif %}>Materials Issued</option>
-          <option value="materials pending" {% if session.get("selected_status_filter") == "materials pending" %}selected{% endif %}>Materials Pending</option>
-          <option value="connected" {% if session.get("selected_status_filter") == "connected" %}selected{% endif %}>Connected</option>
-          <option value="not connected" {% if session.get("selected_status_filter") == "not connected" %}selected{% endif %}>Not Connected</option>
-          <option value="confirmed" {% if session.get("selected_status_filter") == "confirmed" %}selected{% endif %}>Confirmed</option>
-        </select>
-        </div>
-      </form>
-      
-      <form method="POST" action="{{ url_for('set_scheme') }}">
-        <div class="input-group input-group-sm">
-        <label class="input-group-text" for="scheme_select">Scheme</label>
-        <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
-        {% if user.scheme_id %}
-          {% for scheme in schemes %}
-          {% if user.scheme_id|string == scheme._id|string %}
-        disabled
+          {% if user.role in ["administrator", "billing_officer"] %}
+            <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadCustomersModal" style="padding:2px 6px;font-size:0.9em;">
+              <i class="bi bi-upload"></i>
+            </button>
+            <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadCustomersReferenceModal" style="padding:2px 6px;font-size:0.9em;">
+              <i class="bi bi-upload"> Ref</i>
+            </button>
           {% endif %}
-          {% endfor %}
-        {% endif %}
-        >
-        <option value="" {% if not session.get("selected_scheme_id") %}selected{% endif %}>All Schemes</option>
-        {% for scheme in schemes %}
-          <option value="{{ scheme._id }}"
-          {% if session.get("selected_scheme_id")|string == scheme._id|string or (user.scheme_id|string == scheme._id|string) %}selected{% endif %}>
-          {{ scheme.scheme }}
-          </option>
-        {% endfor %}
-        </select>
-        </div>
-      </form>
 
-      <form method="POST" action="{{ url_for('search_customers') }}" style="max-width:180px;">
-        <div class="input-group input-group-sm">
-          <span class="input-group-text bg-white px-1">
-        <button type="submit" class="btn btn-link p-0" style="color:inherit;font-size:0.9em;">
-          <i class="bi bi-search"></i>
-        </button>
-          </span>
-          <input type="text" name="search" class="form-control" style="font-size:0.85em;padding:2px 6px;" placeholder="Search..." value="{{ session.get('search_query', '') }}">
-        </div>
-      </form>
-
-      
-      </div>
-    </div>
-  </div>
-
-<div class="d-flex flex-wrap justify-content-end align-items-center gap-1 me-4 mb-2">
-
-      <div class="d-flex justify-content-center align-items-center gap-1" style="margin-right: auto;">
-        <span class="me-3 align-self-center text-muted" style="font-size:0.85em;">
-          Total: <strong>{{ total }}</strong>
-        </span>
-        <nav>
-          <ul class="pagination pagination-sm mb-0">
-            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-              <a class="page-link" href="?page={{ page - 1 }}">«</a>
-            </li>
-            {% set start_page = page - 2 if page - 2 > 1 else 1 %}
-            {% set end_page = start_page + 5 if start_page + 5 < total_pages else total_pages %}
-            {% if end_page - start_page < 5 %}
-              {% set start_page = end_page - 5 if end_page - 5 > 1 else 1 %}
-            {% endif %}
-            {% if start_page > 1 %}
-              <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
-              {% if start_page > 2 %}
-                <li class="page-item disabled"><span class="page-link">…</span></li>
-              {% endif %}
-            {% endif %}
-            {% for p in range(start_page, end_page + 1) %}
-              <li class="page-item {% if p == page %}active{% endif %}">
-                <a class="page-link" href="?page={{ p }}">{{ p }}</a>
-              </li>
-            {% endfor %}
-            {% if end_page < total_pages %}
-              {% if end_page < total_pages - 1 %}
-                <li class="page-item disabled"><span class="page-link">…</span></li>
-              {% endif %}
-              <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
-            {% endif %}
-            <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-              <a class="page-link" href="?page={{ page + 1 }}">»</a>
-            </li>
-          </ul>
-        </nav>
-      </div>
-
-      <div style="display:flex; gap:8px;">
-        {% if user.role in ['administrator', 'scheme_manager', 'commercial_officer', 'billing_officer', 'area_manager'] %}
-        <button class="btn btn-primary btn-sm px-2 py-1" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
-          <i class="bi bi-plus-lg me-1"></i> Add Customer
-        </button>
-        {% endif %}
-
-        <a href="{{ url_for('download_customers') }}" class="btn btn-outline-secondary btn-sm" title="Download Records" style="padding:2px 6px;font-size:0.9em;">
-          <i class="bi bi-download"></i>
-        </a>
-        
-        {% if user.role in ["administrator", "billing_officer"] %}
-        <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadCustomersModal" style="padding:2px 6px;font-size:0.9em;">
-          <i class="bi bi-upload"></i>
-        </button>
-        <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadCustomersReferenceModal" style="padding:2px 6px;font-size:0.9em;">
-          <i class="bi bi-upload"> Ref</i>
-        </button>
-        {% endif %}
-      </div>
-
-      <!-- upload customers reference modal -->
-      <div class="modal fade" id="uploadCustomersReferenceModal" tabindex="-1" aria-labelledby="uploadCustomersReferenceModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content" style="font-size:0.9rem;">
-        <form method="POST" action="{{ url_for('upload_customers_reference') }}" enctype="multipart/form-data">
-          <div class="modal-header">
-            <h5 class="modal-title" id="uploadCustomersReferenceModalLabel" style="font-size:1rem;">Upload Customers References</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-          <label for="customers_file" class="form-label" style="font-size:0.95em;">Select File (CSV or XLSX)</label>
-          <input type="file" class="form-control" id="customers_file" name="customers_file" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required style="font-size:0.95em;">
-            </div>
-          </div>
-          <div class="modal-footer py-2">
-            <button type="submit" class="btn btn-success btn-sm">Upload</button>
-            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          </div>
-        </form>
-          </div>
-        </div>
-      </div>
-
-      <!-- Upload Customers Modal -->
-      <div class="modal fade" id="uploadCustomersModal" tabindex="-1" aria-labelledby="uploadCustomersModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content" style="font-size:0.9rem;">
-        <form method="POST" action="{{ url_for('upload_customers') }}" enctype="multipart/form-data">
-          <div class="modal-header">
-            <h5 class="modal-title" id="uploadCustomersModalLabel" style="font-size:1rem;">Upload multiple Customers</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-          <label for="customers_file" class="form-label" style="font-size:0.95em;">Select File (CSV or XLSX)</label>
-          <input type="file" class="form-control" id="customers_file" name="customers_file" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required style="font-size:0.95em;">
-            </div>
-          </div>
-          <div class="modal-footer py-2">
-            <button type="submit" class="btn btn-success btn-sm">Upload</button>
-            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-          </div>
-        </form>
-          </div>
-        </div>
-      </div>
-
-
-      <!-- Add Customer Modal -->
-      <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <form method="POST" action="{{ url_for('add_customer') }}" enctype="multipart/form-data">
-              <div class="modal-header">
-                <h5 class="modal-title" id="addCustomerModalLabel">Add New Customer</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body">
-                <div class="row g-2">
-                  <div class="col-md-6 mb-2">
-                    <label for="name" class="form-label">Name</label>
-                    <input type="text" class="form-control" id="name" name="name" required>
-                  </div>
-                  <div class="col-md-6 mb-2">
-                    <label for="contact" class="form-label">Contact</label>
-                    <input type="text" class="form-control" id="contact" name="contact" required>
-                  </div>
-            <div class="col-md-6 mb-2">
-              <label for="scheme_id" class="form-label">Scheme</label>
-              <select name="scheme_id" class="form-select" id="scheme_id" required onchange="filterVillages()">
-                <option value="" disabled selected>Select Scheme</option>
-                {% for scheme in schemes %}
-                  <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-md-6 mb-2">
-              <label for="village_id" class="form-label">Village</label>
-              <select name="village_id" class="form-select" id="village_id" required>
-                <option value="" disabled selected>Select Village</option>
-                {% for village in villages %}
-                  <option value="{{ village._id }}" data-scheme="{{ village.scheme_id }}">{{ village.village }}</option>
-                {% endfor %}
-              </select>
-            </div>
-
-        <script>
-        function filterVillages() {
-          var schemeSelect = document.getElementById('scheme_id');
-          var villageSelect = document.getElementById('village_id');
-          var selectedScheme = schemeSelect.value;
-          Array.from(villageSelect.options).forEach(function(option) {
-            if (!option.value) return; // Skip 'Select Village'
-            option.style.display = (option.getAttribute('data-scheme') === selectedScheme) ? '' : 'none';
-          });
-          // Reset village selection if not matching
-          if (villageSelect.selectedOptions[0] && villageSelect.selectedOptions[0].style.display === 'none') {
-            villageSelect.value = '';
-          }
-        }
-        document.getElementById('scheme_id').addEventListener('change', filterVillages);
-        document.addEventListener('DOMContentLoaded', filterVillages);
-        </script>
-
-                  <div class="col-md-6 mb-2">
-                    <label for="application_id" class="form-label">Application ID</label>
-                    <input type="text" class="form-control" id="application_id" name="application_id" required>
-                  </div>
-                  <div class="col-md-6 mb-2">
-                    <label for="date_applied" class="form-label">Date Applied</label>
-                    <input type="date" class="form-control" id="date_applied" name="date_applied" value="{{ now().strftime('%Y-%m-%d') }}" required>
-                  </div>
-                  <div class="col-md-6 mb-2">
-                    <label for="id_document" class="form-label">Identification Document</label>
-                    <input type="file" class="form-control" id="id_document" name="id_document" accept="application/pdf,image/*" required>
-                  </div>
-                  <div class="col-md-6 mb-2">
-                    <label for="recommendation_letter" class="form-label">Recommendation Letter</label>
-                    <input type="file" class="form-control" id="recommendation_letter" name="recommendation_letter" accept="application/pdf,image/*" required>
-                  </div>
-                </div>
-              </div>
-              <div class="modal-footer py-2">
-                <button type="submit" class="btn btn-success btn-sm">Add Customer</button>
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-</div>
-
-
-  <div class="table-responsive" style="max-height: 470px; min-height: 470px;  overflow-y: auto; -ms-overflow-style: none;">
-    <style>
-      .table-responsive::-webkit-scrollbar { display: none; }
-    </style>
-    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
-      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa; font-size:0.65rem;">
-        <tr class="table-primary">
-        <th>Name</th>
-        <th>Type</th>
-        <th class="d-none d-sm-table-cell">Contact</th>
-        <th class="d-none d-sm-table-cell">Scheme</th>
-        <th class="d-none d-sm-table-cell">Village</th>
-        <th>Status</th>
-        <th>Connection Fee</th>
-        <!-- <th>Connection Clearance</th> -->
-        <!-- <th class="d-none d-sm-table-cell">Connection Balance</th> -->
-        <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody style="font-size:0.65rem;">
-        {% for customer in customers %}
-        <tr class="bg-dark-subtle my-1">
-          <td class="fw-semibold text-truncate">{{ customer.name or '-' }}</td>
-          <td class="text-truncate">{{ customer.type or '-' }}</td>
-          <td class="text-truncate d-none d-sm-table-cell">{{ customer.contact or '-' }}</td>
-          <td class="text-truncate d-none d-sm-table-cell">{{ customer.scheme or '-' }}</td>
-          <td class="text-truncate d-none d-sm-table-cell">{{ customer.village or '-' }}</td>
-          <td class="text-truncate">{{ customer.status or '-' }}</td>
-        <td class="text-truncate">
-      {% if customer.connection_fee %}
-        {{ "{:,}".format(customer.connection_fee|int) }}
-      {% else %}
-        -
-      {% endif %}
-        </td>
-
-        <!-- <td class="text-truncate">
-      {% if customer.amount_paid %}
-        {{ "{:,}".format(customer.amount_paid|int) }}
-      {% else %}
-        -
-      {% endif %}
-        </td> -->
-
-        <!-- <td class="text-truncate d-none d-sm-table-cell">
-      {% if customer.amount_due %}
-        {{ "{:,}".format(customer.amount_due|int) }}
-      {% else %}
-        -
-      {% endif %}
-        </td> -->
-          <td>
-        <div class="d-flex gap-1">
-          <button class="btn btn-outline-info btn-sm p-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ customer._id }}">
-        <i class="bi bi-eye"></i>
-        </button>
-        {% if user.role in ["administrator"] or user.role in ["area_manager"] and customer.status in ["applied", "surveyed"] %}
-        <button class="btn btn-outline-primary btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">
-          <i class="bi bi-pencil"></i>
-        </button>
-        {% endif %}
-        {% if user.role in ["administrator"] %}
-          <button class="btn btn-outline-danger btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ customer._id }}">
-        <i class="bi bi-trash"></i>
-          </button>
-        {% endif %}
-          <button class="btn btn-outline-warning btn-sm p-1" data-bs-toggle="modal" data-bs-target="#actionModal-{{ customer._id }}">
-        <i class="bi bi-lightning"></i>
-          </button>
-        </div>
-          </td>
-        </tr>
-
-<!-- View Modal -->
-<div class="modal fade" id="viewModal-{{ customer._id }}" tabindex="-1" aria-labelledby="viewModalLabel-{{ customer._id }}" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="font-size:0.85rem;">
-      <div class="modal-header py-1">
-        <h6 class="modal-title text-primary" id="viewModalLabel-{{ customer._id }}">
-          {{ customer.name or 'N/A' }}
-        </h6>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body py-1">
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item py-1"><strong>Type:</strong> {{ customer.type or '-' }}</li>
-          <li class="list-group-item py-1"><strong>Contact:</strong> {{ customer.contact or '-' }}</li>
-          <li class="list-group-item py-1"><strong>Scheme:</strong> {{ customer.scheme or '-' }}</li>
-          <li class="list-group-item py-1"><strong>Village:</strong> {{ customer.village or '-' }}</li>
-          <li class="list-group-item py-1"><strong>Status:</strong> {{ customer.status or '-' }}</li>
-          {% if customer.status == 'not verified' %}
-            <li class="list-group-item py-1"><strong>Verification Query:</strong> {{ customer.verification_query or '-' }}</li>
+          {% if user.role in ['administrator', 'scheme_manager', 'commercial_officer', 'billing_officer', 'area_manager'] %}
+            <button class="btn btn-primary btn-sm px-2 py-1" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+              <i class="bi bi-plus-lg me-1"></i> Add Customer
+            </button>
           {% endif %}
-          <li class="list-group-item py-1"><strong>Application ID:</strong> {{ customer.application_id or '-' }}</li>
-          <li class="list-group-item py-1"><strong>Pipe:</strong> {{ customer.pipe_type or '-' }}, DN {{ customer.pipe_diameter or '-' }}mm, Length: {{ customer.pipe_length or '-' }}m</li>
-          <li class="list-group-item py-1"><strong>Date Applied:</strong> {{ customer.date_applied.strftime('%d %b %Y') if customer.date_applied else '-' }}</li>
-          <li class="list-group-item py-1"><strong>Date Surveyed:</strong> {{ customer.survey_date.strftime('%d %b %Y') if customer.survey_date else '-' }}</li>
-          <li class="list-group-item py-1"><strong>Connection Fee:</strong> {{ "{:,}".format(customer.connection_fee|int) if customer.connection_fee else '-' }}</li>
-          <li class="list-group-item py-1"><strong>Amount Paid for connection:</strong> {{ "{:,}".format(customer.amount_paid|int) if customer.amount_paid else '-' }}</li>
-          <li class="list-group-item py-1"><strong>Connection Fee Balance:</strong> {{ "{:,}".format(customer.amount_due|int) if customer.amount_due else '-' }}</li>
-          <li class="list-group-item py-1"><strong>Date Paid:</strong> {{ customer.date_paid.strftime('%d %b %Y') if customer.date_paid else '-' }}</li>
-          <li class="list-group-item py-1"><strong>Meter Serial:</strong> {{ customer.meter_serial or '-' }}</li>
-          <li class="list-group-item py-1"><strong>First Meter Reading:</strong> {{ customer.first_meter_reading or '-' }}</li>
-          <li class="list-group-item py-1"><strong>Tapping:</strong> DN {{ customer.tap_pipe_size or '-' }}mm, {{ customer.tap_pipe_type or '-' }}</li>
-          <li class="list-group-item py-1"><strong>Docs:</strong>
-            {% if customer.id_document %}<a href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">ID document</a>{% endif %}
-            {% if customer.recommendation_letter %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">Recommendation Letter</a>{% endif %}
-            {% if customer.wealth_assessment_form %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">Wealth Assessment Form</a>{% endif %}
-            {% if customer.proof_of_payment %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.proof_of_payment) }}" target="_blank">Proof of Payment</a>{% endif %}
-            {% if not (customer.id_document or customer.recommendation_letter or customer.wealth_assessment_form or customer.proof_of_payment) %}-{% endif %}
-          </li>
-          <li class="list-group-item py-1"><strong>Transaction ID:</strong> {{ customer.transaction_id or '-' }}</li>
-          <li class="list-group-item py-1"><strong>Date of Verification:</strong> {{ customer.verification_date.strftime('%d %b %Y') if customer.verification_date else '-' }}</li>
-          <li class="list-group-item py-1"><strong>Date Materials were Issued:</strong> {{ customer.issuance_date.strftime('%d %b %Y') if customer.issuance_date else '-' }}</li>
-          <li class="list-group-item py-1"><strong>Date of Connection:</strong> {{ customer.connection_date.strftime('%d %b %Y') if customer.connection_date else '-' }}</li>
-          <li class="list-group-item py-1"><strong>Customer Category:</strong> {{ customer.category or '-' }}</li>
-          <li class="list-group-item py-1"><strong>Customer Reference:</strong> {{ customer.customer_reference or '-' }}</li>
-
-        </ul>
-      </div>
-      <div class="modal-footer py-1">
-        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- Edit Customer Modal -->
-<div class="modal fade" id="editModal-{{ customer._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ customer._id }}" aria-hidden="true">
-  <div class="modal-dialog modal-md">
-    <div class="modal-content" style="font-size:0.78rem;">
-      <form method="POST" action="{{ url_for('edit_customer') }}" enctype="multipart/form-data">
-        <div class="modal-header py-1">
-          <h6 class="modal-title text-primary" id="editModalLabel-{{ customer._id }}">Edit Customer</h6>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body py-1">
-          <input type="hidden" name="customer_id" value="{{ customer._id }}">
-          <div class="row g-1">
-            <div class="col-6 mb-1">
-              <label for="name_{{ customer._id }}" class="form-label">Name</label>
-              <input type="text" class="form-control form-control-sm" id="name_{{ customer._id }}" name="name" value="{{ customer.name }}" required>
-            </div>
-            <div class="col-6 mb-1">
-              <label for="contact_{{ customer._id }}" class="form-label">Contact</label>
-              <input type="text" class="form-control form-control-sm" id="contact_{{ customer._id }}" name="contact" value="{{ customer.contact }}" required>
-            </div>
 
-<div class="col-6 mb-1">
-  <label for="scheme_id_{{ customer._id }}" class="form-label">Scheme</label>
-  <select name="scheme_id" class="form-select form-select-sm" id="scheme_id_{{ customer._id }}" required onchange="filterVillages_{{ customer._id }}()">
-    {% for scheme in schemes %}
-      <option value="{{ scheme._id }}" {% if scheme._id|string == customer.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
-    {% endfor %}
-  </select>
-</div>
-<div class="col-6 mb-1">
-  <label for="village_id_{{ customer._id }}" class="form-label">Village</label>
-  <select name="village_id" class="form-select form-select-sm" id="village_id_{{ customer._id }}" required>
-    {% for village in villages %}
-      <option value="{{ village._id }}" data-scheme="{{ village.scheme_id }}" {% if village._id|string == customer.village_id|string %}selected{% endif %}>{{ village.village }}</option>
-    {% endfor %}
-  </select>
-</div>
-<script>
-function filterVillages_{{ customer._id }}() {
-  var schemeSelect = document.getElementById('scheme_id_{{ customer._id }}');
-  var villageSelect = document.getElementById('village_id_{{ customer._id }}');
-  var selectedScheme = schemeSelect.value;
-  Array.from(villageSelect.options).forEach(function(option) {
-    if (!option.value) return; // Skip 'Select Village'
-    option.style.display = (option.getAttribute('data-scheme') === selectedScheme) ? '' : 'none';
-  });
-  // Reset village selection if not matching
-  if (villageSelect.selectedOptions[0] && villageSelect.selectedOptions[0].style.display === 'none') {
-    villageSelect.value = '';
-  }
-}
-document.getElementById('scheme_id_{{ customer._id }}').addEventListener('change', filterVillages_{{ customer._id }});
-document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }});
-</script>
-
-
-<div class="col-6 mb-1">
-  <label for="date_applied_{{ customer._id }}" class="form-label">Date Applied</label>
-  <input type="date"
-         class="form-control form-control-sm"
-         id="date_applied_{{ customer._id }}"
-         name="date_applied"
-         value="{{ customer.date_applied.strftime('%Y-%m-%d') if customer.date_applied else now().strftime('%Y-%m-%d') }}"
-         required>
-</div>
-            <div class="col-6 mb-1">
-              <label for="application_id_{{ customer._id }}" class="form-label">Application ID</label>
-              <input type="text" class="form-control form-control-sm" id="application_id_{{ customer._id }}" name="application_id" value="{{ customer.application_id }}" required>
-            </div>
-            <div class="col-6 mb-1">
-              <label for="id_document_{{ customer._id }}" class="form-label">ID Document</label>
-              <input type="file" class="form-control form-control-sm" id="id_document_{{ customer._id }}" name="id_document" accept="application/pdf,image/*">
-              {% if customer.id_document %}
-                <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">View</a>
-              {% endif %}
-            </div>
-            <div class="col-6 mb-1">
-              <label for="recommendation_letter_{{ customer._id }}" class="form-label">Recommendation Letter</label>
-              <input type="file" class="form-control form-control-sm" id="recommendation_letter_{{ customer._id }}" name="recommendation_letter" accept="application/pdf,image/*">
-              {% if customer.recommendation_letter %}
-                <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">View</a>
-              {% endif %}
-            </div>
-
-{% if customer.status in ["surveyed", "approved", "disapproved", "not approved", 'paid', 'verified','not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
-<div class="col-6 mb-1">
-  <label for="survey_date_{{ customer._id }}" class="form-label">Survey Date</label>
-  <input type="date" class="form-control form-control-sm" id="survey_date_{{ customer._id }}" name="survey_date"
-    value="{{ customer.survey_date.strftime('%Y-%m-%d') if customer.survey_date else now().strftime('%Y-%m-%d') }}" required>
-</div>
-<div class="col-6 mb-1">
-  <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
-  <input type="file" class="form-control form-control-sm" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form"
-    accept="application/pdf,image/*,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-  {% if customer.wealth_assessment_form %}
-    <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">View</a>
-  {% endif %}
-</div>
-<div class="col-6 mb-1">
-  <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
-  <select class="form-select form-select-sm" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
-    <option value="HDPE" {% if customer.pipe_type == "HDPE" or not customer.pipe_type %}selected{% endif %}>HDPE</option>
-    <option value="PVC" {% if customer.pipe_type == "PVC" %}selected{% endif %}>PVC</option>
-    <option value="GI" {% if customer.pipe_type == "GI" %}selected{% endif %}>GI</option>
-  </select>
-</div>
-<div class="col-6 mb-1">
-  <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
-  <select class="form-select form-select-sm" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" required>
-    <option value="15" {% if customer.pipe_diameter|string == "15" %}selected{% endif %}>15</option>
-    <option value="20" {% if customer.pipe_diameter|string == "20" or customer.pipe_diameter is none or customer.pipe_diameter == "" %}selected{% endif %}>20</option>
-    <option value="25" {% if customer.pipe_diameter|string == "25" %}selected{% endif %}>25</option>
-    <option value="32" {% if customer.pipe_diameter|string == "32" %}selected{% endif %}>32</option>
-    <option value="40" {% if customer.pipe_diameter|string == "40" %}selected{% endif %}>40</option>
-    <option value="50" {% if customer.pipe_diameter|string == "50" %}selected{% endif %}>50</option>
-    <option value="65" {% if customer.pipe_diameter|string == "65" %}selected{% endif %}>65</option>
-    <option value="80" {% if customer.pipe_diameter|string == "80" %}selected{% endif %}>80</option>
-  </select>
-</div>
-<div class="col-6 mb-1">
-  <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (m)</label>
-  <input type="number" class="form-control form-control-sm" id="pipe_length_{{ customer._id }}" name="pipe_length" value="{{ customer.pipe_length or '' }}" min="0" step="0.01" required>
-</div>
-<div class="col-6 mb-1">
-  <label for="tap_pipe_size_{{ customer._id }}" class="form-label">Tapping Point Size (mm)</label>
-  <select class="form-select form-select-sm" id="tap_pipe_size_{{ customer._id }}" name="tap_pipe_size" required>
-    <option value="" {% if customer.tap_pipe_size is none or customer.tap_pipe_size == "" %}selected{% endif %}>Select Size</option>
-    <option value="15" {% if customer.tap_pipe_size|string == "15" %}selected{% endif %}>15</option>
-    <option value="20" {% if customer.tap_pipe_size|string == "20" %}selected{% endif %}>20</option>
-    <option value="25" {% if customer.tap_pipe_size|string == "25" %}selected{% endif %}>25</option>
-    <option value="32" {% if customer.tap_pipe_size|string == "32" %}selected{% endif %}>32</option>
-    <option value="40" {% if customer.tap_pipe_size|string == "40" %}selected{% endif %}>40</option>
-    <option value="50" {% if customer.tap_pipe_size|string == "50" %}selected{% endif %}>50</option>
-    <option value="63" {% if customer.tap_pipe_size|string == "63" %}selected{% endif %}>63</option>
-    <option value="75" {% if customer.tap_pipe_size|string == "75" %}selected{% endif %}>75</option>
-    <option value="90" {% if customer.tap_pipe_size|string == "90" %}selected{% endif %}>90</option>
-    <option value="110" {% if customer.tap_pipe_size|string == "110" %}selected{% endif %}>110</option>
-    <option value="160" {% if customer.tap_pipe_size|string == "160" %}selected{% endif %}>160</option>
-    <option value="220" {% if customer.tap_pipe_size|string == "220" %}selected{% endif %}>220</option>
-    <option value="260" {% if customer.tap_pipe_size|string == "260" %}selected{% endif %}>260</option>
-  </select>
-</div>
-<div class="col-6 mb-1">
-  <label for="tap_pipe_type_{{ customer._id }}" class="form-label">Tapping Point Type</label>
-  <select class="form-select form-select-sm" id="tap_pipe_type_{{ customer._id }}" name="tap_pipe_type" required>
-    <option value="" {% if customer.tap_pipe_type is none or customer.tap_pipe_type == "" %}selected{% endif %}>Select Type</option>
-    <option value="HDPE" {% if customer.tap_pipe_type == "HDPE" %}selected{% endif %}>HDPE</option>
-    <option value="PVC" {% if customer.tap_pipe_type == "PVC" %}selected{% endif %}>PVC</option>
-    <option value="GI" {% if customer.tap_pipe_type == "GI" %}selected{% endif %}>GI</option>
-  </select>
-</div>
-{% endif %}
-
-            {% if customer.status in ['approved', 'paid', 'verified', 'not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
-            <!-- <div class="col-6 mb-1">
-              <label for="approval_{{ customer._id }}" class="form-label">Approval</label>
-              <select class="form-select form-select-sm" id="approval_{{ customer._id }}" name="approval" required>
-                <option value="approved" {% if customer.approval == "approved" %}selected{% endif %}>Approved</option>
-                <option value="not approved" {% if customer.approval in ["not approved", "disapproved"] %}selected{% endif %}>Not Approved</option>
-              </select>
-            </div> -->
-            <div class="col-6 mb-1">
-              <label for="customer_type_{{ customer._id }}" class="form-label">Customer Type</label>
-              <select class="form-select form-select-sm" id="customer_type_{{ customer._id }}" name="customer_type" required onchange="togglePaymentPeriodEdit_{{ customer._id }}(this)">
-              <option value="MS" {% if customer.type == "MS" %}selected{% endif %}>MS</option>
-              <option value="ES" {% if customer.type == "ES" %}selected{% endif %}>ES</option>
-              <option value="BP" {% if customer.type == "BP" %}selected{% endif %}>BP</option>
-              </select>
-            </div>
-            <div class="col-6 mb-1" id="paymentPeriodEditField_{{ customer._id }}" style="{% if customer.type != 'ES' %}display:none;{% endif %}">
-              <label for="payment_period_{{ customer._id }}" class="form-label">Payment Period (months)</label>
-              <input type="number" class="form-control form-control-sm" id="payment_period_{{ customer._id }}" name="payment_period" min="1" step="1"
-              value="{{ customer.payment_period if customer.payment_period is not none and customer.payment_period != '' else None }}"
-              {% if customer.type == 'ES' %}required{% endif %}>
-            </div>
-
-            <div class="col-6 mb-1">
-              <label for="connection_fee_{{ customer._id }}" class="form-label">Connection Fee</label>
-              <input type="number" class="form-control form-control-sm" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" value="{{ customer.connection_fee or 0 }}" required>
-            </div>
-
-            <script>
-            function togglePaymentPeriodEdit_{{ customer._id }}(select) {
-              var field = document.getElementById('paymentPeriodEditField_{{ customer._id }}');
-              var input = document.getElementById('payment_period_{{ customer._id }}');
-              if (select.value === 'ES') {
-              field.style.display = '';
-              input.required = true;
-              if (!input.value) input.value = '6';
-              } else {
-              field.style.display = 'none';
-              input.required = false;
-              input.value = '';
-              }
-            }
-            document.addEventListener('DOMContentLoaded', function() {
-              togglePaymentPeriodEdit_{{ customer._id }}(document.getElementById('customer_type_{{ customer._id }}'));
-            });
-            </script>
-            {% endif %}
-
-{% if customer.status in ["paid", "verified", "not verified", "materials issued", "materials pending", "connected", 'not connected', 'confirmed'] %}
-<div class="col-6 mb-1">
-  <label for="amount_paid_{{ customer._id }}" class="form-label">Initial connection deposit</label>
-  <input type="number" class="form-control form-control-sm" id="amount_paid_{{ customer._id }}" name="amount_paid" value="{{ customer.amount_paid or '' }}" min="0" step="0.01" required>
-</div>
-<div class="col-6 mb-1">
-  <label for="date_paid_{{ customer._id }}" class="form-label">Payment Date</label>
-  <input type="date" class="form-control form-control-sm" id="date_paid_{{ customer._id }}" name="date_paid"
-    value="{{ customer.date_paid.strftime('%Y-%m-%d') if customer.date_paid else now().strftime('%Y-%m-%d') }}" required>
-</div>
-<div class="col-6 mb-1">
-  <label for="transaction_id_{{ customer._id }}" class="form-label">Transaction ID</label>
-  <input type="text" class="form-control form-control-sm" id="transaction_id_{{ customer._id }}" name="transaction_id" value="{{ customer.transaction_id or '' }}" required>
-</div>
-<div class="col-6 mb-1">
-  <label for="proof_of_payment_{{ customer._id }}" class="form-label">Proof of Payment</label>
-  <input type="file" class="form-control form-control-sm" id="proof_of_payment_{{ customer._id }}" name="proof_of_payment" accept="application/pdf,image/*">
-  {% if customer.proof_of_payment %}
-    <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.proof_of_payment) }}" target="_blank">View</a>
-  {% endif %}
-</div>
-{% endif %}
-
-{% if customer.status in ["verified", "not verified", "materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
-<div class="col-6 mb-1">
-  <label for="verification_date_{{ customer._id }}" class="form-label">Date of Verification</label>
-  <input type="date" class="form-control form-control-sm" id="verification_date_{{ customer._id }}" name="verification_date"
-    value="{{ customer.verification_date.strftime('%Y-%m-%d') if customer.verification_date else '' }}">
-</div>
-{% endif %}
-
-{% if customer.status == "not verified" %}
-<div class="col-6 mb-1">
-  <label for="verification_query_{{ customer._id }}" class="form-label">Verification Query</label>
-  <input type="text" class="form-control form-control-sm" id="verification_query_{{ customer._id }}" name="verification_query" value="{{ customer.verification_query or '' }}">
-</div>
-{% endif %}
-
-{% if customer.status in ["materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
-<div class="col-6 mb-1">
-  <label for="issuance_date_{{ customer._id }}" class="form-label">Date of Materials Issuance</label>
-  <input type="date" class="form-control form-control-sm" id="issuance_date_{{ customer._id }}" name="issuance_date"
-    value="{{ customer.issuance_date.strftime('%Y-%m-%d') if customer.issuance_date else '' }}">
-</div>
-{% endif %}
-
-{% if customer.status in ["connected", "confirmed", "not connected"] %}
-<div class="col-6 mb-1">
-  <label for="connection_date_{{ customer._id }}" class="form-label">Connection Date</label>
-  <input type="date" class="form-control form-control-sm" id="connection_date_{{ customer._id }}" name="connection_date"
-    value="{{ customer.connection_date.strftime('%Y-%m-%d') if customer.connection_date else '' }}" required>
-</div>
-<div class="col-6 mb-1">
-  <label for="meter_serial_{{ customer._id }}" class="form-label">Meter Serial Number</label>
-  <input type="text" class="form-control form-control-sm" id="meter_serial_{{ customer._id }}" name="meter_serial"
-    value="{{ customer.meter_serial or '' }}" required>
-</div>
-<div class="col-6 mb-1">
-  <label for="first_meter_reading_{{ customer._id }}" class="form-label">Initial Meter Reading</label>
-  <input type="number" class="form-control form-control-sm" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
-    value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
-</div>
-
-<div>
-  <label for="customer_category_{{ customer._id }}" class="form-label">Customer Category</label>
-  <select class="form-select" id="customer_category_{{ customer._id }}" name="customer_category" required>
-    <option value="" disabled>Select Category</option>
-    <option value="domestic" {% if customer.category == 'domestic' or not customer.category %}selected{% endif %}>Domestic</option>
-    <option value="institutional" {% if customer.category == 'institutional' %}selected{% endif %}>Institutional</option>
-    <option value="commercial" {% if customer.category == 'commercial' %}selected{% endif %}>Commercial</option>
-    <option value="psp" {% if customer.category == 'psp' %}selected{% endif %}>PSP</option>
-  </select>
-</div>
-
-{% endif %}
-
-
-{% if customer.status in ["verified", "not verified", "materials issued", "materials pending", "connected", "confirmed", "not connected", "paid", "approved", "disapproved", "not approved"] %}
-<div class="col-6 mb-1">
-  <label for="connection_status_{{ customer._id }}" class="form-label">Status</label>
-  <select class="form-select form-select-sm" id="connection_status_{{ customer._id }}" name="connection_status" required>
-    <option value="confirmed" {% if customer.status == "confirmed" %}selected{% endif %}>Confirmed</option>
-    <option value="connected" {% if customer.status == "connected" %}selected{% endif %}>Connected</option>
-    <option value="not connected" {% if customer.status == "not connected" %}selected{% endif %}>Not Connected</option>
-    <option value="materials issued" {% if customer.status == "materials issued" %}selected{% endif %}>Materials Issued</option>
-    <option value="materials pending" {% if customer.status == "materials pending" %}selected{% endif %}>Materials Pending</option>
-    <option value="verified" {% if customer.status == "verified" %}selected{% endif %}>Verified</option>
-    <option value="not verified" {% if customer.status == "not verified" %}selected{% endif %}>Not Verified</option>
-    <option value="paid" {% if customer.status == "paid" %}selected{% endif %}>Paid</option>
-    <option value="approved" {% if customer.status == "approved" %}selected{% endif %}>Approved</option>
-    <option value="not approved" {% if customer.status == "not approved" %}selected{% endif %}>Not Approved</option>
-  </select>
-</div>
-{% endif %}
-
-{% if customer.status == "confirmed" %}
-<div class="col-6 mb-1">
-  <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
-  <input type="number" class="form-control form-control-sm" id="customer_reference_{{ customer._id }}" name="customer_reference" value="{{ customer.customer_reference or '' }}" required>
-</div>
-{% endif %}
-
-          </div>
-        </div>
-        <div class="modal-footer py-1">
-          <button type="submit" class="btn btn-primary btn-sm">Save</button>
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-
-        <!-- Delete Modal -->
-        <div class="modal fade" id="deleteModal-{{ customer._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ customer._id }}" aria-hidden="true">
+        <!-- upload customers reference modal -->
+        <div class="modal fade" id="uploadCustomersReferenceModal" tabindex="-1" aria-labelledby="uploadCustomersReferenceModalLabel" aria-hidden="true">
           <div class="modal-dialog">
-            <div class="modal-content">
-              <form method="POST" action="{{ url_for('delete_customer') }}">
+            <div class="modal-content" style="font-size:0.9rem;">
+              <form method="POST" action="{{ url_for('upload_customers_reference') }}" enctype="multipart/form-data">
                 <div class="modal-header">
-                  <h5 class="modal-title" id="deleteModalLabel-{{ customer._id }}">Delete Customer: <span class="text-primary">{{ customer.name }}</span></h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  <h5 class="modal-title" id="uploadCustomersReferenceModalLabel" style="font-size:1rem;">Upload Customers References</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                  <input type="hidden" name="customer_id" value="{{ customer._id }}">
-                  <p>Are you sure you want to delete <strong>{{ customer.name }}</strong>?</p>
+                  <div class="mb-3">
+                    <label for="customers_file" class="form-label" style="font-size:0.95em;">Select File (CSV or XLSX)</label>
+                    <input type="file" class="form-control" id="customers_file" name="customers_file" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required style="font-size:0.95em;">
+                  </div>
                 </div>
                 <div class="modal-footer py-2">
-                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                  <button type="submit" class="btn btn-success btn-sm">Upload</button>
                   <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                 </div>
               </form>
@@ -788,352 +57,1048 @@ document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }})
           </div>
         </div>
 
+        <!-- Upload Customers Modal -->
+        <div class="modal fade" id="uploadCustomersModal" tabindex="-1" aria-labelledby="uploadCustomersModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content" style="font-size:0.9rem;">
+              <form method="POST" action="{{ url_for('upload_customers') }}" enctype="multipart/form-data">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="uploadCustomersModalLabel" style="font-size:1rem;">Upload multiple Customers</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="customers_file" class="form-label" style="font-size:0.95em;">Select File (CSV or XLSX)</label>
+                    <input type="file" class="form-control" id="customers_file" name="customers_file" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required style="font-size:0.95em;">
+                  </div>
+                </div>
+                <div class="modal-footer py-2">
+                  <button type="submit" class="btn btn-success btn-sm">Upload</button>
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
 
+        <!-- Add Customer Modal -->
+        <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('add_customer') }}" enctype="multipart/form-data">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="addCustomerModalLabel">Add New Customer</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="row g-2">
+                    <div class="col-md-6 mb-2">
+                      <label for="name" class="form-label">Name</label>
+                      <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                      <label for="contact" class="form-label">Contact</label>
+                      <input type="text" class="form-control" id="contact" name="contact" required>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                      <label for="scheme_id" class="form-label">Scheme</label>
+                      <select name="scheme_id" class="form-select" id="scheme_id" required onchange="filterVillages()">
+                        <option value="" disabled selected>Select Scheme</option>
+                        {% for scheme in schemes %}
+                          <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                      <label for="village_id" class="form-label">Village</label>
+                      <select name="village_id" class="form-select" id="village_id" required>
+                        <option value="" disabled selected>Select Village</option>
+                        {% for village in villages %}
+                          <option value="{{ village._id }}" data-scheme="{{ village.scheme_id }}">{{ village.village }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
 
-<!-- Action Modal -->
-<div class="modal fade" id="actionModal-{{ customer._id }}" tabindex="-1" aria-labelledby="actionModalLabel-{{ customer._id }}" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content" style="font-size:0.85rem;">
-      <div class="modal-header py-1">
-<h6 class="modal-title" id="actionModalLabel-{{ customer._id }}">
-  {% if customer.status == 'applied' %}
-    Survey Details for <span class="text-primary">{{ customer.name }}</span>
-  {% elif customer.status == 'surveyed' or customer.status == 'disapproved' %}
-    Approve <span class="text-primary">{{ customer.name }}</span>
-  {% elif customer.status == 'approved' %}
-    Payment Details for <span class="text-primary">{{ customer.name }}</span>
-  {% elif customer.status == 'paid' or customer.status == 'not verified' %}
-    Verify <span class="text-primary">{{ customer.name }}</span>
-  {% elif customer.status == 'verified' %}
-    Update Material Delivery Status for <span class="text-primary">{{ customer.name }}</span>
-  {% elif customer.status == 'materials issued' %}
-    Connection Details for <span class="text-primary">{{ customer.name }}</span>
-  {% elif customer.status == 'connected' %}
-    Confirm <span class="text-primary">{{ customer.name }}</span>
-  {% else %}
-    Customer Action
-  {% endif %}
-</h6>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body py-1">
-{% if customer.status == 'applied' and user.role in ['administrator', 'scheme_manager', 'area_manager'] %}
-<form method="POST" action="{{ url_for('customer_survey') }}" enctype="multipart/form-data">
-  <input type="hidden" name="customer_id" value="{{ customer._id }}">
-  <div class="mb-2">
-    <label for="survey_date_{{ customer._id }}" class="form-label">Survey Date</label>
-    <input type="date" class="form-control" id="survey_date_{{ customer._id }}" name="survey_date"
-      value="{{ now().strftime('%Y-%m-%d') }}" required>
-  </div>
+                    <script>
+                      function filterVillages() {
+                        var schemeSelect = document.getElementById('scheme_id');
+                        var villageSelect = document.getElementById('village_id');
+                        var selectedScheme = schemeSelect.value;
+                        Array.from(villageSelect.options).forEach(function(option) {
+                          if (!option.value) return; // Skip 'Select Village'
+                          option.style.display = (option.getAttribute('data-scheme') === selectedScheme) ? '' : 'none';
+                        });
+                        // Reset village selection if not matching
+                        if (villageSelect.selectedOptions[0] && villageSelect.selectedOptions[0].style.display === 'none') {
+                          villageSelect.value = '';
+                        }
+                      }
+                      document.getElementById('scheme_id').addEventListener('change', filterVillages);
+                      document.addEventListener('DOMContentLoaded', filterVillages);
+                    </script>
 
-  <div class="row mb-2">
-    <div class="col-6">
-      <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
-      <select class="form-select" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
-        <option value="HDPE" selected>HDPE</option>
-        <option value="PVC">PVC</option>
-        <option value="GI">GI</option>
-      </select>
-    </div>
-    <div class="col-6">
-      <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
-      <select class="form-select" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" required>
-        <option value="15">15</option>
-        <option value="20" selected>20</option>
-        <option value="25">25</option>
-        <option value="32">32</option>
-        <option value="40">40</option>
-        <option value="50">50</option>
-        <option value="65">65</option>
-        <option value="80">80</option>
-      </select>
-    </div>
-  </div>
+                    <div class="col-md-6 mb-2">
+                      <label for="application_id" class="form-label">Application ID</label>
+                      <input type="text" class="form-control" id="application_id" name="application_id" required>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                      <label for="date_applied" class="form-label">Date Applied</label>
+                      <input type="date" class="form-control" id="date_applied" name="date_applied" value="{{ now().strftime('%Y-%m-%d') }}" required>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                      <label for="id_document" class="form-label">Identification Document</label>
+                      <input type="file" class="form-control" id="id_document" name="id_document" accept="application/pdf,image/*" required>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                      <label for="recommendation_letter" class="form-label">Recommendation Letter</label>
+                      <input type="file" class="form-control" id="recommendation_letter" name="recommendation_letter" accept="application/pdf,image/*" required>
+                    </div>
+                  </div>
+                </div>
 
-<div class="row mb-2">
-  <div class="col-6">
-    <label for="tap_pipe_size_{{ customer._id }}" class="form-label">Tapping Point Size (mm)</label>
-    <select class="form-select" id="tap_pipe_size_{{ customer._id }}" name="tap_pipe_size" required>
-      <option value="" selected>Select Size</option>
-      <option value="15">15</option>
-      <option value="20">20</option>
-      <option value="25">25</option>
-      <option value="32">32</option>
-      <option value="40">40</option>
-      <option value="50">50</option>
-      <option value="63">63</option>
-      <option value="75">75</option>
-      <option value="90">90</option>
-      <option value="110">110</option>
-      <option value="160">160</option>
-      <option value="220">220</option>
-      <option value="260">260</option>
-    </select>
-  </div>
-  <div class="col-6">
-    <label for="tap_pipe_type_{{ customer._id }}" class="form-label">Tapping Point Type</label>
-    <select class="form-select" id="tap_pipe_type_{{ customer._id }}" name="tap_pipe_type" required>
-      <option value="" selected>Select Type</option>
-      <option value="HDPE">HDPE</option>
-      <option value="PVC">PVC</option>
-      <option value="GI">GI</option>
-    </select>
-  </div>
-</div>
-
-  <div class="mb-2">
-    <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (meters)</label>
-    <input type="number" class="form-control" id="pipe_length_{{ customer._id }}" name="pipe_length" min="0" step="0.01" required>
-  </div>
-<div class="mb-2">
-  <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
-  <input type="file" class="form-control" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form"
-    accept="application/pdf,image/*,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-  {% if customer.wealth_assessment_form %}
-    <div class="mt-1">
-      <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">
-        <span class="text-primary">{{ customer.wealth_assessment_form }}</span>
-      </a>
-    </div>
-  {% endif %}
-</div>
-  <div class="modal-footer py-1">
-    <button type="submit" class="btn btn-primary btn-sm">Submit</button>
-    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-  </div>
-</form>
-
-{% elif customer.status == 'surveyed' and user.role in ['administrator', 'area_manager'] or customer.status in ['not approved', "disapproved"]  and user.role in ['administrator', 'area_manager'] %}
-<form method="POST" action="{{ url_for('customer_approval') }}">
-  <input type="hidden" name="customer_id" value="{{ customer._id }}">
-  <div class="mb-2">
-    <label for="approval_{{ customer._id }}" class="form-label">Approval</label>
-    <select class="form-select" id="approval_{{ customer._id }}" name="approval" required onchange="toggleApprovalFields_{{ customer._id }}(this)">
-      <option value="" disabled selected>Select Approval</option>
-      <option value="approved">Approved</option>
-      <option value="not approved">Not Approved</option>
-    </select>
-  </div>
-  <div id="approvalFields_{{ customer._id }}">
-    <div class="mb-2 d-flex gap-2 align-items-end" id="customerTypeRow_{{ customer._id }}">
-      <div id="customerTypeField_{{ customer._id }}">
-        <label for="customer_type_{{ customer._id }}" class="form-label">Customer Type</label>
-        <select class="form-select" id="customer_type_{{ customer._id }}" name="customer_type" required onchange="togglePaymentPeriod_{{ customer._id }}(this)">
-          <option value="MS" selected>MS</option>
-          <option value="ES">ES</option>
-          <option value="BP">BP</option>
-        </select>
-      </div>
-      <div id="paymentPeriodField_{{ customer._id }}" style="display:none;">
-        <label for="payment_period_{{ customer._id }}" class="form-label">Payment Period (months)</label>
-        <input type="number" class="form-control" id="payment_period_{{ customer._id }}" name="payment_period" min="1" step="1" value="6">
+                <div class="modal-footer py-2">
+                  <button type="submit" class="btn btn-success btn-sm">Add Customer</button>
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="mb-2">
-      <label for="connection_fee_{{ customer._id }}" class="form-label">Connection Fee</label>
-      <input type="number" class="form-control" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" required>
-    </div>
-  </div>
-  <div class="modal-footer py-1">
-    <button type="submit" class="btn btn-primary btn-sm">Submit</button>
-    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-  </div>
-</form>
 
-<script>
-function toggleApprovalFields_{{ customer._id }}(select) {
-  var fields = document.getElementById('approvalFields_{{ customer._id }}');
-  var customerTypeField = document.getElementById('customerTypeField_{{ customer._id }}');
-  var customerTypeRow = document.getElementById('customerTypeRow_{{ customer._id }}');
-  var paymentPeriodField = document.getElementById('paymentPeriodField_{{ customer._id }}');
-  if (select.value === 'approved') {
-    fields.style.display = 'block';
-    customerTypeField.style.display = 'block';
-    fields.querySelectorAll('input, select').forEach(function(el) { el.required = true; });
-    // Also check customer type for payment period
-    togglePaymentPeriod_{{ customer._id }}(document.getElementById('customer_type_{{ customer._id }}'));
-  } else {
-    fields.style.display = 'none';
-    customerTypeField.style.display = 'none';
-    paymentPeriodField.style.display = 'none';
-    fields.querySelectorAll('input, select').forEach(function(el) { el.required = false; });
-    document.getElementById('payment_period_{{ customer._id }}').required = false;
-  }
-}
-function togglePaymentPeriod_{{ customer._id }}(select) {
-  var paymentPeriodField = document.getElementById('paymentPeriodField_{{ customer._id }}');
-  var paymentPeriodInput = document.getElementById('payment_period_{{ customer._id }}');
-  if (select.value === 'ES') {
-    paymentPeriodField.style.display = 'block';
-    paymentPeriodInput.required = true;
-  } else {
-    paymentPeriodField.style.display = 'none';
-    paymentPeriodInput.required = false;
-  }
-}
-document.addEventListener('DOMContentLoaded', function() {
-  toggleApprovalFields_{{ customer._id }}(document.getElementById('approval_{{ customer._id }}'));
-  togglePaymentPeriod_{{ customer._id }}(document.getElementById('customer_type_{{ customer._id }}'));
-});
-</script>
+    <div class="row mb-2">
 
-{% elif customer.status == 'approved' and user.role in ['administrator', 'area_manager'] or customer.status == 'not verified' and user.role in [ 'area_manager' ] %}
-<form method="POST" action="{{ url_for('customer_payment') }}" enctype="multipart/form-data">
-  <input type="hidden" name="customer_id" value="{{ customer._id }}">
-  <div class="mb-2">
-    <label for="amount_paid_{{ customer._id }}" class="form-label">Amount Paid</label>
-    <input type="number" class="form-control" id="amount_paid_{{ customer._id }}" name="amount_paid" min="0" step="0.01" required>
-  </div>
-  <div class="mb-2">
-    <label for="date_paid_{{ customer._id }}" class="form-label">Date Paid</label>
-    <input type="date" class="form-control" id="date_paid_{{ customer._id }}" name="date_paid" value="{{ now().strftime('%Y-%m-%d') }}" required>
-  </div>
-  <div class="mb-2">
-    <label for="transaction_id_{{ customer._id }}" class="form-label">Transaction ID</label>
-    <input type="text" class="form-control" id="transaction_id_{{ customer._id }}" name="transaction_id" required>
-  </div>
-  <div class="mb-2">
-    <label for="proof_of_payment_{{ customer._id }}" class="form-label">Proof of Payment</label>
-    <input type="file" class="form-control" id="proof_of_payment_{{ customer._id }}" name="proof_of_payment" accept="application/pdf,image/*" required>
-  </div>
-  <div class="modal-footer py-1">
-    <button type="submit" class="btn btn-primary btn-sm">Submit Payment</button>
-    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-  </div>
-</form>
+      <div class="col-2">
+        <form method="POST" action="{{ url_for('search_customers') }}" style="max-width:180px;">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white">
+              <button type="submit" class="btn btn-link p-0" style="color:inherit;font-size:0.9em;">
+                <i class="bi bi-search"></i>
+              </button>
+            </span>
+            <input type="text" name="search" class="form-control" style="font-size:0.85em;padding:2px 6px;" placeholder="Search..." value="{{ session.get('search_query', '') }}">
+          </div>
+        </form>
+      </div>
 
+      <div class="col-2">
+        <form method="POST" action="{{ url_for('set_scheme') }}">
+          <div class="input-group input-group-sm">
+            <label class="input-group-text" for="scheme_select">Scheme</label>
+            <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
+              {% if user.scheme_id %}
+                {% for scheme in schemes %}
+                  {% if user.scheme_id|string == scheme._id|string %}
+                    disabled
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            >
+              <option value="" {% if not session.get("selected_scheme_id") %}selected{% endif %}>All Schemes</option>
+              {% for scheme in schemes %}
+                <option value="{{ scheme._id }}"
+                  {% if session.get("selected_scheme_id")|string == scheme._id|string or (user.scheme_id|string == scheme._id|string) %}selected{% endif %}>
+                  {{ scheme.scheme }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+      </div>
 
-{% elif customer.status == 'paid' and user.role in ['administrator', 'billing_officer', 'deputy_manager'] or customer.status == 'not verified' and user.role in ['administrator', 'billing_officer']   %}
-<form method="POST" action="{{ url_for('customer_verification') }}">
-  <input type="hidden" name="customer_id" value="{{ customer._id }}">
-  <div class="mb-2">
-  <label for="verification_date_{{ customer._id }}" class="form-label">Verification Date</label>
-  <input type="date" class="form-control" id="verification_date_{{ customer._id }}" name="verification_date"
-    value="{{ customer.verification_date.strftime('%Y-%m-%d') if customer.verification_date else now().strftime('%Y-%m-%d') }}"
-    readonly>
-  </div>
-  <div class="mb-2">
-    <label for="customer_reference_{{ customer._id }}" class="form-label">Verification Status</label>
-    <select class="form-select" id="customer_reference_{{ customer._id }}" name="verification_status" required onchange="toggleVerificationQuery('{{ customer._id }}')">
-      <option value="verified" selected>Verified</option>
-      <option value="not verified">Not Verified</option>
-    </select>
-  </div>
-  <div class="mb-2" id="verification_query_field_{{ customer._id }}" style="display:none;">
-    <label for="verification_query_{{ customer._id }}" class="form-label">Verification Query</label>
-    <textarea class="form-control" id="verification_query_{{ customer._id }}" name="verification_query" rows="3" placeholder="Enter verification query or reason for not verified status"></textarea>
-  </div>
-  <div class="modal-footer py-1">
-    <button type="submit" class="btn btn-primary btn-sm">Update</button>
-    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-  </div>
-  <script>
-    function toggleVerificationQuery(customerId) {
-      const select = document.getElementById('customer_reference_' + customerId);
-      const field = document.getElementById('verification_query_field_' + customerId);
-      const textarea = document.getElementById('verification_query_' + customerId);
-      if (select.value === 'not verified') {
-        field.style.display = 'block';
-        textarea.required = true;
-      } else {
-        field.style.display = 'none';
-        textarea.required = false;
-        textarea.value = '';
-      }
-    }
-  </script>
-</form>
+      <div class="col-2">
+        <form method="POST" action="{{ url_for('set_status') }}">
+          <div class="input-group input-group-sm">
+            <label class="input-group-text" for="status_select">Status</label>
+            <select class="form-select" id="status_select" name="status" required onchange="this.form.submit()">
+              <option value="" {% if not session.get("selected_status_filter") or session.get("selected_status_filter") == "" %}selected{% endif %}>All Statuses</option>
+              <option value="applied" {% if session.get("selected_status_filter") == "applied" %}selected{% endif %}>Applied</option>
+              <option value="surveyed" {% if session.get("selected_status_filter") == "surveyed" %}selected{% endif %}>Surveyed</option>
+              <option value="approved" {% if session.get("selected_status_filter") == "approved" %}selected{% endif %}>Approved</option>
+              <option value="disapproved" {% if session.get("selected_status_filter") == "disapproved" %}selected{% endif %}>Disapproved</option>
+              <option value="paid" {% if session.get("selected_status_filter") == "paid" %}selected{% endif %}>Paid</option>
+              <option value="verified" {% if session.get("selected_status_filter") == "verified" %}selected{% endif %}>Verified</option>
+              <option value="not verified" {% if session.get("selected_status_filter") == "not verified" %}selected{% endif %}>Not Verified</option>
+              <option value="materials issued" {% if session.get("selected_status_filter") == "materials issued" %}selected{% endif %}>Materials Issued</option>
+              <option value="materials pending" {% if session.get("selected_status_filter") == "materials pending" %}selected{% endif %}>Materials Pending</option>
+              <option value="connected" {% if session.get("selected_status_filter") == "connected" %}selected{% endif %}>Connected</option>
+              <option value="not connected" {% if session.get("selected_status_filter") == "not connected" %}selected{% endif %}>Not Connected</option>
+              <option value="confirmed" {% if session.get("selected_status_filter") == "confirmed" %}selected{% endif %}>Confirmed</option>
+            </select>
+          </div>
+        </form>
+      </div>
 
-{% elif customer.status == 'verified' and user.role in ['administrator', 'stores_officer'] or customer.status == 'materials pending' and user.role in ['administrator', 'stores_officer'] %}
-<form method="POST" action="{{ url_for('materials_issuance') }}">
-  <input type="hidden" name="customer_id" value="{{ customer._id }}">
-  <input type="hidden" name="issuance_status" value="{{ true }}">
-  <div class="mb-2">
-    <label for="issuance_date_{{ customer._id }}" class="form-label">Materials Issuance Date</label>
-    <input type="date" class="form-control" id="issuance_date_{{ customer._id }}" name="issuance_date" value="{{ customer.issuance_date.strftime('%Y-%m-%d') if customer.issuance_date else now().strftime('%Y-%m-%d') }}" required>
-  </div>
-  <!-- <div class="mb-2">
-    <p class="text-success fw-bold">Update Materials Delivery Status for {{ customer.name }}</p>
-  </div> -->
-  <div class="modal-footer py-1">
-    <button type="submit" class="btn btn-primary btn-sm">Materials Issued</button>
-    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-  </div>
-</form>
+      <div class="col-auto">
+        <form method="POST" action="{{ url_for('applicant_date_filter_data') }}" style="display: flex; align-items: center; flex-wrap: nowrap;" id="dateFilterForm">
+          <div class="input-group input-group-sm" style="flex: 1; min-width: 250px;">
+            <label class="input-group-text" for="filter_select">Date Filter</label>
+            <select class="form-select" id="filter_select" name="filter_field" required onchange="toggleDateFields(); handleFieldChange()">
+              <option value="" {% if not session.get("filter_field") or session.get("filter_field") == "" %}selected{% endif %}>No Filter</option>
+              <option value="application_period" {% if session.get("filter_field") == "date_applied" %}selected{% endif %}>Application Period</option>
+              <option value="survey_period" {% if session.get("filter_field") == "survey_date" %}selected{% endif %}>Survey Period</option>
+              <option value="payment_period" {% if session.get("filter_field") == "date_paid" %}selected{% endif %}>Payment Period</option>
+              <option value="verification_period" {% if session.get("filter_field") == "verification_date" %}selected{% endif %}>Verification Period</option>
+              <option value="material_issuance_period" {% if session.get("filter_field") == "issuance_date" %}selected{% endif %}>Material Issuance Period</option>
+              <option value="connection_period" {% if session.get("filter_field") == "connection_date" %}selected{% endif %}>Connection Period</option>
+            </select>
+          </div>
+          <div class="input-group input-group-sm">
+            <input type="date" class="form-control" id="date_1" name="start_date" required disabled placeholder="start date" onchange="handleFieldChange()" {% if session.get("customers_start_date") %}value="{{ session.get("customers_start_date") }}"{% endif %}>
+            <input type="date" class="form-control" id="date_2" name="end_date" required disabled placeholder="end date" onchange="handleFieldChange()" {% if session.get("customers_end_date") %}value="{{ session.get("customers_end_date") }}"{% endif %}>
+          </div>
+        </form>
 
-{% elif customer.status == 'materials issued' and user.role in ['administrator', 'area_manager'] or customer.status == 'not connected' and user.role in ['administrator', 'area_manager'] %}
-<form method="POST" action="{{ url_for('customer_connection') }}">
-  <input type="hidden" name="customer_id" value="{{ customer._id }}">
-  <div class="mb-2">
-    <label for="connection_date_{{ customer._id }}" class="form-label">Connection Date</label>
-    <input type="date" class="form-control" id="connection_date_{{ customer._id }}" name="connection_date"
-      value="{{ customer.connection_date.strftime('%Y-%m-%d') if customer.connection_date else now().strftime('%Y-%m-%d') }}" required>
-  </div>
-  <div class="mb-2">
-    <label for="meter_serial_{{ customer._id }}" class="form-label">Meter Serial Number</label>
-    <input type="text" class="form-control" id="meter_serial_{{ customer._id }}" name="meter_serial"
-      value="{{ customer.meter_serial or '' }}" required>
-  </div>
-  <div class="mb-2">
-    <label for="first_meter_reading_{{ customer._id }}" class="form-label">Initial Meter Reading</label>
-    <input type="number" class="form-control" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
-      value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
-  </div>
-  
-  <div class="mb-2">
-    <label for="customer_category_{{ customer._id }}" class="form-label">Customer Category</label>
-    <select class="form-select" id="customer_category_{{ customer._id }}" name="customer_category" required>
-      <option value="" disabled>Select Category</option>
-      <option value="domestic" {% if customer.category == 'domestic' %}selected{% endif %}>Domestic</option>
-      <option value="institutional" {% if customer.category == 'institutional' %}selected{% endif %}>Institutional</option>
-      <option value="commercial" {% if customer.category == 'commercial' %}selected{% endif %}>Commercial</option>
-      <option value="psp" {% if customer.category == 'psp' %}selected{% endif %}>PSP</option>
-    </select>
-  </div>
-  
-  <div class="mb-2">
-    <p>Are you sure you want to confirm connection for <strong class="text-primary">{{ customer.name }}</strong>?</p>
-  </div>
-  <div class="modal-footer py-1">
-    <button type="submit" class="btn btn-primary btn-sm">Confirm Connection</button>
-    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-  </div>
-</form>
-
-{% elif customer.status == 'connected' and user.role in ['administrator', 'billing_officer'] %}
-<form method="POST" action="{{ url_for('customer_confirmation') }}">
-  <input type="hidden" name="customer_id" value="{{ customer._id }}">
-  <div class="mb-2">
-    <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
-    <input type="number" class="form-control" id="customer_reference_{{ customer._id }}" name="customer_reference" required>
-  </div>
-  <div class="mb-2">
-    <p>Confirm customer <strong class="text-primary">{{ customer.name }}</strong> by entering the reference number.</p>
-  </div>
-  <div class="modal-footer py-1">
-    <button type="submit" class="btn btn-primary btn-sm">Confirm Customer</button>
-    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-  </div>
-</form>
-
-{% else %}
-<div class="d-flex flex-column align-items-center justify-content-center py-4">
-  <i class="bi bi-check-circle-fill text-success" style="font-size:2rem;"></i>
-  <h6 class="mt-2 mb-1 fw-bold text-success">No Further Actions Required</h6>
-  <p class="text-muted mb-0 text-center" style="max-width: 300px;">
-    All necessary steps for have been completed on your part.<br>
-    Thank you for keeping the records up to date.
-  </p>
-</div>
-{% endif %}
+        <script>
+          function toggleDateFields() {
+            const filterSelect = document.getElementById('filter_select');
+            const dateGroup = document.querySelector('.input-group:has(#date_1)');
+            const date1 = document.getElementById('date_1');
+            const date2 = document.getElementById('date_2');
+            
+            if (filterSelect.value !== "") {
+              dateGroup.style.display = 'flex';
+              date1.disabled = false;
+              date2.disabled = false;
+            } else {
+              dateGroup.style.display = 'none';
+              date1.disabled = true;
+              date2.disabled = true;
+              date1.value = "";
+              date2.value = "";
+            }
+          }
+          function handleFieldChange() {
+            const filterSelect = document.getElementById('filter_select');
+            const date1 = document.getElementById('date_1');
+            const date2 = document.getElementById('date_2');
+            
+            if (filterSelect.value === "") {
+              date1.value = "";
+              date2.value = "";
+              document.getElementById('dateFilterForm').submit();
+            } else if (date1.value === "" || date2.value === "") {
+              return;
+            } else {
+              document.getElementById('dateFilterForm').submit();
+            }
+          }
+          toggleDateFields();
+        </script>
       </div>
     </div>
   </div>
-</div>
 
+  <div class="h-100 w-100" style="overflow-y: auto; -ms-overflow-style: none;">
+    <style>
+      .table-responsive::-webkit-scrollbar { display: none; }
+    </style>
+    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.65rem; border-radius: 0.5rem; overflow: hidden;">
+      <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; font-size:0.75rem;">
+        <tr class="table-secondary">
+          <th>Name</th>
+          <th>Type</th>
+          <th class="d-none d-sm-table-cell">Contact</th>
+          <th class="d-none d-sm-table-cell">Scheme</th>
+          <th class="d-none d-sm-table-cell">Village</th>
+          <th>Status</th>
+          <th>Connection Fee</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody class="table-light" style="font-size:0.65rem;">
+        {% for customer in customers %}
+          <tr class=" table-light">
+            <td class="fw-semibold text-truncate">{{ customer.name or '-' }}</td>
+            <td class="text-truncate">{{ customer.type or '-' }}</td>
+            <td class="text-truncate d-none d-sm-table-cell">{{ customer.contact or '-' }}</td>
+            <td class="text-truncate d-none d-sm-table-cell">{{ customer.scheme or '-' }}</td>
+            <td class="text-truncate d-none d-sm-table-cell">{{ customer.village or '-' }}</td>
+            <td class="text-truncate">{{ customer.status or '-' }}</td>
+            <td class="text-truncate">
+              {% if customer.connection_fee %}
+                {{ "{:,}".format(customer.connection_fee|int) }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                <button class="btn btn-outline-info btn-sm p-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ customer._id }}">
+                  <i class="bi bi-eye"></i>
+                </button>
+                {% if user.role in ["administrator"] or user.role in ["area_manager"] and customer.status in ["applied", "surveyed"] %}
+                  <button class="btn btn-outline-primary btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                {% endif %}
+                {% if user.role in ["administrator"] %}
+                  <button class="btn btn-outline-danger btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ customer._id }}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                {% endif %}
+                <button class="btn btn-outline-warning btn-sm p-1" data-bs-toggle="modal" data-bs-target="#actionModal-{{ customer._id }}">
+                  <i class="bi bi-lightning"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- View Modal -->
+          <div class="modal fade" id="viewModal-{{ customer._id }}" tabindex="-1" aria-labelledby="viewModalLabel-{{ customer._id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content" style="font-size:0.85rem;">
+                <div class="modal-header py-1">
+                  <h6 class="modal-title text-primary" id="viewModalLabel-{{ customer._id }}">
+                    {{ customer.name or 'N/A' }}
+                  </h6>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-1">
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item py-1"><strong>Type:</strong> {{ customer.type or '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Contact:</strong> {{ customer.contact or '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Scheme:</strong> {{ customer.scheme or '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Village:</strong> {{ customer.village or '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Status:</strong> {{ customer.status or '-' }}</li>
+                    {% if customer.status == 'not verified' %}
+                      <li class="list-group-item py-1"><strong>Verification Query:</strong> {{ customer.verification_query or '-' }}</li>
+                    {% endif %}
+                    <li class="list-group-item py-1"><strong>Application ID:</strong> {{ customer.application_id or '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Pipe:</strong> {{ customer.pipe_type or '-' }}, DN {{ customer.pipe_diameter or '-' }}mm, Length: {{ customer.pipe_length or '-' }}m</li>
+                    <li class="list-group-item py-1"><strong>Date Applied:</strong> {{ customer.date_applied.strftime('%d %b %Y') if customer.date_applied else '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Date Surveyed:</strong> {{ customer.survey_date.strftime('%d %b %Y') if customer.survey_date else '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Connection Fee:</strong> {{ "{:,}".format(customer.connection_fee|int) if customer.connection_fee else '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Amount Paid for connection:</strong> {{ "{:,}".format(customer.amount_paid|int) if customer.amount_paid else '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Connection Fee Balance:</strong> {{ "{:,}".format(customer.amount_due|int) if customer.amount_due else '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Date Paid:</strong> {{ customer.date_paid.strftime('%d %b %Y') if customer.date_paid else '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Meter Serial:</strong> {{ customer.meter_serial or '-' }}</li>
+                    <li class="list-group-item py-1"><strong>First Meter Reading:</strong> {{ customer.first_meter_reading or '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Tapping:</strong> DN {{ customer.tap_pipe_size or '-' }}mm, {{ customer.tap_pipe_type or '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Docs:</strong>
+                      {% if customer.id_document %}<a href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">ID document</a>{% endif %}
+                      {% if customer.recommendation_letter %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">Recommendation Letter</a>{% endif %}
+                      {% if customer.wealth_assessment_form %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">Wealth Assessment Form</a>{% endif %}
+                      {% if customer.proof_of_payment %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.proof_of_payment) }}" target="_blank">Proof of Payment</a>{% endif %}
+                      {% if not (customer.id_document or customer.recommendation_letter or customer.wealth_assessment_form or customer.proof_of_payment) %}-{% endif %}
+                    </li>
+                    <li class="list-group-item py-1"><strong>Transaction ID:</strong> {{ customer.transaction_id or '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Date of Verification:</strong> {{ customer.verification_date.strftime('%d %b %Y') if customer.verification_date else '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Date Materials were Issued:</strong> {{ customer.issuance_date.strftime('%d %b %Y') if customer.issuance_date else '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Date of Connection:</strong> {{ customer.connection_date.strftime('%d %b %Y') if customer.connection_date else '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Customer Category:</strong> {{ customer.category or '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Customer Reference:</strong> {{ customer.customer_reference or '-' }}</li>
+                  </ul>
+                </div>
+                <div class="modal-footer py-1">
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit Customer Modal -->
+          <div class="modal fade" id="editModal-{{ customer._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ customer._id }}" aria-hidden="true">
+            <div class="modal-dialog modal-md">
+              <div class="modal-content" style="font-size:0.78rem;">
+                <form method="POST" action="{{ url_for('edit_customer') }}" enctype="multipart/form-data">
+                  <div class="modal-header py-1">
+                    <h6 class="modal-title text-primary" id="editModalLabel-{{ customer._id }}">Edit Customer</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body py-1">
+                    <input type="hidden" name="customer_id" value="{{ customer._id }}">
+                    <div class="row g-1">
+                      <div class="col-6 mb-1">
+                        <label for="name_{{ customer._id }}" class="form-label">Name</label>
+                        <input type="text" class="form-control form-control-sm" id="name_{{ customer._id }}" name="name" value="{{ customer.name }}" required>
+                      </div>
+                      <div class="col-6 mb-1">
+                        <label for="contact_{{ customer._id }}" class="form-label">Contact</label>
+                        <input type="text" class="form-control form-control-sm" id="contact_{{ customer._id }}" name="contact" value="{{ customer.contact }}" required>
+                      </div>
+
+                      <div class="col-6 mb-1">
+                        <label for="scheme_id_{{ customer._id }}" class="form-label">Scheme</label>
+                        <select name="scheme_id" class="form-select form-select-sm" id="scheme_id_{{ customer._id }}" required onchange="filterVillages_{{ customer._id }}()">
+                          {% for scheme in schemes %}
+                            <option value="{{ scheme._id }}" {% if scheme._id|string == customer.scheme_id|string %}selected{% endif %}>{{ scheme.scheme }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="col-6 mb-1">
+                        <label for="village_id_{{ customer._id }}" class="form-label">Village</label>
+                        <select name="village_id" class="form-select form-select-sm" id="village_id_{{ customer._id }}" required>
+                          {% for village in villages %}
+                            <option value="{{ village._id }}" data-scheme="{{ village.scheme_id }}" {% if village._id|string == customer.village_id|string %}selected{% endif %}>{{ village.village }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <script>
+                        function filterVillages_{{ customer._id }}() {
+                          var schemeSelect = document.getElementById('scheme_id_{{ customer._id }}');
+                          var villageSelect = document.getElementById('village_id_{{ customer._id }}');
+                          var selectedScheme = schemeSelect.value;
+                          Array.from(villageSelect.options).forEach(function(option) {
+                            if (!option.value) return; // Skip 'Select Village'
+                            option.style.display = (option.getAttribute('data-scheme') === selectedScheme) ? '' : 'none';
+                          });
+                          // Reset village selection if not matching
+                          if (villageSelect.selectedOptions[0] && villageSelect.selectedOptions[0].style.display === 'none') {
+                            villageSelect.value = '';
+                          }
+                        }
+                        document.getElementById('scheme_id_{{ customer._id }}').addEventListener('change', filterVillages_{{ customer._id }});
+                        document.addEventListener('DOMContentLoaded', filterVillages_{{ customer._id }});
+                      </script>
+
+                      <div class="col-6 mb-1">
+                        <label for="date_applied_{{ customer._id }}" class="form-label">Date Applied</label>
+                        <input type="date"
+                          class="form-control form-control-sm"
+                          id="date_applied_{{ customer._id }}"
+                          name="date_applied"
+                          value="{{ customer.date_applied.strftime('%Y-%m-%d') if customer.date_applied else now().strftime('%Y-%m-%d') }}"
+                          required>
+                      </div>
+                      <div class="col-6 mb-1">
+                        <label for="application_id_{{ customer._id }}" class="form-label">Application ID</label>
+                        <input type="text" class="form-control form-control-sm" id="application_id_{{ customer._id }}" name="application_id" value="{{ customer.application_id }}" required>
+                      </div>
+                      <div class="col-6 mb-1">
+                        <label for="id_document_{{ customer._id }}" class="form-label">ID Document</label>
+                        <input type="file" class="form-control form-control-sm" id="id_document_{{ customer._id }}" name="id_document" accept="application/pdf,image/*">
+                        {% if customer.id_document %}
+                          <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">View</a>
+                        {% endif %}
+                      </div>
+                      <div class="col-6 mb-1">
+                        <label for="recommendation_letter_{{ customer._id }}" class="form-label">Recommendation Letter</label>
+                        <input type="file" class="form-control form-control-sm" id="recommendation_letter_{{ customer._id }}" name="recommendation_letter" accept="application/pdf,image/*">
+                        {% if customer.recommendation_letter %}
+                          <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">View</a>
+                        {% endif %}
+                      </div>
+
+                      {% if customer.status in ["surveyed", "approved", "disapproved", "not approved", 'paid', 'verified','not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
+                        <div class="col-6 mb-1">
+                          <label for="survey_date_{{ customer._id }}" class="form-label">Survey Date</label>
+                          <input type="date" class="form-control form-control-sm" id="survey_date_{{ customer._id }}" name="survey_date"
+                            value="{{ customer.survey_date.strftime('%Y-%m-%d') if customer.survey_date else now().strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="col-6 mb-1">
+                          <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
+                          <input type="file" class="form-control form-control-sm" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form"
+                            accept="application/pdf,image/*,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+                          {% if customer.wealth_assessment_form %}
+                            <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">View</a>
+                          {% endif %}
+                        </div>
+                        <div class="col-6 mb-1">
+                          <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
+                          <select class="form-select form-select-sm" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
+                            <option value="HDPE" {% if customer.pipe_type == "HDPE" or not customer.pipe_type %}selected{% endif %}>HDPE</option>
+                            <option value="PVC" {% if customer.pipe_type == "PVC" %}selected{% endif %}>PVC</option>
+                            <option value="GI" {% if customer.pipe_type == "GI" %}selected{% endif %}>GI</option>
+                          </select>
+                        </div>
+                        <div class="col-6 mb-1">
+                          <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
+                          <select class="form-select form-select-sm" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" required>
+                            <option value="15" {% if customer.pipe_diameter|string == "15" %}selected{% endif %}>15</option>
+                            <option value="20" {% if customer.pipe_diameter|string == "20" or customer.pipe_diameter is none or customer.pipe_diameter == "" %}selected{% endif %}>20</option>
+                            <option value="25" {% if customer.pipe_diameter|string == "25" %}selected{% endif %}>25</option>
+                            <option value="32" {% if customer.pipe_diameter|string == "32" %}selected{% endif %}>32</option>
+                            <option value="40" {% if customer.pipe_diameter|string == "40" %}selected{% endif %}>40</option>
+                            <option value="50" {% if customer.pipe_diameter|string == "50" %}selected{% endif %}>50</option>
+                            <option value="65" {% if customer.pipe_diameter|string == "65" %}selected{% endif %}>65</option>
+                            <option value="80" {% if customer.pipe_diameter|string == "80" %}selected{% endif %}>80</option>
+                          </select>
+                        </div>
+                        <div class="col-6 mb-1">
+                          <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (m)</label>
+                          <input type="number" class="form-control form-control-sm" id="pipe_length_{{ customer._id }}" name="pipe_length" value="{{ customer.pipe_length or '' }}" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-6 mb-1">
+                          <label for="tap_pipe_size_{{ customer._id }}" class="form-label">Tapping Point Size (mm)</label>
+                          <select class="form-select form-select-sm" id="tap_pipe_size_{{ customer._id }}" name="tap_pipe_size" required>
+                            <option value="" {% if customer.tap_pipe_size is none or customer.tap_pipe_size == "" %}selected{% endif %}>Select Size</option>
+                            <option value="15" {% if customer.tap_pipe_size|string == "15" %}selected{% endif %}>15</option>
+                            <option value="20" {% if customer.tap_pipe_size|string == "20" %}selected{% endif %}>20</option>
+                            <option value="25" {% if customer.tap_pipe_size|string == "25" %}selected{% endif %}>25</option>
+                            <option value="32" {% if customer.tap_pipe_size|string == "32" %}selected{% endif %}>32</option>
+                            <option value="40" {% if customer.tap_pipe_size|string == "40" %}selected{% endif %}>40</option>
+                            <option value="50" {% if customer.tap_pipe_size|string == "50" %}selected{% endif %}>50</option>
+                            <option value="63" {% if customer.tap_pipe_size|string == "63" %}selected{% endif %}>63</option>
+                            <option value="75" {% if customer.tap_pipe_size|string == "75" %}selected{% endif %}>75</option>
+                            <option value="90" {% if customer.tap_pipe_size|string == "90" %}selected{% endif %}>90</option>
+                            <option value="110" {% if customer.tap_pipe_size|string == "110" %}selected{% endif %}>110</option>
+                            <option value="160" {% if customer.tap_pipe_size|string == "160" %}selected{% endif %}>160</option>
+                            <option value="220" {% if customer.tap_pipe_size|string == "220" %}selected{% endif %}>220</option>
+                            <option value="260" {% if customer.tap_pipe_size|string == "260" %}selected{% endif %}>260</option>
+                          </select>
+                        </div>
+                        <div class="col-6 mb-1">
+                          <label for="tap_pipe_type_{{ customer._id }}" class="form-label">Tapping Point Type</label>
+                          <select class="form-select form-select-sm" id="tap_pipe_type_{{ customer._id }}" name="tap_pipe_type" required>
+                            <option value="" {% if customer.tap_pipe_type is none or customer.tap_pipe_type == "" %}selected{% endif %}>Select Type</option>
+                            <option value="HDPE" {% if customer.tap_pipe_type == "HDPE" %}selected{% endif %}>HDPE</option>
+                            <option value="PVC" {% if customer.tap_pipe_type == "PVC" %}selected{% endif %}>PVC</option>
+                            <option value="GI" {% if customer.tap_pipe_type == "GI" %}selected{% endif %}>GI</option>
+                          </select>
+                        </div>
+                      {% endif %}
+
+                      {% if customer.status in ['approved', 'paid', 'verified', 'not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
+                        <div class="col-6 mb-1">
+                          <label for="customer_type_{{ customer._id }}" class="form-label">Customer Type</label>
+                          <select class="form-select form-select-sm" id="customer_type_{{ customer._id }}" name="customer_type" required onchange="togglePaymentPeriodEdit_{{ customer._id }}(this)">
+                            <option value="MS" {% if customer.type == "MS" %}selected{% endif %}>MS</option>
+                            <option value="ES" {% if customer.type == "ES" %}selected{% endif %}>ES</option>
+                            <option value="BP" {% if customer.type == "BP" %}selected{% endif %}>BP</option>
+                          </select>
+                        </div>
+                        <div class="col-6 mb-1" id="paymentPeriodEditField_{{ customer._id }}" style="{% if customer.type != 'ES' %}display:none;{% endif %}">
+                          <label for="payment_period_{{ customer._id }}" class="form-label">Payment Period (months)</label>
+                          <input type="number" class="form-control form-control-sm" id="payment_period_{{ customer._id }}" name="payment_period" min="1" step="1"
+                            value="{{ customer.payment_period if customer.payment_period is not none and customer.payment_period != '' else None }}"
+                            {% if customer.type == 'ES' %}required{% endif %}>
+                        </div>
+
+                        <div class="col-6 mb-1">
+                          <label for="connection_fee_{{ customer._id }}" class="form-label">Connection Fee</label>
+                          <input type="number" class="form-control form-control-sm" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" value="{{ customer.connection_fee or 0 }}" required>
+                        </div>
+
+                        <script>
+                          function togglePaymentPeriodEdit_{{ customer._id }}(select) {
+                            var field = document.getElementById('paymentPeriodEditField_{{ customer._id }}');
+                            var input = document.getElementById('payment_period_{{ customer._id }}');
+                            if (select.value === 'ES') {
+                              field.style.display = '';
+                              input.required = true;
+                              if (!input.value) input.value = '6';
+                            } else {
+                              field.style.display = 'none';
+                              input.required = false;
+                              input.value = '';
+                            }
+                          }
+                          document.addEventListener('DOMContentLoaded', function() {
+                            togglePaymentPeriodEdit_{{ customer._id }}(document.getElementById('customer_type_{{ customer._id }}'));
+                          });
+                        </script>
+                      {% endif %}
+
+                      {% if customer.status in ["paid", "verified", "not verified", "materials issued", "materials pending", "connected", 'not connected', 'confirmed'] %}
+                        <div class="col-6 mb-1">
+                          <label for="amount_paid_{{ customer._id }}" class="form-label">Initial connection deposit</label>
+                          <input type="number" class="form-control form-control-sm" id="amount_paid_{{ customer._id }}" name="amount_paid" value="{{ customer.amount_paid or '' }}" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-6 mb-1">
+                          <label for="date_paid_{{ customer._id }}" class="form-label">Payment Date</label>
+                          <input type="date" class="form-control form-control-sm" id="date_paid_{{ customer._id }}" name="date_paid"
+                            value="{{ customer.date_paid.strftime('%Y-%m-%d') if customer.date_paid else now().strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="col-6 mb-1">
+                          <label for="transaction_id_{{ customer._id }}" class="form-label">Transaction ID</label>
+                          <input type="text" class="form-control form-control-sm" id="transaction_id_{{ customer._id }}" name="transaction_id" value="{{ customer.transaction_id or '' }}" required>
+                        </div>
+                        <div class="col-6 mb-1">
+                          <label for="proof_of_payment_{{ customer._id }}" class="form-label">Proof of Payment</label>
+                          <input type="file" class="form-control form-control-sm" id="proof_of_payment_{{ customer._id }}" name="proof_of_payment" accept="application/pdf,image/*">
+                          {% if customer.proof_of_payment %}
+                            <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.proof_of_payment) }}" target="_blank">View</a>
+                          {% endif %}
+                        </div>
+                      {% endif %}
+
+                      {% if customer.status in ["verified", "not verified", "materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
+                        <div class="col-6 mb-1">
+                          <label for="verification_date_{{ customer._id }}" class="form-label">Date of Verification</label>
+                          <input type="date" class="form-control form-control-sm" id="verification_date_{{ customer._id }}" name="verification_date"
+                            value="{{ customer.verification_date.strftime('%Y-%m-%d') if customer.verification_date else '' }}">
+                        </div>
+                      {% endif %}
+
+                      {% if customer.status == "not verified" %}
+                        <div class="col-6 mb-1">
+                          <label for="verification_query_{{ customer._id }}" class="form-label">Verification Query</label>
+                          <input type="text" class="form-control form-control-sm" id="verification_query_{{ customer._id }}" name="verification_query" value="{{ customer.verification_query or '' }}">
+                        </div>
+                      {% endif %}
+
+                      {% if customer.status in ["materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
+                        <div class="col-6 mb-1">
+                          <label for="issuance_date_{{ customer._id }}" class="form-label">Date of Materials Issuance</label>
+                          <input type="date" class="form-control form-control-sm" id="issuance_date_{{ customer._id }}" name="issuance_date"
+                            value="{{ customer.issuance_date.strftime('%Y-%m-%d') if customer.issuance_date else '' }}">
+                        </div>
+                      {% endif %}
+
+                      {% if customer.status in ["connected", "confirmed", "not connected"] %}
+                        <div class="col-6 mb-1">
+                          <label for="connection_date_{{ customer._id }}" class="form-label">Connection Date</label>
+                          <input type="date" class="form-control form-control-sm" id="connection_date_{{ customer._id }}" name="connection_date"
+                            value="{{ customer.connection_date.strftime('%Y-%m-%d') if customer.connection_date else '' }}" required>
+                        </div>
+                        <div class="col-6 mb-1">
+                          <label for="meter_serial_{{ customer._id }}" class="form-label">Meter Serial Number</label>
+                          <input type="text" class="form-control form-control-sm" id="meter_serial_{{ customer._id }}" name="meter_serial"
+                            value="{{ customer.meter_serial or '' }}" required>
+                        </div>
+                        <div class="col-6 mb-1">
+                          <label for="first_meter_reading_{{ customer._id }}" class="form-label">Initial Meter Reading</label>
+                          <input type="number" class="form-control form-control-sm" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
+                            value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
+                        </div>
+
+                        <div>
+                          <label for="customer_category_{{ customer._id }}" class="form-label">Customer Category</label>
+                          <select class="form-select" id="customer_category_{{ customer._id }}" name="customer_category" required>
+                            <option value="" disabled>Select Category</option>
+                            <option value="domestic" {% if customer.category == 'domestic' or not customer.category %}selected{% endif %}>Domestic</option>
+                            <option value="institutional" {% if customer.category == 'institutional' %}selected{% endif %}>Institutional</option>
+                            <option value="commercial" {% if customer.category == 'commercial' %}selected{% endif %}>Commercial</option>
+                            <option value="psp" {% if customer.category == 'psp' %}selected{% endif %}>PSP</option>
+                          </select>
+                        </div>
+                      {% endif %}
+
+                      {% if customer.status in ["verified", "not verified", "materials issued", "materials pending", "connected", "confirmed", "not connected", "paid", "approved", "disapproved", "not approved"] %}
+                        <div class="col-6 mb-1">
+                          <label for="connection_status_{{ customer._id }}" class="form-label">Status</label>
+                          <select class="form-select form-select-sm" id="connection_status_{{ customer._id }}" name="connection_status" required>
+                            <option value="confirmed" {% if customer.status == "confirmed" %}selected{% endif %}>Confirmed</option>
+                            <option value="connected" {% if customer.status == "connected" %}selected{% endif %}>Connected</option>
+                            <option value="not connected" {% if customer.status == "not connected" %}selected{% endif %}>Not Connected</option>
+                            <option value="materials issued" {% if customer.status == "materials issued" %}selected{% endif %}>Materials Issued</option>
+                            <option value="materials pending" {% if customer.status == "materials pending" %}selected{% endif %}>Materials Pending</option>
+                            <option value="verified" {% if customer.status == "verified" %}selected{% endif %}>Verified</option>
+                            <option value="not verified" {% if customer.status == "not verified" %}selected{% endif %}>Not Verified</option>
+                            <option value="paid" {% if customer.status == "paid" %}selected{% endif %}>Paid</option>
+                            <option value="approved" {% if customer.status == "approved" %}selected{% endif %}>Approved</option>
+                            <option value="not approved" {% if customer.status == "not approved" %}selected{% endif %}>Not Approved</option>
+                          </select>
+                        </div>
+                      {% endif %}
+
+                      {% if customer.status == "confirmed" %}
+                        <div class="col-6 mb-1">
+                          <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
+                          <input type="number" class="form-control form-control-sm" id="customer_reference_{{ customer._id }}" name="customer_reference" value="{{ customer.customer_reference or '' }}" required>
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div class="modal-footer py-1">
+                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Delete Modal -->
+          <div class="modal fade" id="deleteModal-{{ customer._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ customer._id }}" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="POST" action="{{ url_for('delete_customer') }}">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel-{{ customer._id }}">Delete Customer: <span class="text-primary">{{ customer.name }}</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <input type="hidden" name="customer_id" value="{{ customer._id }}">
+                    <p>Are you sure you want to delete <strong>{{ customer.name }}</strong>?</p>
+                  </div>
+                  <div class="modal-footer py-2">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Modal -->
+          <div class="modal fade" id="actionModal-{{ customer._id }}" tabindex="-1" aria-labelledby="actionModalLabel-{{ customer._id }}" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content" style="font-size:0.85rem;">
+                <div class="modal-header py-1">
+                  <h6 class="modal-title" id="actionModalLabel-{{ customer._id }}">
+                    {% if customer.status == 'applied' %}
+                      Survey Details for <span class="text-primary">{{ customer.name }}</span>
+                    {% elif customer.status == 'surveyed' or customer.status == 'disapproved' %}
+                      Approve <span class="text-primary">{{ customer.name }}</span>
+                    {% elif customer.status == 'approved' %}
+                      Payment Details for <span class="text-primary">{{ customer.name }}</span>
+                    {% elif customer.status == 'paid' or customer.status == 'not verified' %}
+                      Verify <span class="text-primary">{{ customer.name }}</span>
+                    {% elif customer.status == 'verified' %}
+                      Update Material Delivery Status for <span class="text-primary">{{ customer.name }}</span>
+                    {% elif customer.status == 'materials issued' %}
+                      Connection Details for <span class="text-primary">{{ customer.name }}</span>
+                    {% elif customer.status == 'connected' %}
+                      Confirm <span class="text-primary">{{ customer.name }}</span>
+                    {% else %}
+                      Customer Action
+                    {% endif %}
+                  </h6>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-1">
+                  {% if customer.status == 'applied' and user.role in ['administrator', 'scheme_manager', 'area_manager'] %}
+                    <form method="POST" action="{{ url_for('customer_survey') }}" enctype="multipart/form-data">
+                      <input type="hidden" name="customer_id" value="{{ customer._id }}">
+                      <div class="mb-2">
+                        <label for="survey_date_{{ customer._id }}" class="form-label">Survey Date</label>
+                        <input type="date" class="form-control" id="survey_date_{{ customer._id }}" name="survey_date" value="{{ now().strftime('%Y-%m-%d') }}" required>
+                      </div>
+
+                      <div class="row mb-2">
+                        <div class="col-6">
+                          <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
+                          <select class="form-select" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
+                            <option value="HDPE" selected>HDPE</option>
+                            <option value="PVC">PVC</option>
+                            <option value="GI">GI</option>
+                          </select>
+                        </div>
+                        <div class="col-6">
+                          <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
+                          <select class="form-select" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" required>
+                            <option value="15">15</option>
+                            <option value="20" selected>20</option>
+                            <option value="25">25</option>
+                            <option value="32">32</option>
+                            <option value="40">40</option>
+                            <option value="50">50</option>
+                            <option value="65">65</option>
+                            <option value="80">80</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="row mb-2">
+                        <div class="col-6">
+                          <label for="tap_pipe_size_{{ customer._id }}" class="form-label">Tapping Point Size (mm)</label>
+                          <select class="form-select" id="tap_pipe_size_{{ customer._id }}" name="tap_pipe_size" required>
+                            <option value="" selected>Select Size</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                            <option value="25">25</option>
+                            <option value="32">32</option>
+                            <option value="40">40</option>
+                            <option value="50">50</option>
+                            <option value="63">63</option>
+                            <option value="75">75</option>
+                            <option value="90">90</option>
+                            <option value="110">110</option>
+                            <option value="160">160</option>
+                            <option value="220">220</option>
+                            <option value="260">260</option>
+                          </select>
+                        </div>
+                        <div class="col-6">
+                          <label for="tap_pipe_type_{{ customer._id }}" class="form-label">Tapping Point Type</label>
+                          <select class="form-select" id="tap_pipe_type_{{ customer._id }}" name="tap_pipe_type" required>
+                            <option value="" selected>Select Type</option>
+                            <option value="HDPE">HDPE</option>
+                            <option value="PVC">PVC</option>
+                            <option value="GI">GI</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="mb-2">
+                        <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (meters)</label>
+                        <input type="number" class="form-control" id="pipe_length_{{ customer._id }}" name="pipe_length" min="0" step="0.01" required>
+                      </div>
+                      <div class="mb-2">
+                        <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
+                        <input type="file" class="form-control" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form"
+                          accept="application/pdf,image/*,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+                        {% if customer.wealth_assessment_form %}
+                          <div class="mt-1">
+                            <a class="text-primary" href="{{ url_for('static', filename='uploads/' ~ customer.wealth_assessment_form) }}" target="_blank">
+                              <span class="text-primary">{{ customer.wealth_assessment_form }}</span>
+                            </a>
+                          </div>
+                        {% endif %}
+                      </div>
+                      <div class="modal-footer py-1">
+                        <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      </div>
+                    </form>
+
+                  {% elif customer.status == 'surveyed' and user.role in ['administrator', 'area_manager'] or customer.status in ['not approved', "disapproved"] and user.role in ['administrator', 'area_manager'] %}
+                    <form method="POST" action="{{ url_for('customer_approval') }}">
+                      <input type="hidden" name="customer_id" value="{{ customer._id }}">
+                      <div class="mb-2">
+                        <label for="approval_{{ customer._id }}" class="form-label">Approval</label>
+                        <select class="form-select" id="approval_{{ customer._id }}" name="approval" required onchange="toggleApprovalFields_{{ customer._id }}(this)">
+                          <option value="" disabled selected>Select Approval</option>
+                          <option value="approved">Approved</option>
+                          <option value="not approved">Not Approved</option>
+                        </select>
+                      </div>
+                      <div id="approvalFields_{{ customer._id }}">
+                        <div class="mb-2 d-flex gap-2 align-items-end" id="customerTypeRow_{{ customer._id }}">
+                          <div id="customerTypeField_{{ customer._id }}">
+                            <label for="customer_type_{{ customer._id }}" class="form-label">Customer Type</label>
+                            <select class="form-select" id="customer_type_{{ customer._id }}" name="customer_type" required onchange="togglePaymentPeriod_{{ customer._id }}(this)">
+                              <option value="MS" selected>MS</option>
+                              <option value="ES">ES</option>
+                              <option value="BP">BP</option>
+                            </select>
+                          </div>
+                          <div id="paymentPeriodField_{{ customer._id }}" style="display:none;">
+                            <label for="payment_period_{{ customer._id }}" class="form-label">Payment Period (months)</label>
+                            <input type="number" class="form-control" id="payment_period_{{ customer._id }}" name="payment_period" min="1" step="1" value="6">
+                          </div>
+                        </div>
+                        <div class="mb-2">
+                          <label for="connection_fee_{{ customer._id }}" class="form-label">Connection Fee</label>
+                          <input type="number" class="form-control" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" required>
+                        </div>
+                      </div>
+                      <div class="modal-footer py-1">
+                        <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      </div>
+                    </form>
+
+                    <script>
+                      function toggleApprovalFields_{{ customer._id }}(select) {
+                        var fields = document.getElementById('approvalFields_{{ customer._id }}');
+                        var customerTypeField = document.getElementById('customerTypeField_{{ customer._id }}');
+                        var customerTypeRow = document.getElementById('customerTypeRow_{{ customer._id }}');
+                        var paymentPeriodField = document.getElementById('paymentPeriodField_{{ customer._id }}');
+                        if (select.value === 'approved') {
+                          fields.style.display = 'block';
+                          customerTypeField.style.display = 'block';
+                          fields.querySelectorAll('input, select').forEach(function(el) { el.required = true; });
+                          togglePaymentPeriod_{{ customer._id }}(document.getElementById('customer_type_{{ customer._id }}'));
+                        } else {
+                          fields.style.display = 'none';
+                          customerTypeField.style.display = 'none';
+                          paymentPeriodField.style.display = 'none';
+                          fields.querySelectorAll('input, select').forEach(function(el) { el.required = false; });
+                          document.getElementById('payment_period_{{ customer._id }}').required = false;
+                        }
+                      }
+                      function togglePaymentPeriod_{{ customer._id }}(select) {
+                        var paymentPeriodField = document.getElementById('paymentPeriodField_{{ customer._id }}');
+                        var paymentPeriodInput = document.getElementById('payment_period_{{ customer._id }}');
+                        if (select.value === 'ES') {
+                          paymentPeriodField.style.display = 'block';
+                          paymentPeriodInput.required = true;
+                        } else {
+                          paymentPeriodField.style.display = 'none';
+                          paymentPeriodInput.required = false;
+                        }
+                      }
+                      document.addEventListener('DOMContentLoaded', function() {
+                        toggleApprovalFields_{{ customer._id }}(document.getElementById('approval_{{ customer._id }}'));
+                        togglePaymentPeriod_{{ customer._id }}(document.getElementById('customer_type_{{ customer._id }}'));
+                      });
+                    </script>
+
+                  {% elif customer.status == 'approved' and user.role in ['administrator', 'area_manager'] or customer.status == 'not verified' and user.role in ['area_manager'] %}
+                    <form method="POST" action="{{ url_for('customer_payment') }}" enctype="multipart/form-data">
+                      <input type="hidden" name="customer_id" value="{{ customer._id }}">
+                      <div class="mb-2">
+                        <label for="amount_paid_{{ customer._id }}" class="form-label">Amount Paid</label>
+                        <input type="number" class="form-control" id="amount_paid_{{ customer._id }}" name="amount_paid" min="0" step="0.01" required>
+                      </div>
+                      <div class="mb-2">
+                        <label for="date_paid_{{ customer._id }}" class="form-label">Date Paid</label>
+                        <input type="date" class="form-control" id="date_paid_{{ customer._id }}" name="date_paid" value="{{ now().strftime('%Y-%m-%d') }}" required>
+                      </div>
+                      <div class="mb-2">
+                        <label for="transaction_id_{{ customer._id }}" class="form-label">Transaction ID</label>
+                        <input type="text" class="form-control" id="transaction_id_{{ customer._id }}" name="transaction_id" required>
+                      </div>
+                      <div class="mb-2">
+                        <label for="proof_of_payment_{{ customer._id }}" class="form-label">Proof of Payment</label>
+                        <input type="file" class="form-control" id="proof_of_payment_{{ customer._id }}" name="proof_of_payment" accept="application/pdf,image/*" required>
+                      </div>
+                      <div class="modal-footer py-1">
+                        <button type="submit" class="btn btn-primary btn-sm">Submit Payment</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      </div>
+                    </form>
+
+                  {% elif customer.status == 'paid' and user.role in ['administrator', 'billing_officer', 'deputy_manager'] or customer.status == 'not verified' and user.role in ['administrator', 'billing_officer'] %}
+                    <form method="POST" action="{{ url_for('customer_verification') }}">
+                      <input type="hidden" name="customer_id" value="{{ customer._id }}">
+                      <div class="mb-2">
+                        <label for="verification_date_{{ customer._id }}" class="form-label">Verification Date</label>
+                        <input type="date" class="form-control" id="verification_date_{{ customer._id }}" name="verification_date"
+                          value="{{ customer.verification_date.strftime('%Y-%m-%d') if customer.verification_date else now().strftime('%Y-%m-%d') }}"
+                          readonly>
+                      </div>
+                      <div class="mb-2">
+                        <label for="customer_reference_{{ customer._id }}" class="form-label">Verification Status</label>
+                        <select class="form-select" id="customer_reference_{{ customer._id }}" name="verification_status" required onchange="toggleVerificationQuery('{{ customer._id }}')">
+                          <option value="verified" selected>Verified</option>
+                          <option value="not verified">Not Verified</option>
+                        </select>
+                      </div>
+                      <div class="mb-2" id="verification_query_field_{{ customer._id }}" style="display:none;">
+                        <label for="verification_query_{{ customer._id }}" class="form-label">Verification Query</label>
+                        <textarea class="form-control" id="verification_query_{{ customer._id }}" name="verification_query" rows="3" placeholder="Enter verification query or reason for not verified status"></textarea>
+                      </div>
+                      <div class="modal-footer py-1">
+                        <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      </div>
+                      <script>
+                        function toggleVerificationQuery(customerId) {
+                          const select = document.getElementById('customer_reference_' + customerId);
+                          const field = document.getElementById('verification_query_field_' + customerId);
+                          const textarea = document.getElementById('verification_query_' + customerId);
+                          if (select.value === 'not verified') {
+                            field.style.display = 'block';
+                            textarea.required = true;
+                          } else {
+                            field.style.display = 'none';
+                            textarea.required = false;
+                            textarea.value = '';
+                          }
+                        }
+                      </script>
+                    </form>
+
+                  {% elif customer.status == 'verified' and user.role in ['administrator', 'stores_officer'] or customer.status == 'materials pending' and user.role in ['administrator', 'stores_officer'] %}
+                    <form method="POST" action="{{ url_for('materials_issuance') }}">
+                      <input type="hidden" name="customer_id" value="{{ customer._id }}">
+                      <input type="hidden" name="issuance_status" value="{{ true }}">
+                      <div class="mb-2">
+                        <label for="issuance_date_{{ customer._id }}" class="form-label">Materials Issuance Date</label>
+                        <input type="date" class="form-control" id="issuance_date_{{ customer._id }}" name="issuance_date" value="{{ customer.issuance_date.strftime('%Y-%m-%d') if customer.issuance_date else now().strftime('%Y-%m-%d') }}" required>
+                      </div>
+                      <div class="modal-footer py-1">
+                        <button type="submit" class="btn btn-primary btn-sm">Materials Issued</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      </div>
+                    </form>
+
+                  {% elif customer.status == 'materials issued' and user.role in ['administrator', 'area_manager'] or customer.status == 'not connected' and user.role in ['administrator', 'area_manager'] %}
+                    <form method="POST" action="{{ url_for('customer_connection') }}">
+                      <input type="hidden" name="customer_id" value="{{ customer._id }}">
+                      <div class="mb-2">
+                        <label for="connection_date_{{ customer._id }}" class="form-label">Connection Date</label>
+                        <input type="date" class="form-control" id="connection_date_{{ customer._id }}" name="connection_date"
+                          value="{{ customer.connection_date.strftime('%Y-%m-%d') if customer.connection_date else now().strftime('%Y-%m-%d') }}" required>
+                      </div>
+                      <div class="mb-2">
+                        <label for="meter_serial_{{ customer._id }}" class="form-label">Meter Serial Number</label>
+                        <input type="text" class="form-control" id="meter_serial_{{ customer._id }}" name="meter_serial"
+                          value="{{ customer.meter_serial or '' }}" required>
+                      </div>
+                      <div class="mb-2">
+                        <label for="first_meter_reading_{{ customer._id }}" class="form-label">Initial Meter Reading</label>
+                        <input type="number" class="form-control" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
+                          value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
+                      </div>
+
+                      <div class="mb-2">
+                        <label for="customer_category_{{ customer._id }}" class="form-label">Customer Category</label>
+                        <select class="form-select" id="customer_category_{{ customer._id }}" name="customer_category" required>
+                          <option value="" disabled>Select Category</option>
+                          <option value="domestic" {% if customer.category == 'domestic' %}selected{% endif %}>Domestic</option>
+                          <option value="institutional" {% if customer.category == 'institutional' %}selected{% endif %}>Institutional</option>
+                          <option value="commercial" {% if customer.category == 'commercial' %}selected{% endif %}>Commercial</option>
+                          <option value="psp" {% if customer.category == 'psp' %}selected{% endif %}>PSP</option>
+                        </select>
+                      </div>
+
+                      <div class="mb-2">
+                        <p>Are you sure you want to confirm connection for <strong class="text-primary">{{ customer.name }}</strong>?</p>
+                      </div>
+                      <div class="modal-footer py-1">
+                        <button type="submit" class="btn btn-primary btn-sm">Confirm Connection</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      </div>
+                    </form>
+
+                  {% elif customer.status == 'connected' and user.role in ['administrator', 'billing_officer'] %}
+                    <form method="POST" action="{{ url_for('customer_confirmation') }}">
+                      <input type="hidden" name="customer_id" value="{{ customer._id }}">
+                      <div class="mb-2">
+                        <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
+                        <input type="number" class="form-control" id="customer_reference_{{ customer._id }}" name="customer_reference" required>
+                      </div>
+                      <div class="mb-2">
+                        <p>Confirm customer <strong class="text-primary">{{ customer.name }}</strong> by entering the reference number.</p>
+                      </div>
+                      <div class="modal-footer py-1">
+                        <button type="submit" class="btn btn-primary btn-sm">Confirm Customer</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      </div>
+                    </form>
+
+                  {% else %}
+                    <div class="d-flex flex-column align-items-center justify-content-center py-4">
+                      <i class="bi bi-check-circle-fill text-success" style="font-size:2rem;"></i>
+                      <h6 class="mt-2 mb-1 fw-bold text-success">No Further Actions Required</h6>
+                      <p class="text-muted mb-0 text-center" style="max-width: 300px;">
+                        All necessary steps have been completed. We appreciate your attention to maintaining accurate records.
+                      </p>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
         {% endfor %}
       </tbody>
     </table>
+  </div>
+
+  <div class="d-flex justify-content-center align-items-center gap-1 my-2" style="margin-right: auto;">
+    <span class="me-3 align-self-center text-muted" style="font-size:0.85em;">
+      Total: <strong>{{ total }}</strong>
+    </span>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+          <a class="page-link" href="?page={{ page - 1 }}">«</a>
+        </li>
+        {% set start_page = page - 2 if page - 2 > 1 else 1 %}
+        {% set end_page = start_page + 5 if start_page + 5 < total_pages else total_pages %}
+        {% if end_page - start_page < 5 %}
+          {% set start_page = end_page - 5 if end_page - 5 > 1 else 1 %}
+        {% endif %}
+        {% if start_page > 1 %}
+          <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+          {% if start_page > 2 %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endif %}
+        {% for p in range(start_page, end_page + 1) %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+          </li>
+        {% endfor %}
+        {% if end_page < total_pages %}
+          {% if end_page < total_pages - 1 %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+          <li class="page-item"><a class="page-link" href="?page={{ total_pages }}">{{ total_pages }}</a></li>
+        {% endif %}
+        <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+          <a class="page-link" href="?page={{ page + 1 }}">»</a>
+        </li>
+      </ul>
+    </nav>
   </div>
 
 </div>
