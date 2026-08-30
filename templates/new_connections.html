@@ -6,7 +6,7 @@
   <div class="row align-items-start mb-3 mt-4">
     
     <div class="col-4 mb-2">
-      <h4 class="fw-bold mb-0 mt-0">New Connections</h4>
+      <h4 class="fw-bold text-primary mb-0 mt-0">New Connections</h4>
       <p class="text-muted">Manage New Applicant information</p>
     </div>
 
@@ -291,9 +291,6 @@
   </div>
 
   <div class="h-100 w-100" style="overflow-y: auto; -ms-overflow-style: none;">
-    <style>
-      .table-responsive::-webkit-scrollbar { display: none; }
-    </style>
     <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.65rem; border-radius: 0.5rem; overflow: hidden;">
       <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; font-size:0.75rem;">
         <tr class="table-secondary">
@@ -311,12 +308,12 @@
         {% for customer in customers %}
           <tr class=" table-light">
             <td class="fw-semibold text-truncate">{{ customer.name or '-' }}</td>
-            <td class="text-truncate">{{ customer.type or '-' }}</td>
-            <td class="text-truncate d-none d-sm-table-cell">{{ customer.contact or '-' }}</td>
-            <td class="text-truncate d-none d-sm-table-cell">{{ customer.scheme or '-' }}</td>
-            <td class="text-truncate d-none d-sm-table-cell">{{ customer.village or '-' }}</td>
-            <td class="text-truncate">{{ customer.status or '-' }}</td>
-            <td class="text-truncate">
+            <td class="fw-semibold text-muted text-truncate">{{ customer.type or '-' }}</td>
+            <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.contact or '-' }}</td>
+            <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.scheme or '-' }}</td>
+            <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.village or '-' }}</td>
+            <td class="fw-semibold text-muted text-truncate">{{ customer.status or '-' }}</td>
+            <td class="fw-semibold text-muted text-truncate">
               {% if customer.connection_fee %}
                 {{ "{:,}".format(customer.connection_fee|int) }}
               {% else %}
@@ -325,8 +322,8 @@
             </td>
             <td>
               <div class="d-flex gap-1">
-                <button class="btn btn-outline-info btn-sm p-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ customer._id }}">
-                  <i class="bi bi-eye"></i>
+                <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ customer._id }}">
+                  <i class="bi bi-list-columns-reverse"></i>
                 </button>
                 {% if user.role in ["administrator"] or user.role in ["area_manager"] and customer.status in ["applied", "surveyed"] %}
                   <button class="btn btn-outline-primary btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">

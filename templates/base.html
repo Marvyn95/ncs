@@ -34,32 +34,32 @@
         <div class="row ms-2 px-2 mt-4 flex-grow-1">
           <ul class="nav flex-column" id="sidebarTabs">
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'home' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'home' %}active bg-primary text-white{% endif %} fw-semibold" 
                     href="{{ url_for('home') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
                   <i class="bi bi-house-fill me-2"></i> Dashboard
                 </a>
               </li>
               {% if user.role == "administrator" %}
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'umbrellas' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'umbrellas' %}active bg-primary text-white{% endif %} fw-semibold" 
                     href="{{ url_for('umbrellas') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
                   <i class="bi bi-building-fill me-2"></i> Umbrellas
                 </a>
               </li>
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'users' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'users' %}active bg-primary text-white{% endif %} fw-semibold" 
                     href="{{ url_for('users') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
                   <i class="bi bi-person-fill me-2"></i> Users
                 </a>
               </li>
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'areas' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'areas' %}active bg-primary text-white{% endif %} fw-semibold" 
                     href="{{ url_for('areas') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
                   <i class="bi bi-map-fill me-2"></i> Areas
                 </a>
               </li>
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'districts' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'districts' %}active bg-primary text-white{% endif %} fw-semibold" 
                     href="{{ url_for('districts') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
                   <i class="bi bi-geo-alt me-2"></i> Districts
                 </a>
@@ -68,13 +68,13 @@
 
               {% if user.role in ["administrator", "area_manager"] %}
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'subcounties' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'subcounties' %}active bg-primary text-white{% endif %} fw-semibold" 
                     href="{{ url_for('subcounties') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
                   <i class="bi bi-signpost-split-fill me-2"></i> Subcounties
                 </a>
               </li>
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'parishes' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'parishes' %}active bg-primary text-white{% endif %} fw-semibold" 
                     href="{{ url_for('parishes') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
                   <i class="bi bi-bank2 me-2"></i> Parishes
                 </a>
@@ -82,7 +82,7 @@
               {% endif %}
 
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'schemes' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'schemes' %}active bg-primary text-white{% endif %} fw-semibold" 
                     href="{{ url_for('schemes') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
                   <i class="bi bi-diagram-3-fill me-2"></i> Schemes
                 </a>
@@ -90,7 +90,7 @@
 
               {% if user.role in ["administrator", "area_manager"] %}
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'villages' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'villages' %}active bg-primary text-white{% endif %} fw-semibold" 
                     href="{{ url_for('villages') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
                   <i class="bi bi-geo-alt-fill me-2"></i> Villages
                 </a>
@@ -98,21 +98,27 @@
               {% endif %}
                 
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'customers' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
-                    href="{{ url_for('customers') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'new_connections' %}active bg-primary text-white{% endif %} fw-semibold" 
+                    href="{{ url_for('new_connections') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
                   <i class="bi bi-people-fill me-2"></i> New Connections
                 </a>
               </li>
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'reports' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
-                    href="{{ url_for('reports') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
-                  <i class="bi bi-file-earmark-bar-graph-fill me-2"></i> ES Reports
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'ms_reports' %}active bg-primary text-white{% endif %} fw-semibold" 
+                    href="{{ url_for('ms_reports') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
+                  <i class="bi bi-table me-2"></i> MS Reports
                 </a>
               </li>
               <li class="nav-item">
-                <a class="text-dark nav-link d-flex align-items-center {% if section == 'BP_reports' %}active bg-secondary bg-opacity-25{% endif %} fw-semibold" 
-                  href="{{ url_for('BP_reports') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
-                  <i class="bi bi-file-earmark-bar-graph-fill me-2"></i> BP Reports
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'es_reports' %}active bg-primary text-white{% endif %} fw-semibold" 
+                    href="{{ url_for('es_reports') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
+                  <i class="bi bi-table me-2"></i> ES Reports
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="text-dark nav-link d-flex align-items-center {% if section == 'bp_reports' %}active bg-primary text-white{% endif %} fw-semibold" 
+                  href="{{ url_for('bp_reports') }}" style="border-radius: 6px; font-size: 0.79rem; padding: 6px 8px;">
+                  <i class="bi bi-table me-2"></i> BP Reports
                 </a>
               </li>
             </ul>

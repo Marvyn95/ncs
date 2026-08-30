@@ -4,13 +4,13 @@
 <div class="w-100 h-100 d-flex flex-column overflow-hidden px-3 py-2">
 
   <!-- Header Section -->
-  <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
-    <div>
-      <h4 class="fw-bold mb-0">Schemes</h4>
+  <div class="row align-items-start mb-1 mt-4">
+    <div class="col-4">
+      <h4 class="fw-bold text-primary mb-0">Schemes</h4>
       <p class="text-muted mb-0 small">Manage Schemes</p>
     </div>
-    <div>
-      <button class="btn btn-primary btn-sm px-3" data-bs-toggle="modal" data-bs-target="#addSchemeModal">
+    <div class="col-8 text-end">
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSchemeModal">
         <i class="bi bi-plus-lg me-1"></i> Add Scheme
       </button>
     </div>
@@ -99,11 +99,11 @@
       <tbody>
         {% for scheme in schemes %}
         <tr class="table-light" style="font-size:0.65rem;">
-          <td class="fw-normal text-truncate ps-3 py-2" style="max-width: 200px;">{{ scheme.scheme }}</td>
-          <td class="fw-normal text-truncate py-2" style="max-width: 200px;">{{ scheme.area }}</td>
-          <td class="fw-normal text-truncate py-2" style="max-width: 200px;">{{ scheme.umbrella }}</td>
-          <td class="fw-normal text-truncate py-2" style="max-width: 200px;">{{ scheme.district }}</td>
-          <td class="pe-3 py-2">
+          <td class="fw-semibold text-truncate ps-3" style="max-width: 200px;">{{ scheme.scheme }}</td>
+          <td class="fw-semibold text-muted text-truncate" style="max-width: 200px;">{{ scheme.area }}</td>
+          <td class="fw-semibold text-muted text-truncate" style="max-width: 200px;">{{ scheme.umbrella }}</td>
+          <td class="fw-semibold text-muted text-truncate" style="max-width: 200px;">{{ scheme.district }}</td>
+          <td class="pe-3">
             <div class="d-flex gap-1">
               <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ scheme._id }}">
                 <i class="bi bi-pencil fs-6"></i>

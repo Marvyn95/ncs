@@ -1,55 +1,59 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="w-100 h-100">
-  <div class="d-flex justify-content-between align-items-start mb-3">
-    <div>
-      <h5 class="fw-bold mb-1">Districts</h5>
+<div class="w-100 h-100 d-flex flex-column overflow-hidden">
+
+  <div class="row align-items-start mb-1 mt-4">
+    <div class="col-4">
+      <h5 class="fw-bold text-primary mb-1">Districts</h5>
       <p class="mb-0">Manage districts</p>
     </div>
-    <div>
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDistrictModal">
+
+    <div class="col-8 text-end">
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDistrictModal">
         <i class="bi bi-plus-lg me-1"></i> Add District
       </button>
     </div>
-  </div>
 
-  <!-- Add District Modal -->
-  <div class="modal fade" id="addDistrictModal" tabindex="-1" aria-labelledby="addDistrictModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <form method="POST" action="{{ url_for('add_district') }}">
-          <div class="modal-header">
-            <h5 class="modal-title" id="addDistrictModalLabel">Add New District</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <label for="new_district" class="form-label">District Name</label>
-              <input type="text" class="form-control" id="new_district" name="district" required>
+    <!-- Add District Modal -->
+    <div class="modal fade" id="addDistrictModal" tabindex="-1" aria-labelledby="addDistrictModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form method="POST" action="{{ url_for('add_district') }}">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addDistrictModalLabel">Add New District</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-success">Add District</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          </div>
-        </form>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="new_district" class="form-label">District Name</label>
+                <input type="text" class="form-control" id="new_district" name="district" required>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-success">Add District</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
+
   </div>
 
-  <div class="table-responsive" style="max-height: 500px; min-height: 500px; overflow-y: auto;">
+
+  <div class="table-responsive" style="overflow-y: auto; overscroll-behavior: contain;">
     <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
-      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
-        <tr class="table-primary">
+      <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+        <tr class="table-secondary">
           <th>District Name</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for district in districts %}
-        <tr class="bg-dark-subtle my-1">
-          <td class="fw-normal text-truncate" style="max-width: 250px;">{{ district.district }}</td>
+        <tr class="table-light my-1" style="font-size:0.65rem;">
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ district.district }}</td>
           <td>
             <div class="d-flex gap-1">
               <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ district._id }}">

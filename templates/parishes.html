@@ -1,82 +1,85 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="w-100 h-100">
-  <div class="d-flex justify-content-between align-items-start mb-3">
-    <div>
-      <h5 class="fw-bold mb-1">Parishes</h5>
+<div class="w-100 h-100 d-flex flex-column overflow-hidden">
+  <div class="row align-items-start mb-1 mt-4">
+    <div class="col-4">
+      <h5 class="fw-bold text-primary mb-1">Parishes</h5>
       <p class="mb-0">Manage parishes</p>
     </div>
-    <div>
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addParishModal">
+    <div class="col-8 text-end">
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addParishModal">
         <i class="bi bi-plus-lg me-1"></i> Add Parish
       </button>
     </div>
-  </div>
 
-<!-- Add Parish Modal -->
-<div class="modal fade" id="addParishModal" tabindex="-1" aria-labelledby="addParishModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" action="{{ url_for('add_parish') }}">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addParishModalLabel">Add New Parish</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="new_parish" class="form-label">Parish Name</label>
-                        <input type="text" class="form-control" id="new_parish" name="parish" required>
+    <!-- Add Parish Modal -->
+    <div class="modal fade" id="addParishModal" tabindex="-1" aria-labelledby="addParishModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="{{ url_for('add_parish') }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addParishModalLabel">Add New Parish</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="mb-3">
-                        <label for="district_select" class="form-label">District</label>
-                        <select class="form-select" id="district_select" name="district_id" required>
-                            <option value="" disabled selected>Select District</option>
-                            {% for district in districts %}
-                                <option value="{{ district._id }}">{{ district.district }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="new_parish" class="form-label">Parish Name</label>
+                            <input type="text" class="form-control" id="new_parish" name="parish" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="district_select" class="form-label">District</label>
+                            <select class="form-select" id="district_select" name="district_id" required>
+                                <option value="" disabled selected>Select District</option>
+                                {% for district in districts %}
+                                    <option value="{{ district._id }}">{{ district.district }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="subcounty_select" class="form-label">Subcounty</label>
+                            <select class="form-select" id="subcounty_select" name="subcounty_id" required>
+                                <option value="" disabled selected>Select Subcounty</option>
+                                {% for subcounty in subcounties %}
+                                    <option value="{{ subcounty._id }}" data-district="{{ subcounty.district_id }}">{{ subcounty.subcounty }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="subcounty_select" class="form-label">Subcounty</label>
-                        <select class="form-select" id="subcounty_select" name="subcounty_id" required>
-                            <option value="" disabled selected>Select Subcounty</option>
-                            {% for subcounty in subcounties %}
-                                <option value="{{ subcounty._id }}" data-district="{{ subcounty.district_id }}">{{ subcounty.subcounty }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Add Parish</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Add Parish</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-</div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const districtSelect = document.getElementById('district_select');
-        const subcountySelect = document.getElementById('subcounty_select');
-        const allOptions = Array.from(subcountySelect.querySelectorAll('option[data-district]'));
 
-        districtSelect.addEventListener('change', function() {
-            const selectedDistrict = this.value;
-            subcountySelect.innerHTML = '<option value="" disabled selected>Select Subcounty</option>';
-            allOptions.forEach(option => {
-                if (option.getAttribute('data-district') === selectedDistrict) {
-                    subcountySelect.appendChild(option.cloneNode(true));
-                }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const districtSelect = document.getElementById('district_select');
+            const subcountySelect = document.getElementById('subcounty_select');
+            const allOptions = Array.from(subcountySelect.querySelectorAll('option[data-district]'));
+
+            districtSelect.addEventListener('change', function() {
+                const selectedDistrict = this.value;
+                subcountySelect.innerHTML = '<option value="" disabled selected>Select Subcounty</option>';
+                allOptions.forEach(option => {
+                    if (option.getAttribute('data-district') === selectedDistrict) {
+                        subcountySelect.appendChild(option.cloneNode(true));
+                    }
+                });
             });
         });
-    });
-</script>
+    </script>
 
-  <div class="table-responsive" style="max-height: 500px; min-height: 500px; overflow-y: auto;">
+  </div>
+
+
+  <div class="table-responsive" style="overflow-y: auto; overscroll-behavior: contain;">
     <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.75rem;">
-      <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
-        <tr class="table-primary">
+      <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+        <tr class="table-secondary">
           <th>Parish Name</th>
           <th>Subcounty</th>
           <th>District</th>
@@ -85,10 +88,10 @@
       </thead>
       <tbody>
         {% for parish in parishes %}
-        <tr class="bg-dark-subtle my-1">
-          <td class="fw-normal text-truncate" style="max-width: 250px;">{{ parish.parish }}</td>
-          <td class="fw-normal text-truncate" style="max-width: 250px;">{{ parish.subcounty }}</td>
-          <td class="fw-normal text-truncate" style="max-width: 250px;">{{ parish.district }}</td>
+        <tr class="table-light my-1" style="font-size:0.65rem;">
+          <td class="fw-semibold text-truncate" style="max-width: 250px;">{{ parish.parish }}</td>
+          <td class="fw-semibold text-muted text-truncate" style="max-width: 250px;">{{ parish.subcounty }}</td>
+          <td class="fw-semibold text-muted text-truncate" style="max-width: 250px;">{{ parish.district }}</td>
           <td>
             <div class="d-flex gap-1">
               <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ parish._id }}">

@@ -6,12 +6,12 @@
   <div class="row align-items-start mb-1 mt-4">
 
     <div class="col-4">
-      <h4 class="fw-bold mb-0 mt-0">Umbrellas</h4>
+      <h4 class="fw-bold mb-0 mt-0 text-primary">Umbrellas</h4>
       <p class="text-muted">Manage Umbrellas</p>
     </div>
 
-    <div class="col-8">
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUmbrellaModal">
+    <div class="col-8 text-end">
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUmbrellaModal">
         <i class="bi bi-plus-lg"></i> Add Umbrella
       </button>
     </div>
@@ -54,7 +54,7 @@
       <tbody>
         {% for umbrella in umbrellas %}
         <tr class="table-light" style="font-size:0.65rem;">
-          <td class="fw-normal text-truncate" style="max-width: 250px;">{{ umbrella.umbrella }}</td>
+          <td class="text-truncate fw-semibold" style="max-width: 250px;">{{ umbrella.umbrella }}</td>
           <td>
             <div class="d-flex gap-1">
               <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#editModal-{{ umbrella._id }}" disabled>

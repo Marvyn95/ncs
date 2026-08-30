@@ -840,23 +840,18 @@ def villages():
 
     if user.get("area_id") == None and user.get("scheme_id") == None:
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
-        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
+        village_db_query = {"umbrella_id": user.get("umbrella_id")}
 
-    if user.get("area_id") and user.get("scheme_id") == None:
+    elif user.get("area_id") and user.get("scheme_id") == None:
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
-
         schemes = sorted(schemes, key=lambda x: x["scheme"])
         scheme_ids = [str(scheme["_id"]) for scheme in schemes]
+        village_db_query = {"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}
 
-        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}))
+    elif user.get("scheme_id"):
+        village_db_query = {"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}
 
-    if user.get("scheme_id"):
-        schemes = list(db.Schemes.find({"_id": ObjectId(user.get("scheme_id"))}))
-        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
-
-    if session.get('village_search_query'):
-        village_search_query = session.get('village_search_query').lower()
-        villages = [v for v in villages if village_search_query in v.get("village", "").lower()]
+    villages = list(db.Villages.find(village_db_query))
 
     page = request.args.get('page', None)
     if page:
@@ -867,11 +862,13 @@ def villages():
     session['villages_page'] = page
     per_page = 120
 
+    if session.get('village_search_query'):
+        village_search_query = session.get('village_search_query').lower()
+        villages = [v for v in villages if village_search_query in v.get("village", "").lower()]
+
     districts = sorted(list(db.Districts.find()), key=lambda x: x["district"])
     subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"])
     parishes = sorted(list(db.Parishes.find()), key=lambda x: x["parish"])
-
-    print(len(villages))
 
     for village in villages:
         village["parish"] = next((item["parish"] for item in parishes if str(item["_id"]) == village.get("parish_id")), None)
@@ -979,10 +976,10 @@ def delete_village():
     return redirect(url_for("villages"))
 
 
-# customers
-@app.route('/customers', methods=["GET"])
+# new connections
+@app.route('/new_connections', methods=["GET"])
 @login_required
-def customers():
+def new_connections():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
 
     if user is None:
@@ -1065,9 +1062,9 @@ def customers():
 
     total_pages = (total + per_page - 1) // per_page
 
-    return render_template("customers.html",
+    return render_template("new_connections.html",
                            user=user,
-                           section="customers",
+                           section="new_connections",
                            date=datetime.datetime.now(),
                            now=datetime.datetime.now,
                            customers=customers,
@@ -1091,7 +1088,7 @@ def set_scheme():
     session.pop('customers_page', None)
 
     flash("Scheme set.", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 @app.route('/set_reports_scheme', methods=['POST'])
@@ -1100,11 +1097,9 @@ def set_reports_scheme():
     scheme_id = request.form.get('scheme_id')
     session['reports_selected_scheme_id'] = str(scheme_id)
     session.pop('reports_search_query', None)
-    
     session['reports_page'] = 1
-
     flash("Scheme set.", "success")
-    return redirect(url_for("reports"))
+    return redirect(url_for("es_reports"))
 
 
 @app.route('/add_customer', methods=["POST"])
@@ -1125,7 +1120,7 @@ def add_customer():
     customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
     if next((x for x in customers if x.get("application_id") == request.form.get("application_id")), None):
         flash("Application ID already exists!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     db.Customers.insert_one({
         "name": name,
@@ -1141,7 +1136,7 @@ def add_customer():
         "umbrella_id": user.get("umbrella_id")
     })
     flash("Customer added successfully!", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 @app.route('/edit_customer', methods=["POST"])
@@ -1155,7 +1150,7 @@ def edit_customer():
 
     if abs(int(request.form.get("customer_reference", 0))) > 2**63 - 1:
         flash("Customer reference is too large!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
     customers = list(db.Customers.find())
@@ -1172,7 +1167,7 @@ def edit_customer():
     if customer.get("application_id") != request.form.get("application_id"):
         if next((x for x in customers if x.get("application_id") == request.form.get("application_id")), None):
             flash("Application ID already exists!", "danger")
-            return redirect(url_for("customers"))
+            return redirect(url_for("new_connections"))
         else:
             update_data["application_id"] = request.form.get("application_id")
 
@@ -1289,14 +1284,14 @@ def edit_customer():
         existing_customer = db.Customers.find_one({"customer_reference": int(request.form.get("customer_reference"))})
         if existing_customer and str(existing_customer.get("_id")) != customer_id:
             flash("Customer reference already exists!", "danger")
-            return redirect(url_for("customers"))
+            return redirect(url_for("new_connections"))
         update_data["customer_reference"] = int(request.form.get("customer_reference"))
     
     if 'transaction_id' in request.form:
         if request.form.get("transaction_id") != customer.get("transaction_id"):
             if next((x for x in customers if x.get("transaction_id") == request.form.get("transaction_id")), None):
                 flash("Transaction ID already exists!", "danger")
-                return redirect(url_for("customers"))
+                return redirect(url_for("new_connections"))
             else:
                 update_data["transaction_id"] = request.form.get("transaction_id")
 
@@ -1307,7 +1302,7 @@ def edit_customer():
         db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": {"bpb": roll_down_balances(updated_customer, updated_customer.get("bpb"))}})
 
     flash("Customer updated successfully!", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 
@@ -1327,7 +1322,7 @@ def customer_survey():
     
     if datetime.datetime.strptime(survey_date, "%Y-%m-%d") < customer.get("date_applied"):
         flash("Survey date cannot be before application date!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     update_data = {
         "pipe_type": pipe_type,
@@ -1346,7 +1341,7 @@ def customer_survey():
 
     db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
     flash("Survey details saved successfully!", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 @app.route('/customer_approval', methods=["POST"])
@@ -1376,7 +1371,7 @@ def customer_approval():
         {"$set": update_data}
     )
     flash("Approval status updated!", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 @app.route('/customer_payment', methods=["POST"])
@@ -1392,17 +1387,17 @@ def customer_payment():
 
     if datetime.datetime.strptime(date_paid, "%Y-%m-%d") < customer.get("survey_date") or datetime.datetime.strptime(date_paid, "%Y-%m-%d") < customer.get("date_applied"):
         flash("Payment date cannot be before survey or application date!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     customers = list(db.Customers.find())
 
     if next((x for x in customers if x.get("transaction_id") == transaction_id), None):
         flash("Payment with this transaction ID already exists!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     if int(amount_paid) > 2**63 - 1:
         flash("Payment amount is too large!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     update_data = {
         "amount_paid": int(amount_paid),
@@ -1424,7 +1419,7 @@ def customer_payment():
     )
 
     flash("Payment recorded successfully!", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 @app.route('/customer_verification', methods=["POST"])
@@ -1448,7 +1443,7 @@ def customer_verification():
     )
 
     flash("Customer status updated!", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 @app.route('/materials_issuance', methods=["POST"])
 @login_required
@@ -1463,7 +1458,7 @@ def materials_issuance():
     )
 
     flash("Customer status updated successfully!", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 @app.route('/customer_connection', methods=["POST"])
 @login_required
@@ -1476,13 +1471,13 @@ def customer_connection():
 
     if float(first_meter_reading) > 2**63 - 1:
         flash("First meter reading is too large!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
 
     if datetime.datetime.strptime(connection_date, "%Y-%m-%d") < customer.get("survey_date") or datetime.datetime.strptime(connection_date, "%Y-%m-%d") < customer.get("date_applied") or datetime.datetime.strptime(connection_date, "%Y-%m-%d") < customer.get("date_paid"):
         flash("Connection date cannot be before survey or application date or payment date!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     if customer.get("customer_reference") is not None:
         update_data = {
@@ -1493,7 +1488,7 @@ def customer_connection():
             "category": customer_category
         }
         db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     update_data = {
         "status": "connected",
@@ -1508,7 +1503,7 @@ def customer_connection():
         {"$set": update_data}
     )
     flash("Connection status updated!", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 @app.route('/customer_confirmation', methods=["POST"])
@@ -1519,12 +1514,12 @@ def customer_confirmation():
 
     if abs(int(customer_reference)) > 2**63 - 1:
         flash("Customer reference is too large!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
     
     existing_customer = db.Customers.find_one({"customer_reference": int(customer_reference)})
     if existing_customer and str(existing_customer.get("_id")) != customer_id:
         flash("Customer reference already exists!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
@@ -1533,7 +1528,7 @@ def customer_confirmation():
     
     session.pop("schemes_customers", None)
     flash("Customer confirmed successfully!", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 #come edit this later on for certain cases
@@ -1546,19 +1541,19 @@ def delete_customer():
 
     if customer.get("status") in ["confirmed"]:
         flash("Cannot delete customer, customer is confirmed!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     if customer.get("status") in ["connected"]:
         flash("Cannot delete customer, customer is connected!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
     
     if customer.get("status") in ["approved"]:
         flash("Cannot delete customer, customer is approved!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     if customer.get("amount_paid") not in [0, None]:
         flash("Cannot delete customer, payments have been made by customer!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     if customer.get("customer_reference") is not None:
         delete_file(customer.get("id_document"))
@@ -1573,13 +1568,13 @@ def delete_customer():
     session.pop("schemes_customers", None)
 
     flash("Customer deleted successfully!", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
-# reports
-@app.route('/reports', methods=["GET"])
+# es reports
+@app.route('/es_reports', methods=["GET"])
 @login_required
-def reports():
+def es_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
 
     if user is None:
@@ -1655,9 +1650,9 @@ def reports():
     
     total_pages = (total + per_page - 1) // per_page
 
-    return render_template("reports.html",
+    return render_template("es_reports.html",
                            user=user,
-                           section="reports",
+                           section="es_reports",
                            date=datetime.datetime.now(),
                            customers=customers,
                            schemes=schemes,
@@ -1676,11 +1671,11 @@ def add_monthly_billing_sheet():
     
     if not file or file.filename == "":
         flash("No file selected!", "danger")
-        return redirect(url_for("reports"))
+        return redirect(url_for("es_reports"))
     
     if file.filename.endswith(".xls"):
         flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
-        return redirect(url_for("reports"))
+        return redirect(url_for("es_reports"))
     
     if file.filename.endswith(".csv"):
         df = pd.read_csv(file)
@@ -1688,20 +1683,20 @@ def add_monthly_billing_sheet():
         df = pd.read_excel(file)
     else:
         flash("Unsupported file format, upload a CSV or Excel file!", "danger")
-        return redirect(url_for("reports"))
+        return redirect(url_for("es_reports"))
     
     # if len(df.columns) != 31:
     #     flash("Monthly billing sheet must have exactly 31 columns!", "danger")
-    #     return redirect(url_for("reports"))
+    #     return redirect(url_for("es_reports"))
     
     if df.columns[1] != "MeterRef" or df.columns[9] != "Period" or df.columns[19] != "TotalCharges":
         flash("Monthly billing sheet must have 'MeterRef', 'Period', and 'TotalCharges' as the second, tenth, and twentieth columns respectively!", "danger")
-        return redirect(url_for("reports"))
+        return redirect(url_for("es_reports"))
     
     year_months = df["Period"].astype(str).str[:6]
     if len(year_months.unique()) != 1:
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
-        return redirect(url_for("reports"))
+        return redirect(url_for("es_reports"))
 
     es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
     for customer in es_bp_customers:
@@ -1783,8 +1778,6 @@ def add_monthly_billing_sheet():
             if customer_billing_data.empty:
                 continue
 
-            print(f"Processing BP customer: {customer.get('name')} with reference: {customer.get('customer_reference')}")
-
             bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
 
             if bpb == []:
@@ -1835,11 +1828,11 @@ def add_monthly_payment_sheet():
 
     if not file or file.filename == "":
         flash("No file selected!", "danger")
-        return redirect(url_for("reports"))
+        return redirect(url_for("es_reports"))
 
     if file.filename.endswith(".xls"):
         flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
-        return redirect(url_for("reports"))
+        return redirect(url_for("es_reports"))
 
     if file.filename.endswith(".csv"):
         df = pd.read_csv(file)
@@ -1847,20 +1840,20 @@ def add_monthly_payment_sheet():
         df = pd.read_excel(file)
     else:
         flash("Unsupported file format, upload a CSV or Excel file!", "danger")
-        return redirect(url_for("reports"))
+        return redirect(url_for("es_reports"))
     
     if len(df.columns) != 11:
         flash("Monthly payment sheet must have exactly 11 columns!", "danger")
-        return redirect(url_for("reports"))
+        return redirect(url_for("es_reports"))
 
     if df.columns[1] != "CustomerRef" or df.columns[4] != "TranAmount" or df.columns[9] != "PaymentDate":
         flash("Monthly payment sheet must have 'CustomerRef', 'TranAmount', and 'PaymentDate' as the second, fifth, and tenth columns respectively!", "danger")
-        return redirect(url_for("reports"))
+        return redirect(url_for("es_reports"))
 
     year_months = df["PaymentDate"].str[:7]
     if len(year_months.unique()) != 1:
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
-        return redirect(url_for("reports"))
+        return redirect(url_for("es_reports"))
 
     es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
     for customer in es_bp_customers:
@@ -2006,7 +1999,7 @@ def customer_history():
 
     db.Customers.update_one({"_id": ObjectId(customer_id), "umbrella_id": user.get("umbrella_id")}, {"$set": {"bpb": new_bpb}})
 
-    return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now(), section="customers")
+    return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now(), section="es_reports")
 
 
 @app.route("/subcounties")
@@ -2316,7 +2309,7 @@ def customer_report_download():
 
     if not customer:
         flash("Customer not found.", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     report_path = generate_customer_report(customer)
     return send_file(
@@ -2333,11 +2326,11 @@ def upload_customers():
 
     if not file or file.filename == "":
         flash("No file selected!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
     
     if file.filename.endswith(".xls"):
         flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
     
     if file.filename.endswith(".csv"):
         df = pd.read_csv(file)
@@ -2345,15 +2338,15 @@ def upload_customers():
         df = pd.read_excel(file)
     else:
         flash("Unsupported file format, upload a CSV or Excel file!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
     
     # if len(df.columns) != 10:
     #     flash("Customer upload file must have exactly 10 columns!", "danger")
-    #     return redirect(url_for("customers"))
+    #     return redirect(url_for("new_connections"))
     
     if df.columns[0] != "MeterRef" or df.columns[1] != "MeterSerial" or df.columns[2] != "CustomerRef" or df.columns[3] != "Name" or df.columns[4] != "Phone" or df.columns[5] != "VillageName" or df.columns[6] != "SchemeName" or df.columns[7] != "UmbrellaName" or df.columns[8] != "CustomerType" or df.columns[9] != "CreationDate":
         flash("Customer upload file must have 'MeterRef', 'MeterSerial', 'CustomerRef', 'Name', 'Phone', 'VillageName', 'SchemeName', 'UmbrellaName', 'CustomerType', and 'CreationDate' as the first ten columns respectively!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     schemes = list(db.Schemes.find())
     umbrellas = list(db.Umbrellas.find())
@@ -2470,7 +2463,7 @@ def upload_customers():
     session.pop("schemes_customers", None)
 
     flash(f"{cust_no} Customers processed!, {es_no} ES, {ms_no} MS, {es_no + ms_no} uploaded", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 @app.route("/search_customers", methods=["POST"])
@@ -2478,7 +2471,7 @@ def search_customers():
     search_query = request.form.get("search", "").strip()
     session ["search_query"] = search_query if search_query else None
     session["customers_page"] = 1
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 @app.route("/search_customers_2", methods=["POST"])
@@ -2487,7 +2480,7 @@ def search_customers_2():
     session["reports_search_query"] = search_query if search_query else None
     session["reports_page"] = 1
 
-    return redirect(url_for("reports"))
+    return redirect(url_for("es_reports"))
 
 
 
@@ -2611,7 +2604,7 @@ def set_status():
     session["selected_status_filter"] = status if status != "" else None
     session["customers_page"] = 1
 
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 @app.route("/applicant_date_filter_data", methods=["POST"])
@@ -2644,7 +2637,7 @@ def applicant_date_filter_data():
 
         session["customers_page"] = 1
 
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 @app.route("/es_report_date_filter", methods=["POST"])
@@ -2657,7 +2650,7 @@ def es_report_date_filter():
 
     session["reports_page"] = 1
     
-    return redirect(url_for("reports"))
+    return redirect(url_for("es_reports"))
 
 @app.route("/BP_report_date_filter", methods=["POST"])
 def BP_report_date_filter():
@@ -2666,10 +2659,10 @@ def BP_report_date_filter():
     session["bp_reports_start_date"] = start_date_str
     session["bp_reports_end_date"] = end_date_str
     session["BP_reports_page"] = 1
-    return redirect(url_for("BP_reports"))
+    return redirect(url_for("bp_reports"))
 
-@app.route('/BP_reports', methods=['GET'])
-def BP_reports():
+@app.route('/bp_reports', methods=['GET'])
+def bp_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
@@ -2730,14 +2723,15 @@ def BP_reports():
     total_pages = (total_customers + per_page - 1) // per_page
     
     return render_template(
-        'BP_reports.html',
+        'bp_reports.html',
         user=user, date=datetime.datetime.now(),
         schemes=schemes,
         customers=customers,
         page=page,
         total_pages=total_pages,
-        section="BP_reports",
-        overall_sum_paid=overall_sum_paid
+        section="bp_reports",
+        overall_sum_paid=overall_sum_paid,
+        total_customers=total_customers,
         )
 
 
@@ -2748,7 +2742,7 @@ def set_bp_reports_scheme():
     session.pop("bp_reports_search_query", None)
     session["BP_reports_page"] = 1
 
-    return redirect(url_for("BP_reports"))
+    return redirect(url_for("bp_reports"))
 
 
 @app.route('/search_customers_3', methods=['POST'])
@@ -2757,7 +2751,7 @@ def search_customers_3():
     session["bp_reports_search_query"] = search_query if search_query else None
     session["BP_reports_page"] = 1
 
-    return redirect(url_for("BP_reports"))
+    return redirect(url_for("bp_reports"))
 
 
 
@@ -2823,7 +2817,7 @@ def bp_customer_history():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     
-    return render_template("bp_customer_history.html", customer=customer, date = datetime.datetime.now(), user=user)
+    return render_template("bp_customer_history.html", customer=customer, date = datetime.datetime.now(), user=user, section="bp_reports")
 
 
 @app.route("/bp_customer_report_download", methods=["POST"])
@@ -2834,12 +2828,11 @@ def bp_customer_report_download():
 
     if not customer:
         flash("Customer not found.", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     report_path = generate_customer_report(customer)
     return send_file(
         report_path,
-        section="BP_reports",
         as_attachment=False,
         download_name=f"{customer.get('name', 'customer')}_report.pdf",
         mimetype="application/pdf"
@@ -2852,11 +2845,11 @@ def upload_customers_reference():
 
     if not file or file.filename == "":
         flash("No file selected!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
     
     if file.filename.endswith(".xls"):
         flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
     
     if file.filename.endswith(".csv"):
         df = pd.read_csv(file)
@@ -2864,18 +2857,18 @@ def upload_customers_reference():
         df = pd.read_excel(file)
     else:
         flash("Unsupported file format, upload a CSV or Excel file!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
 
     if df.columns[0] != "MeterRef" or df.columns[1] != "MeterSerial" or df.columns[3] != "Name" or df.columns[4] != "Phone" or df.columns[5] != "VillageName":
         flash("Unexpected file column structure!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
     
 
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
 
     if not user:
         flash("User not found!", "danger")
-        return redirect(url_for("customers"))
+        return redirect(url_for("new_connections"))
     
     customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "status": "connected"}))
     villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
@@ -2898,7 +2891,7 @@ def upload_customers_reference():
             db.Customers.update_one({"_id": ObjectId(cust.get("_id")), "umbrella_id": user.get("umbrella_id")}, {"$set": {"customer_reference": int(matching_row["MeterRef"].values[0]), "status": "confirmed"}})
             
     flash(f"{matches} Customer references updated successfully!", "success")
-    return redirect(url_for("customers"))
+    return redirect(url_for("new_connections"))
 
 
 @app.route("/reload_es_reports")
@@ -2914,4 +2907,79 @@ def reload_es_reports():
         cust_no += 1
 
     flash(f"ES reports reloaded successfully for {cust_no} customers!", "success")
-    return redirect(url_for("reports"))
+    return redirect(url_for("es_reports"))
+
+
+
+@app.route('/ms_reports', methods=['GET'])
+def ms_reports():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+    schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+    villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
+
+    schemes = sorted(schemes, key=lambda x: x["scheme"].lower())
+    # villages = sorted(villages, key=lambda x: x["village"].lower())
+
+    query = {"umbrella_id": user.get("umbrella_id"), "type": "BP", "status": "confirmed", "customer_reference": {"$ne": None}}
+    
+    if session.get("bp_reports_selected_scheme_id"):
+        query["scheme_id"] = session.get("bp_reports_selected_scheme_id")
+    
+    if session.get("bp_reports_search_query"):
+        search_regex = re.compile(re.escape(session.get("bp_reports_search_query")), re.IGNORECASE)
+        query["$or"] = [
+            {"name": search_regex},
+            {"contact": search_regex},
+            {"customer_reference": search_regex}
+        ]
+    
+    # Pagination
+    page = request.args.get("page")
+
+    page = int(page) if page else session.get("BP_reports_page", 1)
+
+    session["BP_reports_page"] = page
+
+    per_page = 200
+    total_customers = db.Customers.count_documents(query)
+    skip = (page - 1) * per_page
+    
+    customers = list(db.Customers.find(query).sort("name", 1).skip(skip).limit(per_page))
+
+    overall_sum_paid = 0
+    
+    for c in customers:
+        c["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), 'N/A')
+        c["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), 'N/A')
+
+        if session.get("bp_reports_start_date") and session.get("bp_reports_end_date"):
+            bp_report_start_date = datetime.datetime.strptime(session.get("bp_reports_start_date"), "%Y-%m-%d")
+            bp_report_end_date = datetime.datetime.strptime(session.get("bp_reports_end_date"), "%Y-%m-%d")
+
+            c["bpb"] = [entry for entry in c.get("bpb", []) if bp_report_start_date <= entry.get("period", datetime.datetime.min) <= bp_report_end_date]
+            c["total_consumption"] = sum(int(entry.get("consumption", 0)) for entry in c.get("bpb", []))
+            c["total_bill"] = sum(int(entry.get("bill", 0)) for entry in c.get("bpb", []))
+            c["total_payment"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
+            c["total_debt"] = "n/a"
+        else:
+            c["total_consumption"] = sum(int(entry.get("consumption", 0)) for entry in c.get("bpb", []))
+            c["total_bill"] = sum(int(entry.get("bill", 0)) for entry in c.get("bpb", []))
+            c["total_payment"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
+            c["total_debt"] = c["total_bill"] - c["total_payment"]
+
+        overall_sum_paid += c["total_payment"]
+
+    total_pages = (total_customers + per_page - 1) // per_page
+    
+    return render_template(
+        'bp_reports.html',
+        user=user, date=datetime.datetime.now(),
+        schemes=schemes,
+        customers=customers,
+        page=page,
+        total_pages=total_pages,
+        section="ms_reports",
+        overall_sum_paid=overall_sum_paid,
+        total_customers=total_customers,
+        )
