@@ -154,5 +154,60 @@
     </table>
   </div>
 
+  <!-- Additional Information Links -->
+  <div class="mt-4">
+    <h6 class="fw-semibold mb-3 text-secondary">Manage Administrative Locale and Schemes</h6>
+    <div class="table-responsive" style="overflow-y: auto;">
+      <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.85rem;">
+        <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
+          <tr class="table-secondary my-1">
+            <th>Module</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody style="font-size:0.85rem;">
+          {% if user.role == "administrator" %}
+          <tr class="table-light">
+            <td class="text-truncate fw-semibold" style="max-width: 200px;"><i class="bi bi-building-fill me-2"></i>Umbrellas</td>
+            <td class="text-truncate" style="max-width: 300px;"><a href="{{ url_for('umbrellas') }}" class="btn btn-sm btn-outline-primary">Manage</a></td>
+          </tr>
+          <tr class="table-light">
+            <td class="text-truncate fw-semibold" style="max-width: 200px;"><i class="bi bi-person-fill me-2"></i>Users</td>
+            <td class="text-truncate" style="max-width: 300px;"><a href="{{ url_for('users') }}" class="btn btn-sm btn-outline-primary">Manage</a></td>
+          </tr>
+          <tr class="table-light">
+            <td class="text-truncate fw-semibold" style="max-width: 200px;"><i class="bi bi-map-fill me-2"></i>Areas</td>
+            <td class="text-truncate" style="max-width: 300px;"><a href="{{ url_for('areas') }}" class="btn btn-sm btn-outline-primary">Manage</a></td>
+          </tr>
+          <tr class="table-light">
+            <td class="text-truncate fw-semibold" style="max-width: 200px;"><i class="bi bi-geo-alt me-2"></i>Districts</td>
+            <td class="text-truncate" style="max-width: 300px;"><a href="{{ url_for('districts') }}" class="btn btn-sm btn-outline-primary">Manage</a></td>
+          </tr>
+          {% endif %}
+
+          {% if user.role in ["administrator", "area_manager"] %}
+          <tr class="table-light">
+            <td class="text-truncate fw-semibold" style="max-width: 200px;"><i class="bi bi-signpost-split-fill me-2"></i>Subcounties</td>
+            <td class="text-truncate" style="max-width: 300px;"><a href="{{ url_for('subcounties') }}" class="btn btn-sm btn-outline-primary">Manage</a></td>
+          </tr>
+          <tr class="table-light">
+            <td class="text-truncate fw-semibold" style="max-width: 200px;"><i class="bi bi-bank2 me-2"></i>Parishes</td>
+            <td class="text-truncate" style="max-width: 300px;"><a href="{{ url_for('parishes') }}" class="btn btn-sm btn-outline-primary">Manage</a></td>
+          </tr>
+          <tr class="table-light">
+            <td class="text-truncate fw-semibold" style="max-width: 200px;"><i class="bi bi-geo-alt-fill me-2"></i>Villages</td>
+            <td class="text-truncate" style="max-width: 300px;"><a href="{{ url_for('villages') }}" class="btn btn-sm btn-outline-primary">Manage</a></td>
+          </tr>
+          {% endif %}
+
+          <tr class="table-light">
+            <td class="text-truncate fw-semibold" style="max-width: 200px;"><i class="bi bi-diagram-3-fill me-2"></i>Schemes</td>
+            <td class="text-truncate" style="max-width: 300px;"><a href="{{ url_for('schemes') }}" class="btn btn-sm btn-outline-primary">Manage</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 {% endblock %}

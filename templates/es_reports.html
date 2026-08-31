@@ -225,7 +225,7 @@
               {% endif %}
             </td>
             <td>
-              <form method="POST" action="{{ url_for('customer_history') }}" style="display:inline;">
+              <form method="POST" action="{{ url_for('es_customer_history') }}" style="display:inline;">
                 <input type="hidden" name="customer_id" value="{{ customer._id }}">
                 <input type="hidden" name="customer_reference" value="{{ customer.customer_reference }}">
                 <button type="submit" class="btn btn-outline-primary btn-sm" title="View History">

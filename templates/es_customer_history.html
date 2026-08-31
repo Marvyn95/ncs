@@ -15,11 +15,11 @@
       <form method="post" action="{{ url_for('customer_report_download') }}" class="d-inline">
         <input type="hidden" name="customer_id" value="{{ customer._id }}">
         <input type="hidden" name="umbrella_id" value="{{ customer.umbrella_id }}">
-        <button type="submit" class="btn btn-sm btn-outline-primary">
+        <button type="submit" class="btn btn-sm btn-primary">
           <i class="bi bi-download"></i> Download Report
         </button>
       </form>
-      <a href="{{ url_for('es_reports') }}" class="btn btn-sm btn-outline-primary">
+      <a href="{{ url_for('es_reports') }}" class="btn btn-sm btn-secondary">
         <i class="bi bi-arrow-left me-1"></i> Back to Reports
       </a>
     </div>

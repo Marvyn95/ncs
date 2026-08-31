@@ -1671,11 +1671,11 @@ def add_monthly_billing_sheet():
     
     if not file or file.filename == "":
         flash("No file selected!", "danger")
-        return redirect(url_for("es_reports"))
+        return redirect(request.referrer or url_for("home"))
     
     if file.filename.endswith(".xls"):
         flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
-        return redirect(url_for("es_reports"))
+        return redirect(request.referrer or url_for("home"))
     
     if file.filename.endswith(".csv"):
         df = pd.read_csv(file)
@@ -1683,20 +1683,20 @@ def add_monthly_billing_sheet():
         df = pd.read_excel(file)
     else:
         flash("Unsupported file format, upload a CSV or Excel file!", "danger")
-        return redirect(url_for("es_reports"))
+        return redirect(request.referrer or url_for("home"))
     
     # if len(df.columns) != 31:
     #     flash("Monthly billing sheet must have exactly 31 columns!", "danger")
-    #     return redirect(url_for("es_reports"))
+    #     return redirect(request.referrer or url_for("es_reports"))
     
     if df.columns[1] != "MeterRef" or df.columns[9] != "Period" or df.columns[19] != "TotalCharges":
         flash("Monthly billing sheet must have 'MeterRef', 'Period', and 'TotalCharges' as the second, tenth, and twentieth columns respectively!", "danger")
-        return redirect(url_for("es_reports"))
+        return redirect(request.referrer or url_for("home"))
     
     year_months = df["Period"].astype(str).str[:6]
     if len(year_months.unique()) != 1:
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
-        return redirect(url_for("es_reports"))
+        return redirect(request.referrer or url_for("home"))
 
     es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
     for customer in es_bp_customers:
@@ -1983,8 +1983,8 @@ def add_monthly_payment_sheet():
     return redirect(request.referrer)
 
 
-@app.route('/customer_history', methods=['POST'])
-def customer_history():
+@app.route('/es_customer_history', methods=['POST'])
+def es_customer_history():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     customer_id = request.form.get('customer_id')
@@ -1999,7 +1999,7 @@ def customer_history():
 
     db.Customers.update_one({"_id": ObjectId(customer_id), "umbrella_id": user.get("umbrella_id")}, {"$set": {"bpb": new_bpb}})
 
-    return render_template('customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now(), section="es_reports")
+    return render_template('es_customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now(), section="es_reports")
 
 
 @app.route("/subcounties")
@@ -2748,7 +2748,11 @@ def set_bp_reports_scheme():
 @app.route('/search_customers_3', methods=['POST'])
 def search_customers_3():
     search_query = request.form.get("search", "").strip()
-    session["bp_reports_search_query"] = search_query if search_query else None
+    if search_query:
+        session["bp_reports_search_query"] = search_query
+    else:
+        session["bp_reports_search_query"] = ''
+        session.pop("bp_reports_search_query")
     session["BP_reports_page"] = 1
 
     return redirect(url_for("bp_reports"))
@@ -2801,6 +2805,7 @@ def download_bp_reports():
 
 
 @app.route("/bp_customer_history", methods=["POST"])
+@login_required
 def bp_customer_history():
     customer_id = request.form.get("customer_id")
     customer_reference = request.form.get("customer_reference")
@@ -2896,7 +2901,6 @@ def upload_customers_reference():
 
 @app.route("/reload_es_reports")
 def reload_es_reports():
-
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "type": "ES", "status": "confirmed"}))
 
@@ -2915,19 +2919,19 @@ def reload_es_reports():
 def ms_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
-    schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
-    villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
 
-    schemes = sorted(schemes, key=lambda x: x["scheme"].lower())
+    schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
+
+    villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
     # villages = sorted(villages, key=lambda x: x["village"].lower())
 
-    query = {"umbrella_id": user.get("umbrella_id"), "type": "BP", "status": "confirmed", "customer_reference": {"$ne": None}}
+    query = {"umbrella_id": user.get("umbrella_id"), "status": "confirmed", "customer_reference": {"$ne": None}}
     
-    if session.get("bp_reports_selected_scheme_id"):
-        query["scheme_id"] = session.get("bp_reports_selected_scheme_id")
+    if session.get("ms_reports_selected_scheme_id"):
+        query["scheme_id"] = session.get("ms_reports_selected_scheme_id")
     
-    if session.get("bp_reports_search_query"):
-        search_regex = re.compile(re.escape(session.get("bp_reports_search_query")), re.IGNORECASE)
+    if session.get("ms_reports_search_query"):
+        search_regex = re.compile(re.escape(session.get("ms_reports_search_query")), re.IGNORECASE)
         query["$or"] = [
             {"name": search_regex},
             {"contact": search_regex},
@@ -2936,11 +2940,8 @@ def ms_reports():
     
     # Pagination
     page = request.args.get("page")
-
-    page = int(page) if page else session.get("BP_reports_page", 1)
-
-    session["BP_reports_page"] = page
-
+    page = int(page) if page else session.get("ms_reports_page", 1)
+    session["ms_reports_page"] = page
     per_page = 200
     total_customers = db.Customers.count_documents(query)
     skip = (page - 1) * per_page
@@ -2953,11 +2954,11 @@ def ms_reports():
         c["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), 'N/A')
         c["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), 'N/A')
 
-        if session.get("bp_reports_start_date") and session.get("bp_reports_end_date"):
-            bp_report_start_date = datetime.datetime.strptime(session.get("bp_reports_start_date"), "%Y-%m-%d")
-            bp_report_end_date = datetime.datetime.strptime(session.get("bp_reports_end_date"), "%Y-%m-%d")
+        if session.get("ms_reports_start_date") and session.get("ms_reports_end_date"):
+            ms_report_start_date = datetime.datetime.strptime(session.get("ms_reports_start_date"), "%Y-%m-%d")
+            ms_report_end_date = datetime.datetime.strptime(session.get("ms_reports_end_date"), "%Y-%m-%d")
 
-            c["bpb"] = [entry for entry in c.get("bpb", []) if bp_report_start_date <= entry.get("period", datetime.datetime.min) <= bp_report_end_date]
+            c["bpb"] = [entry for entry in c.get("bpb", []) if ms_report_start_date <= entry.get("period", datetime.datetime.min) <= ms_report_end_date]
             c["total_consumption"] = sum(int(entry.get("consumption", 0)) for entry in c.get("bpb", []))
             c["total_bill"] = sum(int(entry.get("bill", 0)) for entry in c.get("bpb", []))
             c["total_payment"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
@@ -2973,7 +2974,7 @@ def ms_reports():
     total_pages = (total_customers + per_page - 1) // per_page
     
     return render_template(
-        'bp_reports.html',
+        'ms_reports.html',
         user=user, date=datetime.datetime.now(),
         schemes=schemes,
         customers=customers,
@@ -2983,3 +2984,478 @@ def ms_reports():
         overall_sum_paid=overall_sum_paid,
         total_customers=total_customers,
         )
+
+@app.route('/set_ms_reports_scheme', methods=['POST'])
+@login_required
+def set_ms_reports_scheme():
+    scheme_id = request.form.get("scheme_id")
+    session["ms_reports_selected_scheme_id"] = scheme_id if scheme_id else None
+    session.pop("ms_reports_search_query", None)
+    session["ms_reports_page"] = 1
+    return redirect(url_for("ms_reports"))
+
+
+@app.route('/ms_customer_search', methods=['POST'])
+@login_required
+def ms_customer_search():
+    search_query = request.form.get("search", "").strip()
+    if search_query:
+        session["ms_reports_search_query"] = search_query
+    else:
+        session["ms_reports_search_query"] = ''
+        session.pop("ms_reports_search_query")
+
+    session["ms_reports_page"] = 1
+    return redirect(url_for("ms_reports"))
+
+
+@app.route('/ms_report_date_filter', methods=['POST'])
+@login_required
+def ms_report_date_filter():
+    start_date_str = request.form.get("start_date")
+    end_date_str = request.form.get("end_date")
+    session["ms_reports_start_date"] = start_date_str
+    session["ms_reports_end_date"] = end_date_str
+    session["ms_reports_page"] = 1
+    return redirect(url_for("ms_reports"))
+
+@app.route('/ms_customer_history', methods=['GET', 'POST'])
+@login_required
+def ms_customer_history():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
+
+    if request.method == "POST":
+        customer_id = request.form.get("customer_id")
+        customer_reference = request.form.get("customer_reference")
+        customer = db.Customers.find_one({"_id": ObjectId(customer_id), "customer_reference": int(customer_reference)})
+
+        customer["bpb"] = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
+        customer["scheme"] = db.Schemes.find_one({"_id": ObjectId(customer.get("scheme_id"))}).get("scheme") if customer.get("scheme_id") else 'N/A'
+        customer["village"] = db.Villages.find_one({"_id": ObjectId(customer.get("village_id"))}).get("village") if customer.get("village_id") else 'N/A'
+        customer["total_consumption"] = sum(int(entry.get("consumption", 0)) for entry in customer.get("bpb", []))
+        customer["total_bill"] = sum(int(entry.get("bill", 0)) for entry in customer.get("bpb", []))
+        customer["total_payment"] = sum(int(entry.get("payment", 0)) for entry in customer.get("bpb", []))
+        customer["total_debt"] = customer["total_bill"] - customer["total_payment"] if customer["total_bill"] >= customer["total_payment"] else 0
+        customer["balance_on_connection"] = customer["bpb"][-1].get("balance_on_connection", 0) if customer.get("bpb") else customer.get("amount_due", 0)
+        
+        return render_template("ms_customer_history.html", customer=customer, date = datetime.datetime.now(), user=user, section="ms_reports")
+
+
+@app.route('/customer_monthly_billing_sheet_update', methods=["POST"])
+@login_required
+def customer_monthly_billing_sheet_update():
+    file = request.files.get("monthly_billing_sheet_file")
+    
+    if not file or file.filename == "":
+        flash("No file selected!", "danger")
+        return redirect(request.referrer or url_for("home"))
+    
+    if file.filename.endswith(".xls"):
+        flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
+        return redirect(request.referrer or url_for("home"))
+    
+    if file.filename.endswith(".csv"):
+        df = pd.read_csv(file)
+    elif file.filename.endswith((".xls", ".xlsx")):
+        df = pd.read_excel(file)
+    else:
+        flash("Unsupported file format, upload a CSV or Excel file!", "danger")
+        return redirect(request.referrer or url_for("home"))
+    
+    # if len(df.columns) != 31:
+    #     flash("Monthly billing sheet must have exactly 31 columns!", "danger")
+    #     return redirect(request.referrer or url_for("es_reports"))
+    
+    if df.columns[1] != "MeterRef" or df.columns[9] != "Period" or df.columns[19] != "TotalCharges":
+        flash("Monthly billing sheet must have 'MeterRef', 'Period', and 'TotalCharges' as the second, tenth, and twentieth columns respectively!", "danger")
+        return redirect(request.referrer or url_for("home"))
+    
+    year_months = df["Period"].astype(str).str[:6]
+    if len(year_months.unique()) != 1:
+        flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
+        return redirect(request.referrer or url_for("home"))
+
+    es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
+    for customer in es_bp_customers:
+
+        if customer.get("type") == "ES":
+
+            customer_billing_data = df[df["MeterRef"].astype(str) == str(customer.get("customer_reference"))]
+
+            if customer_billing_data.empty:
+                continue
+    
+            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
+            
+            if bpb == []:
+
+                due_amount = customer.get("connection_fee", 0) - customer.get("amount_paid", 0)
+
+                if due_amount >= 0:
+                    db.Customers.update_one({"_id": customer.get("_id")}, {
+                        "$set": {
+                            "bpb": [{
+                                "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                                "consumption": int(customer_billing_data["Consumption"].values[0]),
+                                "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                                "payment": 0,
+                                "balance_on_connection": int(due_amount),
+                                "balance_on_bill": int(customer_billing_data["TotalCharges"].values[0]),
+                                "prepayment_balance": 0
+                            }]
+                        }
+                    })
+                
+                elif due_amount < 0:
+
+                    db.Customers.update_one({"_id": customer.get("_id")}, {
+                        "$set": {
+                            "bpb": [{
+                                "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                                "consumption": int(customer_billing_data["Consumption"].values[0]),
+                                "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                                "payment": 0,
+                                "balance_on_connection": 0,
+                                "balance_on_bill": int(customer_billing_data["TotalCharges"].values[0]) + due_amount,
+                                "prepayment_balance": int(due_amount)*(-1)
+                            }]
+                        }
+                    })
+
+            elif bpb != []:
+                month_entry = next((entry for entry in bpb if entry["period"] == datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m")), None)
+                if not month_entry:
+                    bpb.append({
+                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                        "consumption": int(customer_billing_data["Consumption"].values[0]),
+                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                        "payment": 0,
+                    })
+                elif month_entry:
+                    bpb.remove(month_entry)
+                    bpb.append({
+                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                        "consumption": int(customer_billing_data["Consumption"].values[0]),
+                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                        "payment": month_entry.get("payment", 0),
+                    })
+
+                new_bpb = roll_down_balances(customer, bpb)
+
+                db.Customers.update_one({"_id": customer.get("_id")}, {
+                    "$set": {
+                        "bpb": new_bpb
+                    }
+                })
+
+        elif customer.get("type") == "BP":
+
+            customer_billing_data = df[df["MeterRef"].astype(str) == str(customer.get("customer_reference"))]
+
+            if customer_billing_data.empty:
+                continue
+
+            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
+
+            if bpb == []:
+                db.Customers.update_one({"_id": customer.get("_id")}, {
+                    "$set": {
+                        "bpb": [{
+                            "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                            "consumption": int(customer_billing_data["Consumption"].values[0]),
+                            "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                            "payment": 0,
+                        }]
+                    }
+                })
+            else:
+                month_entry = next((entry for entry in bpb if entry["period"] == datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m")), None)
+                if month_entry:
+                    bpb.remove(month_entry)
+                    bpb.append({
+                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                        "consumption": int(customer_billing_data["Consumption"].values[0]),
+                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                        "payment": month_entry.get("payment", 0),
+                    })
+                elif not month_entry:
+                    bpb.append({
+                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
+                        "consumption": int(customer_billing_data["Consumption"].values[0]),
+                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                        "payment": 0,
+                    })
+
+                bpb = sorted(bpb, key=lambda x: x.get("period"))
+
+                db.Customers.update_one({"_id": customer.get("_id")}, {
+                    "$set": {
+                        "bpb": bpb
+                    }
+                })
+
+    flash("Monthly billing sheet processed successfully!", "success")
+    return redirect(request.referrer)
+
+
+@app.route('/customer_monthly_payment_sheet_update', methods=["POST"])
+@login_required
+def customer_monthly_payment_sheet_update():
+    file = request.files.get("monthly_payment_sheet_file")
+
+    if not file or file.filename == "":
+        flash("No file selected!", "danger")
+        return redirect(url_for("es_reports"))
+
+    if file.filename.endswith(".xls"):
+        flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
+        return redirect(url_for("es_reports"))
+
+    if file.filename.endswith(".csv"):
+        df = pd.read_csv(file)
+    elif file.filename.endswith(".xlsx"):
+        df = pd.read_excel(file)
+    else:
+        flash("Unsupported file format, upload a CSV or Excel file!", "danger")
+        return redirect(url_for("es_reports"))
+    
+    if len(df.columns) != 11:
+        flash("Monthly payment sheet must have exactly 11 columns!", "danger")
+        return redirect(url_for("es_reports"))
+
+    if df.columns[1] != "CustomerRef" or df.columns[4] != "TranAmount" or df.columns[9] != "PaymentDate":
+        flash("Monthly payment sheet must have 'CustomerRef', 'TranAmount', and 'PaymentDate' as the second, fifth, and tenth columns respectively!", "danger")
+        return redirect(url_for("es_reports"))
+
+    year_months = df["PaymentDate"].str[:7]
+    if len(year_months.unique()) != 1:
+        flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
+        return redirect(url_for("es_reports"))
+
+    es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
+    for customer in es_bp_customers:
+
+        if customer.get("type") == "ES":
+            customer_payment_data = df[df["CustomerRef"].astype(str) == str(customer.get("customer_reference"))]
+
+            if customer_payment_data.empty:
+                continue
+
+            amount_paid = int(customer_payment_data["TranAmount"].sum())
+            payment_date = datetime.datetime.strptime(customer_payment_data["PaymentDate"].values[0].split("T")[0][:7], "%Y-%m")
+
+            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
+            if bpb == []:
+
+                due_amount = customer.get("connection_fee", 0) - customer.get("amount_paid", 0)
+
+                if due_amount >= 0:
+                    db.Customers.update_one({"_id": customer.get("_id")}, {
+                        "$set": {
+                            "bpb": [{
+                                "period": payment_date,
+                                "consumption": 0,
+                                "bill": 0,
+                                "payment": amount_paid,
+                                "balance_on_connection": int(due_amount),
+                                "balance_on_bill": 0,
+                                "prepayment_balance": 0
+                            }]
+                        }
+                    })
+                
+                elif due_amount < 0:
+                    db.Customers.update_one({"_id": customer.get("_id")}, {
+                        "$set": {
+                            "bpb": [{
+                                "period": payment_date,
+                                "consumption": 0,
+                                "bill": 0,
+                                "payment": amount_paid,
+                                "balance_on_connection": 0,
+                                "balance_on_bill": 0,
+                                "prepayment_balance": int(due_amount)*(-1)
+                            }]
+                        }
+                    })
+
+            elif bpb != []:
+                month_entry = next((entry for entry in bpb if entry["period"] == payment_date), None)
+                if not month_entry:
+                    bpb.append({
+                            "period": payment_date,
+                            "consumption": 0,
+                            "bill": 0,
+                            "payment": amount_paid,
+                    })
+                elif month_entry:
+                    bpb.remove(month_entry)
+                    bpb.append({
+                        "period": payment_date,
+                        "consumption": month_entry.get("consumption", 0),
+                        "bill": month_entry.get("bill", 0),
+                        "payment": amount_paid,
+                    })
+
+                new_bpb = roll_down_balances(customer, bpb)
+
+                db.Customers.update_one({"_id": customer.get("_id")}, {
+                    "$set": {
+                        "bpb": new_bpb
+                    }
+                })
+        
+        elif customer.get("type") == "BP":
+
+            customer_payment_data = df[df["CustomerRef"].astype(str) == str(customer.get("customer_reference"))]
+
+            if customer_payment_data.empty:
+                continue
+
+            amount_paid = int(customer_payment_data["TranAmount"].sum())
+            payment_date = datetime.datetime.strptime(customer_payment_data["PaymentDate"].values[0].split("T")[0][:7], "%Y-%m")
+
+            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
+
+            if bpb == []:
+                db.Customers.update_one({"_id": customer.get("_id")}, {
+                    "$set": {
+                        "bpb": [{
+                            "period": payment_date,
+                            "consumption": 0,
+                            "bill": 0,
+                            "payment": amount_paid,
+                        }]
+                    }
+                })
+            
+            elif bpb != []:
+                month_entry = next((entry for entry in bpb if entry["period"] == payment_date), None)
+                if month_entry:
+                    bpb.remove(month_entry)
+                    bpb.append({
+                        "period": payment_date,
+                        "consumption": month_entry.get("consumption", 0),
+                        "bill": month_entry.get("bill", 0),
+                        "payment": amount_paid,
+                    })
+
+                elif not month_entry:
+                    bpb.append({
+                        "period": payment_date,
+                        "consumption": 0,
+                        "bill": 0,
+                        "payment": amount_paid,
+                    })
+
+                bpb = sorted(bpb, key=lambda x: x.get("period"))
+
+                db.Customers.update_one({"_id": customer.get("_id")}, {
+                    "$set": {
+                        "bpb": bpb
+                    }
+                })
+    
+    flash("Monthly payment sheet processed successfully!", "success")
+    return redirect(request.referrer)
+
+
+@app.route('/download_ms_reports', methods=['GET', 'POST'])
+@login_required
+def download_ms_reports():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    date = datetime.datetime.now().strftime("%d.%B.%Y")
+
+    query = {"umbrella_id": user.get("umbrella_id"), "status": "confirmed"}
+
+    if session.get("ms_reports_selected_scheme_id"):
+        query["scheme_id"] = session.get("ms_reports_selected_scheme_id")
+    
+
+    if session.get("ms_reports_search_query"):
+        query["$or"] = [
+            {"name": {"$regex": session.get("ms_reports_search_query"), "$options": "i"}},
+            {"contact": {"$regex": session.get("ms_reports_search_query"), "$options": "i"}},
+            {"customer_reference": {"$regex": session.get("ms_reports_search_query"), "$options": "i"}},
+        ]    
+    
+    customers = list(db.Customers.find(query).sort("name", 1))
+    
+    data = []
+    villages = list(db.Villages.find())
+    schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+    areas = list(db.Areas.find({"umbrella_id": user.get("umbrella_id")}))
+
+    # districts = list(db.Districts.find())
+    # subcounties = list(db.Subcounties.find())
+    # parishes = list(db.Parishes.find())
+
+    ms_report_start_date_str = session.get("ms_reports_start_date")
+    ms_report_end_date_str = session.get("ms_reports_end_date")
+
+    if ms_report_start_date_str and ms_report_end_date_str:
+        ms_report_start_date = datetime.datetime.strptime(ms_report_start_date_str, "%Y-%m-%d")
+        ms_report_end_date = datetime.datetime.strptime(ms_report_end_date_str, "%Y-%m-%d")
+
+        for c in customers:
+
+            c["bpb"] = [entry for entry in c.get("bpb", []) if ms_report_start_date <= entry.get("period", datetime.datetime.min) <= ms_report_end_date]
+
+            data.append({
+                "Name": c.get("name"),
+                "Type": c.get("type"),
+                "Contact": c.get("contact"),
+                "Category": c.get("category"),
+                "Customer Reference": c.get("customer_reference"),
+                "connection_date": c.get("connection_date").strftime("%Y-%m-%d") if c.get("connection_date") else None,
+                "Scheme": next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), None),
+                "Area": next((a.get("area") for a in areas if str(a.get("_id")) == c.get("area_id")), None),
+                "Village": next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), None),
+                "Connection Fee": c.get("connection_fee"),
+                "Date of Connection Fee Payment": c.get("date_paid").strftime("%Y-%m-%d") if c.get("date_paid") else None,
+                "Connection Balance": 'n/a',
+                "Bill Balance": 'n/a',
+                "Overall Balance": 'n/a',
+                "Total Cumulative Consumption": sum(entry.get("consumption", 0) for entry in c.get("bpb", [])),
+                "Total Cumulative Bill": sum(entry.get("bill", 0) for entry in c.get("bpb", [])),
+                "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
+            })  
+
+        attachment_name = f"ms_report_{ms_report_start_date.strftime('%d.%B.%Y')}_to_{ms_report_end_date.strftime('%d.%B.%Y')}.xlsx"
+
+    else:     
+        for c in customers:
+            data.append({
+                "Name": c.get("name"),
+                "Type": c.get("type"),
+                "Contact": c.get("contact"),
+                "Category": c.get("category"),
+                "Customer Reference": c.get("customer_reference"),
+                "connection_date": c.get("connection_date").strftime("%Y-%m-%d") if c.get("connection_date") else None,
+                "Scheme": next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), None),
+                "Area": next((a.get("area") for a in areas if str(a.get("_id")) == c.get("area_id")), None),
+                "Village": next((v.get("village") for v in villages if str(v.get("_id")) == c.get("village_id")), None),
+                "Connection Fee": c.get("connection_fee"),
+                "Initial Amount Paid for Connection": c.get("amount_paid"),
+                "Date of Connection Fee Payment": c.get("date_paid").strftime("%Y-%m-%d") if c.get("date_paid") else None,
+                "Connection Balance": c.get("bpb")[-1].get("balance_on_connection", 0) if c.get("bpb") else c.get("amount_due", 0),
+                "Bill Balance": c.get("bpb")[-1].get("balance_on_bill", 0) if c.get("bpb") else 0,
+                "Overall Balance": c.get("bpb")[-1].get("balance_on_connection", 0) + c.get("bpb")[-1].get("balance_on_bill", 0) if c.get("bpb") else c.get("amount_due", 0),
+                "Total Cumulative Consumption": sum(entry.get("consumption", 0) for entry in c.get("bpb", [])),
+                "Total Cumulative Bill": sum(entry.get("bill", 0) for entry in c.get("bpb", [])),
+                "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
+            })
+        
+        attachment_name = f"ms_report_{date}.xlsx"
+
+    df = pd.DataFrame(data)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='ES SHEET')
+    output.seek(0)
+    return send_file(output,
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                     as_attachment=False,
+                     download_name=attachment_name)

@@ -3,8 +3,8 @@
 {% block content %}
 <div class="w-100 h-100 d-flex flex-column overflow-hidden">
 
-  <div class="row align-items-start mt-4">
-    
+  <!-- Header Section -->
+  <div class="row align-items-start mt-4 flex-shrink-0">
     <div class="col-3">
       <h5 class="fw-bold mb-0 mt-0">
         <span class="mb-1 text-primary fw-semibold">{{ customer.name }}</span>
@@ -12,7 +12,7 @@
       <p class="text-muted">customer payment history</p>
     </div>
 
-    <div class="col-8 text-end">
+    <div class="col-9 text-end">
       <form method="post" action="{{ url_for('bp_customer_report_download') }}" class="d-inline">
         <input type="hidden" name="customer_id" value="{{ customer._id }}">
         <input type="hidden" name="umbrella_id" value="{{ customer.umbrella_id }}">
@@ -24,10 +24,10 @@
         <i class="bi bi-arrow-left me-1"></i> Back to Reports
       </a>
     </div>
+  </div>
 
- </div>
-
-  <div class="row mb-3">
+  <!-- Customer Details Card -->
+  <div class="row mb-1 flex-shrink-0">
     <div class="col-12">
       <div class="card border-0 shadow-sm bg-opacity-10 mb-2">
         <div class="card-body py-2 px-3">
@@ -54,20 +54,6 @@
               <span class="fw-semibold text-dark">Village:</span>
               <span class="text-primary">{{ customer.village or '-' }}</span>
             </div>
-            <!-- <div class="col">
-              <span class="fw-semibold text-dark">Payment Period:</span>
-              <span class="text-primary">{{ customer.payment_period or '-' }}</span> months
-            </div> -->
-            <!-- <div class="col">
-              <span class="fw-semibold text-dark">Monthly Installment:</span>
-              <span class="text-primary">
-                {% if customer.connection_fee and customer.payment_period %}
-                  {{ "{:,}".format((customer.amount_due|int // customer.payment_period|int)) }} ugx
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-            </div> -->
             <div class="col">
               <span class="fw-semibold text-dark">Connection Fee:</span>
               <span class="text-primary">
@@ -78,26 +64,6 @@
                 {% endif %}
               </span>
             </div>
-            <!-- <div class="col">
-              <span class="fw-semibold text-dark">Initial Clearance:</span>
-              <span class="text-primary">
-                {% if customer.amount_paid %}
-                  {{ "{:,}".format(customer.amount_paid|int) }} ugx
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-            </div> -->
-            <!-- <div class="col">
-              <span class="fw-semibold text-dark">Initial Deficit:</span>
-              <span class="text-primary">
-                {% if customer.connection_fee and customer.amount_paid %}
-                  {{ "{:,}".format(customer.connection_fee|int - customer.amount_paid|int) }} ugx
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-            </div> -->
             <div class="col">
               <span class="fw-semibold text-dark">Total Debt:</span>
               <span class="text-primary">
@@ -108,6 +74,21 @@
                 {% endif %}
               </span>
             </div>
+            {% if customer.get("type") == "ES" %}
+            <div class="col">
+              <span class="fw-semibold text-dark">Connection Balance:</span>
+              <span class="text-primary">
+                {% if customer.balance_on_connection %}
+                  {{ "{:,}".format(customer.get("balance_on_connection", 0)|int) }} ugx
+                {% else %}
+                  -
+                {% endif %}
+              </span>
+              <span class="small text-muted d-block">
+                refer to ES reports
+              </span>
+            </div>
+            {% endif %}
             <div class="col">
               <span class="fw-semibold text-dark">Contact:</span>
               <span class="text-primary">
@@ -117,10 +98,6 @@
                   -
                 {% endif %}
               </span>
-          </div>
-          <div class="row">
-            <div class="col text-end">
-              <span class="small text-muted">As of {{ date.strftime('%d %b %Y') }}</span>
             </div>
           </div>
         </div>
@@ -128,15 +105,15 @@
     </div>
   </div>
 
-  <!-- customer table -->
-  <div class="table-responsive" style="overflow-y: auto; overscroll-behavior: contain;">
-    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.8rem;">
-      <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
-        <tr class="table-secondary">
-          <th>Month</th>
-          <th>Consumption (m3)</th>
-          <th>Bill</th>
-          <th>Payment</th>
+  <!-- Customer Table Container (Fixed Flex Scroll) -->
+  <div class="table-responsive flex-grow-1" style="min-height: 0; overflow-y: auto; overscroll-behavior: contain;">
+    <table class="table table-secondary table-hover table-sm align-middle mb-0" style="font-size:0.8rem;">
+      <thead>
+        <tr>
+          <th class="bg-secondary text-white sticky-top" style="top: 0; z-index: 2;">Month</th>
+          <th class="bg-secondary text-white sticky-top" style="top: 0; z-index: 2;">Consumption (m3)</th>
+          <th class="bg-secondary text-white sticky-top" style="top: 0; z-index: 2;">Bill</th>
+          <th class="bg-secondary text-white sticky-top" style="top: 0; z-index: 2;">Payment</th>
         </tr>
       </thead>
       <tbody>
@@ -150,7 +127,6 @@
               -
             {% endif %}
           </td>
-
           <td class="text-truncate" style="max-width: 100px;">
             {% if bpb.consumption %}
               {{ "{:,}".format(bpb.consumption|int) }}
@@ -158,7 +134,6 @@
               -
             {% endif %}
           </td>
-
           <td class="text-truncate" style="max-width: 100px;">
             {% if bpb.bill %}
               {{ "{:,}".format(bpb.bill|int) }}
@@ -185,7 +160,4 @@
   </div>
 
 </div>
-
-
-
 {% endblock %}

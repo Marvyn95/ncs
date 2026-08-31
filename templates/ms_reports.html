@@ -5,8 +5,8 @@
 
   <div class="row align-items-start mt-4">
     <div class="col-4">
-      <h4 class="fw-bold text-primary mb-0 mt-0">BP Reports</h4>
-      <p class="text-muted">Manage Bankable Project Customer Reports</p>
+      <h4 class="fw-bold text-primary mb-0 mt-0">MS Reports</h4>
+      <p class="text-muted">Manage Main Stream Customer Reports</p>
     </div>
 
     <div class="col-8 text-end">
@@ -19,7 +19,7 @@
           </button>
         {% endif %}
 
-          <a href="{{ url_for('download_bp_reports') }}" class="btn btn-outline-secondary btn-sm" title="Download Records" style="padding:2px 6px;font-size:0.9em;">
+          <a href="{{ url_for('download_ms_reports') }}" class="btn btn-outline-secondary btn-sm" title="Download Records" style="padding:2px 6px;font-size:0.9em;">
           <i class="bi bi-download"></i>
           </a>
 
@@ -27,7 +27,7 @@
       <div class="modal fade" id="addMonthlyPaymentSheetModal" tabindex="-1" aria-labelledby="addMonthlyPaymentSheetModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
-            <form method="POST" action="{{ url_for('add_monthly_payment_sheet') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ url_for('customer_monthly_payment_sheet_update') }}" enctype="multipart/form-data">
               <div class="modal-header py-2">
                 <h5 class="modal-title" id="addMonthlyPaymentSheetModalLabel">Add Monthly Payment Sheet</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -52,7 +52,7 @@
       <div class="modal fade" id="addMonthlyBillingSheetModal" tabindex="-1" aria-labelledby="addMonthlyBillingSheetModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
-            <form method="POST" action="{{ url_for('add_monthly_billing_sheet') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ url_for('customer_monthly_billing_sheet_update') }}" enctype="multipart/form-data">
               <div class="modal-header py-2">
                 <h5 class="modal-title" id="addMonthlyBillingSheetModalLabel">Add Monthly Billing Sheet</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -78,20 +78,20 @@
 
   <div class="row mb-3">
     <div class="col-3">
-      <form method="POST" action="{{ url_for('search_customers_3') }}">
+      <form method="POST" action="{{ url_for('ms_customer_search') }}">
         <div class="input-group input-group-sm">
           <span class="input-group-text bg-white px-1">
         <button type="submit" class="btn btn-link p-0" style="color:inherit;font-size:0.9em;">
           <i class="bi bi-search"></i>
         </button>
           </span>
-          <input type="text" name="search" class="form-control" style="font-size:0.85em;padding:2px 6px;" placeholder="Search..." value="{{ session.get('bp_reports_search_query', '') }}">
+          <input type="text" name="search" class="form-control" style="font-size:0.85em;padding:2px 6px;" placeholder="Search..." value="{{ session.get('ms_reports_search_query', '') }}">
         </div>
       </form>
     </div>
 
     <div class="col-3">
-      <form method="POST" action="{{ url_for('set_bp_reports_scheme') }}" class="d-flex align-items-center flex-wrap">
+      <form method="POST" action="{{ url_for('set_ms_reports_scheme') }}" class="d-flex align-items-center flex-wrap">
         <div class="input-group input-group-sm me-1">
           <label class="input-group-text" for="scheme_select">Scheme</label>
           <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
@@ -101,7 +101,7 @@
         <option value="" selected>All Schemes</option>
         {% for scheme in schemes %}
           <option value="{{ scheme._id }}"
-        {% if session.get("bp_reports_selected_scheme_id")|string == scheme._id|string or user.scheme_id|string == scheme._id|string %}selected{% endif %}>
+        {% if session.get("ms_reports_selected_scheme_id")|string == scheme._id|string or user.scheme_id|string == scheme._id|string %}selected{% endif %}>
         {{ scheme.scheme }}
           </option>
         {% endfor %}
@@ -111,10 +111,10 @@
     </div>
 
     <div class="col-3">
-      <form method="POST" action="{{ url_for('BP_report_date_filter') }}" id="dateFilterForm">
+      <form method="POST" action="{{ url_for('ms_report_date_filter') }}" id="dateFilterForm">
         <div class="input-group input-group-sm">
-          <input type="date" class="form-control" id="date_1" name="start_date" {% if session.get(" bp_reports_start_date") %} value="{{ session.get("bp_reports_start_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
-          <input type="date" class="form-control" id="date_2" name="end_date" {% if session.get("bp_reports_end_date") %} value="{{ session.get("bp_reports_end_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
+          <input type="date" class="form-control" id="date_1" name="start_date" {% if session.get("ms_reports_start_date") %} value="{{ session.get("ms_reports_start_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
+          <input type="date" class="form-control" id="date_2" name="end_date" {% if session.get("ms_reports_end_date") %} value="{{ session.get("ms_reports_end_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
         </div>
       </form>
       <script>
@@ -192,14 +192,18 @@
 
                 <td class="fw-semibold text-muted text-truncate" style="max-width: 120px;">
             {% if customer.bpb %}
-              {{ "{:,}".format(customer.get("total_debt", 0)|int) }}
+                  {% if customer.get("total_debt") == 'n/a' %}
+                    n/a
+                  {% else %}
+                    {{ "{:,}".format(customer.get("total_debt", 0)|int) }}
+                  {% endif %}
             {% else %}
               -
             {% endif %}
               </td>
 
               <td>
-          <form method="POST" action="{{ url_for('bp_customer_history') }}" style="display:inline;">
+          <form method="POST" action="{{ url_for('ms_customer_history') }}" style="display:inline;">
             <input type="hidden" name="customer_id" value="{{ customer._id }}">
             <input type="hidden" name="customer_reference" value="{{ customer.customer_reference }}">
             <button type="submit" class="btn btn-outline-primary btn-sm" title="View History">
@@ -219,24 +223,24 @@
 
   <div class="col-3">
     <div class="align-items-center">
-      <small class="text-muted">BP customers: </small>
+      <small class="text-muted">Total: </small>
       <span class="fw-semibold">{{ total_customers }}</span>
     </div>
   </div>
 
-  <div class="col-3">
+  <!-- <div class="col-3">
     <div class="align-items-center">
       <small class="text-muted">Total Amount Paid: </small>
       <span class="fw-semibold">{{ "{:,}".format(overall_sum_paid|int) if overall_sum_paid else '0' }}</span>
     </div>
-  </div>
+  </div> -->
 
   <div class="col-3">
     <ul class="pagination pagination-sm justify-content-start align-items-center mb-0" >
       <!-- Previous button -->
       {% if page > 1 %}
         <li class="page-item">
-          <a class="page-link" href="{{ url_for('bp_reports', page=page-1) }}">Prev</a>
+          <a class="page-link" href="{{ url_for('ms_reports', page=page-1) }}">Prev</a>
         </li>
       {% else %}
         <li class="page-item disabled">
@@ -252,7 +256,7 @@
           </li>
         {% else %}
           <li class="page-item">
-            <a class="page-link" href="{{ url_for('bp_reports', page=p) }}">{{ p }}</a>
+            <a class="page-link" href="{{ url_for('ms_reports', page=p) }}">{{ p }}</a>
           </li>
         {% endif %}
       {% endfor %}
@@ -260,7 +264,7 @@
       <!-- Next button -->
       {% if page < total_pages %}
         <li class="page-item">
-          <a class="page-link" href="{{ url_for('bp_reports', page=page+1) }}">Next</a>
+          <a class="page-link" href="{{ url_for('ms_reports', page=page+1) }}">Next</a>
         </li>
       {% else %}
         <li class="page-item disabled">
