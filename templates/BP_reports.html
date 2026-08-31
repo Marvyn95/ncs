@@ -78,7 +78,7 @@
 
   <div class="row mb-3">
     <div class="col-3">
-      <form method="POST" action="{{ url_for('search_customers_3') }}">
+      <form method="POST" action="{{ url_for('search_bp_reports') }}">
         <div class="input-group input-group-sm">
           <span class="input-group-text bg-white px-1">
         <button type="submit" class="btn btn-link p-0" style="color:inherit;font-size:0.9em;">
@@ -111,9 +111,9 @@
     </div>
 
     <div class="col-3">
-      <form method="POST" action="{{ url_for('BP_report_date_filter') }}" id="dateFilterForm">
+      <form method="POST" action="{{ url_for('bp_report_date_filter') }}" id="dateFilterForm">
         <div class="input-group input-group-sm">
-          <input type="date" class="form-control" id="date_1" name="start_date" {% if session.get(" bp_reports_start_date") %} value="{{ session.get("bp_reports_start_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
+          <input type="date" class="form-control" id="date_1" name="start_date" {% if session.get("bp_reports_start_date") %} value="{{ session.get("bp_reports_start_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
           <input type="date" class="form-control" id="date_2" name="end_date" {% if session.get("bp_reports_end_date") %} value="{{ session.get("bp_reports_end_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
         </div>
       </form>

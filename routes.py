@@ -1020,25 +1020,25 @@ def new_connections():
     if user.get("scheme_id"):
         query["scheme_id"] = user.get("scheme_id")
 
-    if session.get("selected_scheme_id"):
-        query["scheme_id"] = session.get("selected_scheme_id")
+    if session.get("new_connections_selected_scheme_id"):
+        query["scheme_id"] = session.get("new_connections_selected_scheme_id")
 
-    if session.get("selected_status_filter") and session.get("selected_status_filter") != "all":
-        query["status"] = session.get("selected_status_filter")
+    if session.get("new_connections_status_filter") and session.get("new_connections_status_filter") != "all":
+        query["status"] = session.get("new_connections_status_filter")
 
-    if session.get("filter_field") and session.get("customers_start_date") and session.get("customers_end_date"):
-        customers_start_date = datetime.datetime.strptime(session.get("customers_start_date"), "%Y-%m-%d")
-        customers_end_date = datetime.datetime.strptime(session.get("customers_end_date"), "%Y-%m-%d")
+    if session.get("new_connections_date_filter_field") and session.get("new_connections_start_date") and session.get("new_connections_end_date"):
+        customers_start_date = datetime.datetime.strptime(session.get("new_connections_start_date"), "%Y-%m-%d")
+        customers_end_date = datetime.datetime.strptime(session.get("new_connections_end_date"), "%Y-%m-%d")
 
-        query[session.get("filter_field")] = {
+        query[session.get("new_connections_date_filter_field")] = {
             "$gte": customers_start_date,
             "$lte": customers_end_date
         }
     
-    if session.get("search_query"):
+    if session.get("new_connections_search_query"):
         query["$or"] = [
-            {"name": {"$regex": session.get("search_query"), "$options": "i"}},
-            {"contact": {"$regex": session.get("search_query"), "$options": "i"}},
+            {"name": {"$regex": session.get("new_connections_search_query"), "$options": "i"}},
+            {"contact": {"$regex": session.get("new_connections_search_query"), "$options": "i"}},
         ]
 
     customers = list(db.Customers.find(query))
@@ -1078,26 +1078,26 @@ def new_connections():
 
 
 
-@app.route('/set_scheme', methods=['POST'])
+@app.route('/set_new_connections_scheme', methods=['POST'])
 @login_required
-def set_scheme():
+def set_new_connections_scheme():
     scheme_id = request.form.get('scheme_id')
-    session['selected_scheme_id'] = str(scheme_id)
+    session['new_connections_selected_scheme_id'] = str(scheme_id)
 
-    session.pop('search_query', None)
-    session.pop('customers_page', None)
+    session.pop('new_connections_search_query', None)
+    session.pop('new_connections_page', None)
 
     flash("Scheme set.", "success")
     return redirect(url_for("new_connections"))
 
 
-@app.route('/set_reports_scheme', methods=['POST'])
+@app.route('/set_es_reports_scheme', methods=['POST'])
 @login_required
-def set_reports_scheme():
+def set_es_reports_scheme():
     scheme_id = request.form.get('scheme_id')
-    session['reports_selected_scheme_id'] = str(scheme_id)
-    session.pop('reports_search_query', None)
-    session['reports_page'] = 1
+    session['es_reports_selected_scheme_id'] = str(scheme_id)
+    session.pop('es_reports_search_query', None)
+    session['es_reports_page'] = 1
     flash("Scheme set.", "success")
     return redirect(url_for("es_reports"))
 
@@ -1597,8 +1597,8 @@ def es_reports():
     
     page = request.args.get('page', None)
 
-    page = int(page) if page is not None else int(session.get("reports_page", 1))
-    session['reports_page'] = page
+    page = int(page) if page is not None else int(session.get("es_reports_page", 1))
+    session['es_reports_page'] = page
 
     per_page = 50
 
@@ -1609,16 +1609,16 @@ def es_reports():
         scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
         query["scheme_id"] = {"$in": scheme_ids_for_area}
     
-    if session.get("reports_selected_scheme_id"):
-        query["scheme_id"] = session.get("reports_selected_scheme_id")
+    if session.get("es_reports_selected_scheme_id"):
+        query["scheme_id"] = session.get("es_reports_selected_scheme_id")
 
     if user.get("scheme_id"):
         query["scheme_id"] = user.get("scheme_id")
     
-    if session.get("reports_search_query"):
+    if session.get("es_reports_search_query"):
         query["$or"] = [
-            {"name": {"$regex": session.get("reports_search_query"), "$options": "i"}},
-            {"contact": {"$regex": session.get("reports_search_query"), "$options": "i"}},
+            {"name": {"$regex": session.get("es_reports_search_query"), "$options": "i"}},
+            {"contact": {"$regex": session.get("es_reports_search_query"), "$options": "i"}},
         ]
 
     customers = sorted(list(db.Customers.find(query)), key=lambda x: x.get("name", "").lower())
@@ -2213,8 +2213,9 @@ def delete_parish():
 
 
 
-@app.route("/download_customers")
-def download_customers():
+@app.route("/download_new_connections", methods=["GET"])
+@login_required
+def download_new_connections():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     selected_scheme_id = session.get("selected_scheme_id")
     date = datetime.datetime.now().strftime("%d.%B.%Y")
@@ -2466,19 +2467,19 @@ def upload_customers():
     return redirect(url_for("new_connections"))
 
 
-@app.route("/search_customers", methods=["POST"])
-def search_customers():
-    search_query = request.form.get("search", "").strip()
-    session ["search_query"] = search_query if search_query else None
-    session["customers_page"] = 1
+@app.route("/search_new_connections", methods=["POST"])
+def search_new_connections():
+    search_query = request.form.get("new_connections_search", "").strip()
+    session["new_connections_search_query"] = search_query if search_query else None
+    session["new_connections_page"] = 1
     return redirect(url_for("new_connections"))
 
 
-@app.route("/search_customers_2", methods=["POST"])
-def search_customers_2():
+@app.route("/search_es_reports", methods=["POST"])
+def search_es_reports():
     search_query = request.form.get("search", "").strip()
-    session["reports_search_query"] = search_query if search_query else None
-    session["reports_page"] = 1
+    session["es_reports_search_query"] = search_query if search_query else None
+    session["es_reports_page"] = 1
 
     return redirect(url_for("es_reports"))
 
@@ -2487,21 +2488,20 @@ def search_customers_2():
 @app.route("/download_es_reports")
 def download_es_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    reports_selected_scheme_id = session.get("reports_selected_scheme_id")
     date = datetime.datetime.now().strftime("%d.%B.%Y")
 
     query = {"umbrella_id": user.get("umbrella_id"), "type": "ES", "status": "confirmed"}
 
-    if session.get("reports_selected_scheme_id"):
-        query["scheme_id"] = session.get("reports_selected_scheme_id")
+    if session.get("es_reports_selected_scheme_id"):
+        query["scheme_id"] = session.get("es_reports_selected_scheme_id")
     
 
-    if session.get("reports_search_query"):
+    if session.get("es_reports_search_query"):
         query["$or"] = [
-            {"name": {"$regex": session.get("reports_search_query"), "$options": "i"}},
-            {"contact": {"$regex": session.get("reports_search_query"), "$options": "i"}},
-            {"customer_reference": {"$regex": session.get("reports_search_query"), "$options": "i"}},
-        ]    
+            {"name": {"$regex": session.get("es_reports_search_query"), "$options": "i"}},
+            {"contact": {"$regex": session.get("es_reports_search_query"), "$options": "i"}},
+            {"customer_reference": {"$regex": session.get("es_reports_search_query"), "$options": "i"}},
+        ]
     
     customers = list(db.Customers.find(query).sort("name", 1))
     
@@ -2598,44 +2598,44 @@ def village_sort_by_village():
     session.pop("village_sort_by_scheme", None)
     return redirect(request.referrer or url_for("villages"))
 
-@app.route("/set_status", methods=["POST"])
-def set_status():
+@app.route("/set_new_connections_status", methods=["POST"])
+def set_new_connections_status():
     status = request.form.get("status")
-    session["selected_status_filter"] = status if status != "" else None
-    session["customers_page"] = 1
+    session["new_connections_status_filter"] = status if status != "" else None
+    session["new_connections_page"] = 1
 
     return redirect(url_for("new_connections"))
 
 
-@app.route("/applicant_date_filter_data", methods=["POST"])
-def applicant_date_filter_data():
+@app.route("/new_connection_date_filter_data", methods=["POST"])
+def new_connection_date_filter_data():
 
     filter_field = request.form.get("filter_field")
     start_date_str = request.form.get("start_date")
     end_date_str = request.form.get("end_date")
 
     if filter_field == "application_period":
-        session["filter_field"] = "date_applied"
+        session["new_connections_date_filter_field"] = "date_applied"
     elif filter_field == "survey_period":
-        session["filter_field"] = "survey_date"
+        session["new_connections_date_filter_field"] = "survey_date"
     elif filter_field == "payment_period":
-        session["filter_field"] = "date_paid"
+        session["new_connections_date_filter_field"] = "date_paid"
     elif filter_field == "verification_period":
-        session["filter_field"] = "verification_date"
+        session["new_connections_date_filter_field"] = "verification_date"
     elif filter_field == "material_issuance_period":
-        session["filter_field"] = "issuance_date"
+        session["new_connections_date_filter_field"] = "issuance_date"
     elif filter_field == "connection_period":
-        session["filter_field"] = "connection_date"
+        session["new_connections_date_filter_field"] = "connection_date"
     elif filter_field == "":
-        session.pop("filter_field", None)
-        session.pop("customers_start_date", None)
-        session.pop("customers_end_date", None)
+        session.pop("new_connections_date_filter_field", None)
+        session.pop("new_connections_start_date", None)
+        session.pop("new_connections_end_date", None)
     
-    if session.get("filter_field") != "":
-        session["customers_start_date"] = start_date_str
-        session["customers_end_date"] = end_date_str
+    if session.get("new_connections_date_filter_field"):
+        session["new_connections_start_date"] = start_date_str
+        session["new_connections_end_date"] = end_date_str
 
-        session["customers_page"] = 1
+        session["new_connections_page"] = 1
 
     return redirect(url_for("new_connections"))
 
@@ -2648,17 +2648,17 @@ def es_report_date_filter():
     session["es_reports_start_date"] = start_date_str
     session["es_reports_end_date"] = end_date_str
 
-    session["reports_page"] = 1
+    session["es_reports_page"] = 1
     
     return redirect(url_for("es_reports"))
 
-@app.route("/BP_report_date_filter", methods=["POST"])
-def BP_report_date_filter():
+@app.route("/bp_report_date_filter", methods=["POST"])
+def bp_report_date_filter():
     start_date_str = request.form.get("start_date")
     end_date_str = request.form.get("end_date")
     session["bp_reports_start_date"] = start_date_str
     session["bp_reports_end_date"] = end_date_str
-    session["BP_reports_page"] = 1
+    session["bp_reports_page"] = 1
     return redirect(url_for("bp_reports"))
 
 @app.route('/bp_reports', methods=['GET'])
@@ -2689,7 +2689,7 @@ def bp_reports():
 
     page = int(page) if page else session.get("BP_reports_page", 1)
 
-    session["BP_reports_page"] = page
+    session["bp_reports_page"] = page
 
     per_page = 200
     total_customers = db.Customers.count_documents(query)
@@ -2740,20 +2740,20 @@ def set_bp_reports_scheme():
     scheme_id = request.form.get("scheme_id")
     session["bp_reports_selected_scheme_id"] = scheme_id if scheme_id else None
     session.pop("bp_reports_search_query", None)
-    session["BP_reports_page"] = 1
+    session["bp_reports_page"] = 1
 
     return redirect(url_for("bp_reports"))
 
 
-@app.route('/search_customers_3', methods=['POST'])
-def search_customers_3():
+@app.route('/search_bp_reports', methods=['POST'])
+def search_bp_reports():
     search_query = request.form.get("search", "").strip()
     if search_query:
         session["bp_reports_search_query"] = search_query
     else:
         session["bp_reports_search_query"] = ''
-        session.pop("bp_reports_search_query")
-    session["BP_reports_page"] = 1
+        session.pop("bp_reports_search_query", None)
+    session["bp_reports_page"] = 1
 
     return redirect(url_for("bp_reports"))
 

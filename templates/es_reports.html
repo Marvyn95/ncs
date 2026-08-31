@@ -83,20 +83,20 @@
   <div class="row mb-3">
 
     <div class="col-3">
-      <form method="POST" action="{{ url_for('search_customers_2') }}">
+      <form method="POST" action="{{ url_for('search_es_reports') }}">
         <div class="input-group input-group-sm">
           <span class="input-group-text bg-white px-1">
             <button type="submit" class="btn btn-link p-0" style="color:inherit;font-size:0.9em;">
               <i class="bi bi-search"></i>
             </button>
           </span>
-          <input type="text" name="search" class="form-control" style="font-size:0.85em;padding:2px 6px;" placeholder="Search..." value="{{ session.get('reports_search_query', '') }}">
+          <input type="text" name="search" class="form-control" style="font-size:0.85em;padding:2px 6px;" placeholder="Search..." value="{{ session.get('es_reports_search_query', '') }}">
         </div>
       </form>
     </div>
 
     <div class="col-3">
-      <form method="POST" action="{{ url_for('set_reports_scheme') }}" class="d-flex align-items-center me-1 flex-wrap gap-1">
+      <form method="POST" action="{{ url_for('set_es_reports_scheme') }}" class="d-flex align-items-center me-1 flex-wrap gap-1">
         <div class="input-group input-group-sm me-1">
           <label class="input-group-text" for="scheme_select">Scheme</label>
           <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
@@ -105,7 +105,7 @@
             {% endfor %}>
             <option value="" selected>All Schemes</option>
             {% for scheme in schemes %}
-              <option value="{{ scheme._id }}" {% if session.get("reports_selected_scheme_id")|string == scheme._id|string or user.scheme_id|string == scheme._id|string %}selected{% endif %}>
+              <option value="{{ scheme._id }}" {% if session.get("es_reports_selected_scheme_id")|string == scheme._id|string or user.scheme_id|string == scheme._id|string %}selected{% endif %}>
                 {{ scheme.scheme }}
               </option>
             {% endfor %}
