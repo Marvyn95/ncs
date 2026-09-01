@@ -1281,11 +1281,11 @@ def edit_customer():
         update_data["first_meter_reading"] = request.form.get("first_meter_reading")
 
     if 'customer_reference' in request.form:
-        existing_customer = db.Customers.find_one({"customer_reference": int(request.form.get("customer_reference"))})
+        existing_customer = db.Customers.find_one({"customer_reference": str(request.form.get("customer_reference"))})
         if existing_customer and str(existing_customer.get("_id")) != customer_id:
             flash("Customer reference already exists!", "danger")
             return redirect(url_for("new_connections"))
-        update_data["customer_reference"] = int(request.form.get("customer_reference"))
+        update_data["customer_reference"] = str(request.form.get("customer_reference"))
     
     if 'transaction_id' in request.form:
         if request.form.get("transaction_id") != customer.get("transaction_id"):
@@ -1509,6 +1509,8 @@ def customer_connection():
 @app.route('/customer_confirmation', methods=["POST"])
 @login_required
 def customer_confirmation():
+    user = db.Users.find_one({"_id": ObjectId(session.get("user_id"))})
+
     customer_id = request.form.get("customer_id")
     customer_reference = request.form.get("customer_reference")
 
@@ -1516,17 +1518,18 @@ def customer_confirmation():
         flash("Customer reference is too large!", "danger")
         return redirect(url_for("new_connections"))
     
-    existing_customer = db.Customers.find_one({"customer_reference": int(customer_reference)})
+    existing_customer = db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "customer_reference": str(customer_reference)})
     if existing_customer and str(existing_customer.get("_id")) != customer_id:
         flash("Customer reference already exists!", "danger")
         return redirect(url_for("new_connections"))
 
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
-        {"$set": {"customer_reference": int(customer_reference), "status": "confirmed"}}
+        {"$set": {"customer_reference": str(customer_reference), "status": "confirmed"}}
     )
     
     session.pop("schemes_customers", None)
+
     flash("Customer confirmed successfully!", "success")
     return redirect(url_for("new_connections"))
 
@@ -1575,6 +1578,7 @@ def delete_customer():
 @app.route('/es_reports', methods=["GET"])
 @login_required
 def es_reports():
+
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
 
     if user is None:
@@ -1661,326 +1665,6 @@ def es_reports():
                            per_page=per_page,
                            total=total
                            )
-
-
-
-@app.route('/add_monthly_billing_sheet', methods=["POST"])
-@login_required
-def add_monthly_billing_sheet():
-    file = request.files.get("monthly_billing_sheet_file")
-    
-    if not file or file.filename == "":
-        flash("No file selected!", "danger")
-        return redirect(request.referrer or url_for("home"))
-    
-    if file.filename.endswith(".xls"):
-        flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
-        return redirect(request.referrer or url_for("home"))
-    
-    if file.filename.endswith(".csv"):
-        df = pd.read_csv(file)
-    elif file.filename.endswith((".xls", ".xlsx")):
-        df = pd.read_excel(file)
-    else:
-        flash("Unsupported file format, upload a CSV or Excel file!", "danger")
-        return redirect(request.referrer or url_for("home"))
-    
-    # if len(df.columns) != 31:
-    #     flash("Monthly billing sheet must have exactly 31 columns!", "danger")
-    #     return redirect(request.referrer or url_for("es_reports"))
-    
-    if df.columns[1] != "MeterRef" or df.columns[9] != "Period" or df.columns[19] != "TotalCharges":
-        flash("Monthly billing sheet must have 'MeterRef', 'Period', and 'TotalCharges' as the second, tenth, and twentieth columns respectively!", "danger")
-        return redirect(request.referrer or url_for("home"))
-    
-    year_months = df["Period"].astype(str).str[:6]
-    if len(year_months.unique()) != 1:
-        flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
-        return redirect(request.referrer or url_for("home"))
-
-    es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
-    for customer in es_bp_customers:
-
-        if customer.get("type") == "ES":
-
-            customer_billing_data = df[df["MeterRef"].astype(str) == str(customer.get("customer_reference"))]
-
-            if customer_billing_data.empty:
-                continue
-    
-            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
-            
-            if bpb == []:
-
-                due_amount = customer.get("connection_fee", 0) - customer.get("amount_paid", 0)
-
-                if due_amount >= 0:
-                    db.Customers.update_one({"_id": customer.get("_id")}, {
-                        "$set": {
-                            "bpb": [{
-                                "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                                "consumption": int(customer_billing_data["Consumption"].values[0]),
-                                "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                                "payment": 0,
-                                "balance_on_connection": int(due_amount),
-                                "balance_on_bill": int(customer_billing_data["TotalCharges"].values[0]),
-                                "prepayment_balance": 0
-                            }]
-                        }
-                    })
-                
-                elif due_amount < 0:
-
-                    db.Customers.update_one({"_id": customer.get("_id")}, {
-                        "$set": {
-                            "bpb": [{
-                                "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                                "consumption": int(customer_billing_data["Consumption"].values[0]),
-                                "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                                "payment": 0,
-                                "balance_on_connection": 0,
-                                "balance_on_bill": int(customer_billing_data["TotalCharges"].values[0]) + due_amount,
-                                "prepayment_balance": int(due_amount)*(-1)
-                            }]
-                        }
-                    })
-
-            elif bpb != []:
-                month_entry = next((entry for entry in bpb if entry["period"] == datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m")), None)
-                if not month_entry:
-                    bpb.append({
-                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                        "consumption": int(customer_billing_data["Consumption"].values[0]),
-                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                        "payment": 0,
-                    })
-                elif month_entry:
-                    bpb.remove(month_entry)
-                    bpb.append({
-                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                        "consumption": int(customer_billing_data["Consumption"].values[0]),
-                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                        "payment": month_entry.get("payment", 0),
-                    })
-
-                new_bpb = roll_down_balances(customer, bpb)
-
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": new_bpb
-                    }
-                })
-
-        elif customer.get("type") == "BP":
-
-            customer_billing_data = df[df["MeterRef"].astype(str) == str(customer.get("customer_reference"))]
-
-            if customer_billing_data.empty:
-                continue
-
-            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
-
-            if bpb == []:
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": [{
-                            "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                            "consumption": int(customer_billing_data["Consumption"].values[0]),
-                            "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                            "payment": 0,
-                        }]
-                    }
-                })
-            else:
-                month_entry = next((entry for entry in bpb if entry["period"] == datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m")), None)
-                if month_entry:
-                    bpb.remove(month_entry)
-                    bpb.append({
-                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                        "consumption": int(customer_billing_data["Consumption"].values[0]),
-                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                        "payment": month_entry.get("payment", 0),
-                    })
-                elif not month_entry:
-                    bpb.append({
-                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                        "consumption": int(customer_billing_data["Consumption"].values[0]),
-                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                        "payment": 0,
-                    })
-
-                bpb = sorted(bpb, key=lambda x: x.get("period"))
-
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": bpb
-                    }
-                })
-
-    flash("Monthly billing sheet processed successfully!", "success")
-    return redirect(request.referrer)
-
-
-@app.route('/add_monthly_payment_sheet', methods=["POST"])
-@login_required
-def add_monthly_payment_sheet():
-    file = request.files.get("monthly_payment_sheet_file")
-
-    if not file or file.filename == "":
-        flash("No file selected!", "danger")
-        return redirect(url_for("es_reports"))
-
-    if file.filename.endswith(".xls"):
-        flash("Excel .xls format is not supported, please convert to .xlsx or .csv and try again!", "danger")
-        return redirect(url_for("es_reports"))
-
-    if file.filename.endswith(".csv"):
-        df = pd.read_csv(file)
-    elif file.filename.endswith(".xlsx"):
-        df = pd.read_excel(file)
-    else:
-        flash("Unsupported file format, upload a CSV or Excel file!", "danger")
-        return redirect(url_for("es_reports"))
-    
-    if len(df.columns) != 11:
-        flash("Monthly payment sheet must have exactly 11 columns!", "danger")
-        return redirect(url_for("es_reports"))
-
-    if df.columns[1] != "CustomerRef" or df.columns[4] != "TranAmount" or df.columns[9] != "PaymentDate":
-        flash("Monthly payment sheet must have 'CustomerRef', 'TranAmount', and 'PaymentDate' as the second, fifth, and tenth columns respectively!", "danger")
-        return redirect(url_for("es_reports"))
-
-    year_months = df["PaymentDate"].str[:7]
-    if len(year_months.unique()) != 1:
-        flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
-        return redirect(url_for("es_reports"))
-
-    es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
-    for customer in es_bp_customers:
-
-        if customer.get("type") == "ES":
-            customer_payment_data = df[df["CustomerRef"].astype(str) == str(customer.get("customer_reference"))]
-
-            if customer_payment_data.empty:
-                continue
-
-            amount_paid = int(customer_payment_data["TranAmount"].sum())
-            payment_date = datetime.datetime.strptime(customer_payment_data["PaymentDate"].values[0].split("T")[0][:7], "%Y-%m")
-
-            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
-            if bpb == []:
-
-                due_amount = customer.get("connection_fee", 0) - customer.get("amount_paid", 0)
-
-                if due_amount >= 0:
-                    db.Customers.update_one({"_id": customer.get("_id")}, {
-                        "$set": {
-                            "bpb": [{
-                                "period": payment_date,
-                                "consumption": 0,
-                                "bill": 0,
-                                "payment": amount_paid,
-                                "balance_on_connection": int(due_amount),
-                                "balance_on_bill": 0,
-                                "prepayment_balance": 0
-                            }]
-                        }
-                    })
-                
-                elif due_amount < 0:
-                    db.Customers.update_one({"_id": customer.get("_id")}, {
-                        "$set": {
-                            "bpb": [{
-                                "period": payment_date,
-                                "consumption": 0,
-                                "bill": 0,
-                                "payment": amount_paid,
-                                "balance_on_connection": 0,
-                                "balance_on_bill": 0,
-                                "prepayment_balance": int(due_amount)*(-1)
-                            }]
-                        }
-                    })
-
-            elif bpb != []:
-                month_entry = next((entry for entry in bpb if entry["period"] == payment_date), None)
-                if not month_entry:
-                    bpb.append({
-                            "period": payment_date,
-                            "consumption": 0,
-                            "bill": 0,
-                            "payment": amount_paid,
-                    })
-                elif month_entry:
-                    bpb.remove(month_entry)
-                    bpb.append({
-                        "period": payment_date,
-                        "consumption": month_entry.get("consumption", 0),
-                        "bill": month_entry.get("bill", 0),
-                        "payment": amount_paid,
-                    })
-
-                new_bpb = roll_down_balances(customer, bpb)
-
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": new_bpb
-                    }
-                })
-        
-        elif customer.get("type") == "BP":
-
-            customer_payment_data = df[df["CustomerRef"].astype(str) == str(customer.get("customer_reference"))]
-
-            if customer_payment_data.empty:
-                continue
-
-            amount_paid = int(customer_payment_data["TranAmount"].sum())
-            payment_date = datetime.datetime.strptime(customer_payment_data["PaymentDate"].values[0].split("T")[0][:7], "%Y-%m")
-
-            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
-
-            if bpb == []:
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": [{
-                            "period": payment_date,
-                            "consumption": 0,
-                            "bill": 0,
-                            "payment": amount_paid,
-                        }]
-                    }
-                })
-            
-            elif bpb != []:
-                month_entry = next((entry for entry in bpb if entry["period"] == payment_date), None)
-                if month_entry:
-                    bpb.remove(month_entry)
-                    bpb.append({
-                        "period": payment_date,
-                        "consumption": month_entry.get("consumption", 0),
-                        "bill": month_entry.get("bill", 0),
-                        "payment": amount_paid,
-                    })
-
-                elif not month_entry:
-                    bpb.append({
-                        "period": payment_date,
-                        "consumption": 0,
-                        "bill": 0,
-                        "payment": amount_paid,
-                    })
-
-                bpb = sorted(bpb, key=lambda x: x.get("period"))
-
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": bpb
-                    }
-                })
-    
-    flash("Monthly payment sheet processed successfully!", "success")
-    return redirect(request.referrer)
 
 
 @app.route('/es_customer_history', methods=['POST'])
@@ -2253,7 +1937,7 @@ def download_new_connections():
 
     customers = list(db.Customers.find(query))
     
-    attachment_name = f"customers_{date}_{query.get('status') if query.get('status') else ''}.xlsx"
+    attachment_name = f"new_connections_{date}_{query.get('status') if query.get('status') else ''}.xlsx"
 
     data = []
     villages = list(db.Villages.find())
@@ -2356,6 +2040,7 @@ def upload_customers():
     cust_no = 0
     es_no = 0
     ms_no = 0
+    
     for row in df.itertuples(index=False):
         cust_no += 1
         meter_ref = row[0]
@@ -2367,7 +2052,6 @@ def upload_customers():
         umbrella_name = row[7]
         customer_type = row[8]
         creation_date = row[9]
-        
         application_id = str(row[10]).strip() if len(row) > 10 else None
         pipe_length = str(row[11]).strip() if len(row) > 11 else None
         connection_fee = row[12] if len(row) > 12 else None
@@ -2381,7 +2065,7 @@ def upload_customers():
         status = "confirmed"
         type = "ES" if "ES-" in str(name) else "MS"
         meter_serial = str(meter_serial).strip() if not pd.isna(meter_serial) else None
-        customer_reference = int(re.sub(r'\D', '', str(meter_ref))) if not pd.isna(meter_ref) else None
+        customer_reference = str(meter_ref) if not pd.isna(meter_ref) else None
 
         # customercreation date info 
         creation_date_formatted = pd.to_datetime(creation_date)
@@ -2460,6 +2144,7 @@ def upload_customers():
             es_no += 1
         elif type == "MS":
             ms_no += 1
+        
 
     session.pop("schemes_customers", None)
 
@@ -3032,7 +2717,7 @@ def ms_customer_history():
     if request.method == "POST":
         customer_id = request.form.get("customer_id")
         customer_reference = request.form.get("customer_reference")
-        customer = db.Customers.find_one({"_id": ObjectId(customer_id), "customer_reference": int(customer_reference)})
+        customer = db.Customers.find_one({"_id": ObjectId(customer_id), "customer_reference": str(customer_reference)})
 
         customer["bpb"] = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
         customer["scheme"] = db.Schemes.find_one({"_id": ObjectId(customer.get("scheme_id"))}).get("scheme") if customer.get("scheme_id") else 'N/A'
@@ -3049,6 +2734,8 @@ def ms_customer_history():
 @app.route('/customer_monthly_billing_sheet_update', methods=["POST"])
 @login_required
 def customer_monthly_billing_sheet_update():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
     file = request.files.get("monthly_billing_sheet_file")
     
     if not file or file.filename == "":
@@ -3076,136 +2763,70 @@ def customer_monthly_billing_sheet_update():
         return redirect(request.referrer or url_for("home"))
     
     year_months = df["Period"].astype(str).str[:6]
+
     if len(year_months.unique()) != 1:
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
         return redirect(request.referrer or url_for("home"))
 
-    es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
-    for customer in es_bp_customers:
+    all_customers = db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed"})
+    customer_reference_numbers = [str(customer.get("customer_reference")) for customer in all_customers]
 
-        if customer.get("type") == "ES":
+    found = 0
+    not_found = 0
 
-            customer_billing_data = df[df["MeterRef"].astype(str) == str(customer.get("customer_reference"))]
+    for entry in df.itertuples():
 
-            if customer_billing_data.empty:
-                continue
-    
-            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
-            
+        if str(entry.MeterRef) not in customer_reference_numbers:
+            not_found += 1
+            continue
+
+        if str(entry.MeterRef) in customer_reference_numbers:
+            found += 1
+            customer = db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "customer_reference": str(entry.MeterRef)})
+            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period")) if customer.get("bpb") else []
+
             if bpb == []:
-
-                due_amount = customer.get("connection_fee", 0) - customer.get("amount_paid", 0)
-
-                if due_amount >= 0:
-                    db.Customers.update_one({"_id": customer.get("_id")}, {
-                        "$set": {
-                            "bpb": [{
-                                "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                                "consumption": int(customer_billing_data["Consumption"].values[0]),
-                                "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                                "payment": 0,
-                                "balance_on_connection": int(due_amount),
-                                "balance_on_bill": int(customer_billing_data["TotalCharges"].values[0]),
-                                "prepayment_balance": 0
-                            }]
-                        }
-                    })
-                
-                elif due_amount < 0:
-
-                    db.Customers.update_one({"_id": customer.get("_id")}, {
-                        "$set": {
-                            "bpb": [{
-                                "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                                "consumption": int(customer_billing_data["Consumption"].values[0]),
-                                "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                                "payment": 0,
-                                "balance_on_connection": 0,
-                                "balance_on_bill": int(customer_billing_data["TotalCharges"].values[0]) + due_amount,
-                                "prepayment_balance": int(due_amount)*(-1)
-                            }]
-                        }
-                    })
-
+                bpb_entry = {
+                    "period": datetime.datetime.strptime(str(entry.Period)[:6], "%Y%m"),
+                    "consumption": int(entry.Consumption),
+                    "bill": int(entry.TotalCharges),
+                    "payment": 0,
+                }
+                bpb.append(bpb_entry)
             elif bpb != []:
-                month_entry = next((entry for entry in bpb if entry["period"] == datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m")), None)
-                if not month_entry:
-                    bpb.append({
-                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                        "consumption": int(customer_billing_data["Consumption"].values[0]),
-                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
+                monthentry = next((item for item in bpb if item.get("period") == datetime.datetime.strptime(str(entry.Period)[:6], "%Y%m")), None)
+                if monthentry is None:
+                    bpb_entry = {
+                        "period": datetime.datetime.strptime(str(entry.Period)[:6], "%Y%m"),
+                        "consumption": int(entry.Consumption),
+                        "bill": int(entry.TotalCharges),
                         "payment": 0,
-                    })
-                elif month_entry:
-                    bpb.remove(month_entry)
-                    bpb.append({
-                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                        "consumption": int(customer_billing_data["Consumption"].values[0]),
-                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                        "payment": month_entry.get("payment", 0),
-                    })
-
-                new_bpb = roll_down_balances(customer, bpb)
-
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": new_bpb
                     }
-                })
+                    bpb.append(bpb_entry)
+                elif monthentry is not None:
+                    monthentry_copy = monthentry
+                    monthentry_copy["consumption"] = int(entry.Consumption)
+                    monthentry_copy["bill"] = int(entry.TotalCharges)
+                    bpb.remove(monthentry)
+                    bpb.append(monthentry_copy)
 
-        elif customer.get("type") == "BP":
+            bpb = sorted(bpb, key=lambda x: x.get("period"))
+            bpb = roll_down_balances(customer, bpb)
 
-            customer_billing_data = df[df["MeterRef"].astype(str) == str(customer.get("customer_reference"))]
+            db.Customers.update_one(
+                {"umbrella_id": user.get("umbrella_id"), "_id": customer.get("_id")},
+                {"$set": {"bpb": bpb}}
+            )
 
-            if customer_billing_data.empty:
-                continue
-
-            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
-
-            if bpb == []:
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": [{
-                            "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                            "consumption": int(customer_billing_data["Consumption"].values[0]),
-                            "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                            "payment": 0,
-                        }]
-                    }
-                })
-            else:
-                month_entry = next((entry for entry in bpb if entry["period"] == datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m")), None)
-                if month_entry:
-                    bpb.remove(month_entry)
-                    bpb.append({
-                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                        "consumption": int(customer_billing_data["Consumption"].values[0]),
-                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                        "payment": month_entry.get("payment", 0),
-                    })
-                elif not month_entry:
-                    bpb.append({
-                        "period": datetime.datetime.strptime(str(customer_billing_data["Period"].values[0]), "%Y%m"),
-                        "consumption": int(customer_billing_data["Consumption"].values[0]),
-                        "bill": int(customer_billing_data["TotalCharges"].values[0]),
-                        "payment": 0,
-                    })
-
-                bpb = sorted(bpb, key=lambda x: x.get("period"))
-
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": bpb
-                    }
-                })
-
-    flash("Monthly billing sheet processed successfully!", "success")
+    flash(f"Monthly billing sheet processed successfully! Found: {found}, Not Found: {not_found}", "success")
     return redirect(request.referrer)
 
 
 @app.route('/customer_monthly_payment_sheet_update', methods=["POST"])
 @login_required
 def customer_monthly_payment_sheet_update():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
     file = request.files.get("monthly_payment_sheet_file")
 
     if not file or file.filename == "":
@@ -3237,131 +2858,56 @@ def customer_monthly_payment_sheet_update():
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
         return redirect(url_for("es_reports"))
 
-    es_bp_customers = db.Customers.find({"customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": {"$in": ["ES", "BP"]}})
-    for customer in es_bp_customers:
+    all_customers = db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed"})
+    customer_reference_numbers = [str(cust.get("customer_reference")) for cust in all_customers]
 
-        if customer.get("type") == "ES":
-            customer_payment_data = df[df["CustomerRef"].astype(str) == str(customer.get("customer_reference"))]
+    found = 0
+    not_found = 0
 
-            if customer_payment_data.empty:
-                continue
+    for entry in df.itertuples():
+        customer_ref = str(entry.CustomerRef)
+        tran_amount = int(entry.TranAmount)
+        payment_date = str(entry.PaymentDate)
 
-            amount_paid = int(customer_payment_data["TranAmount"].sum())
-            payment_date = datetime.datetime.strptime(customer_payment_data["PaymentDate"].values[0].split("T")[0][:7], "%Y-%m")
+        if customer_ref not in customer_reference_numbers:
+            not_found += 1
+            continue
 
-            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
+        if customer_ref in customer_reference_numbers:
+            found += 1
+            customer = db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "customer_reference": str(customer_ref), "status": "confirmed"})
+            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period", "")) if customer.get("bpb") else []
+
             if bpb == []:
-
-                due_amount = customer.get("connection_fee", 0) - customer.get("amount_paid", 0)
-
-                if due_amount >= 0:
-                    db.Customers.update_one({"_id": customer.get("_id")}, {
-                        "$set": {
-                            "bpb": [{
-                                "period": payment_date,
-                                "consumption": 0,
-                                "bill": 0,
-                                "payment": amount_paid,
-                                "balance_on_connection": int(due_amount),
-                                "balance_on_bill": 0,
-                                "prepayment_balance": 0
-                            }]
-                        }
-                    })
-                
-                elif due_amount < 0:
-                    db.Customers.update_one({"_id": customer.get("_id")}, {
-                        "$set": {
-                            "bpb": [{
-                                "period": payment_date,
-                                "consumption": 0,
-                                "bill": 0,
-                                "payment": amount_paid,
-                                "balance_on_connection": 0,
-                                "balance_on_bill": 0,
-                                "prepayment_balance": int(due_amount)*(-1)
-                            }]
-                        }
-                    })
-
-            elif bpb != []:
-                month_entry = next((entry for entry in bpb if entry["period"] == payment_date), None)
+                bpb_entry = {
+                    "period": datetime.datetime.strptime(payment_date[:7], "%Y-%m"),
+                    "consumption": 0,
+                    "bill": 0,
+                    "payment": tran_amount,
+                }
+                bpb.append(bpb_entry)
+            if bpb != []:
+                month_entry = next((entry for entry in bpb if entry.get("period") == datetime.datetime.strptime(payment_date[:7], "%Y-%m")), None)
                 if not month_entry:
-                    bpb.append({
-                            "period": payment_date,
-                            "consumption": 0,
-                            "bill": 0,
-                            "payment": amount_paid,
-                    })
-                elif month_entry:
-                    bpb.remove(month_entry)
-                    bpb.append({
-                        "period": payment_date,
-                        "consumption": month_entry.get("consumption", 0),
-                        "bill": month_entry.get("bill", 0),
-                        "payment": amount_paid,
-                    })
-
-                new_bpb = roll_down_balances(customer, bpb)
-
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": new_bpb
-                    }
-                })
-        
-        elif customer.get("type") == "BP":
-
-            customer_payment_data = df[df["CustomerRef"].astype(str) == str(customer.get("customer_reference"))]
-
-            if customer_payment_data.empty:
-                continue
-
-            amount_paid = int(customer_payment_data["TranAmount"].sum())
-            payment_date = datetime.datetime.strptime(customer_payment_data["PaymentDate"].values[0].split("T")[0][:7], "%Y-%m")
-
-            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
-
-            if bpb == []:
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": [{
-                            "period": payment_date,
-                            "consumption": 0,
-                            "bill": 0,
-                            "payment": amount_paid,
-                        }]
-                    }
-                })
-            
-            elif bpb != []:
-                month_entry = next((entry for entry in bpb if entry["period"] == payment_date), None)
-                if month_entry:
-                    bpb.remove(month_entry)
-                    bpb.append({
-                        "period": payment_date,
-                        "consumption": month_entry.get("consumption", 0),
-                        "bill": month_entry.get("bill", 0),
-                        "payment": amount_paid,
-                    })
-
-                elif not month_entry:
-                    bpb.append({
-                        "period": payment_date,
+                    bpb_entry = {
+                        "period": datetime.datetime.strptime(payment_date[:7], "%Y-%m"),
                         "consumption": 0,
                         "bill": 0,
-                        "payment": amount_paid,
-                    })
-
-                bpb = sorted(bpb, key=lambda x: x.get("period"))
-
-                db.Customers.update_one({"_id": customer.get("_id")}, {
-                    "$set": {
-                        "bpb": bpb
+                        "payment": tran_amount,
                     }
-                })
-    
-    flash("Monthly payment sheet processed successfully!", "success")
+                    bpb.append(bpb_entry)
+                elif month_entry is not None:
+                    month_entry_copy = month_entry
+                    month_entry_copy["payment"] = month_entry.get("payment", 0) + tran_amount
+                    bpb.remove(month_entry)
+                    bpb.append(month_entry_copy)
+
+            bpb = sorted(bpb, key=lambda x: x["period"])
+            bpb = roll_down_balances(customer, bpb)
+
+            db.Customers.update_one({"umbrella_id": user.get("umbrella_id"), "_id": customer["_id"]}, {"$set": {"bpb": bpb}})
+
+    flash(f"Monthly payment sheet processed successfully! Found: {found}, Not Found: {not_found}", "success")
     return redirect(request.referrer)
 
 
@@ -3377,7 +2923,6 @@ def download_ms_reports():
     if session.get("ms_reports_selected_scheme_id"):
         query["scheme_id"] = session.get("ms_reports_selected_scheme_id")
     
-
     if session.get("ms_reports_search_query"):
         query["$or"] = [
             {"name": {"$regex": session.get("ms_reports_search_query"), "$options": "i"}},
@@ -3463,3 +3008,22 @@ def download_ms_reports():
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                      as_attachment=False,
                      download_name=attachment_name)
+
+
+@app.route("/ms_customer_report_download", methods=["POST"])
+def ms_customer_report_download():
+    customer_id = request.form.get("customer_id")
+    umbrella_id = request.form.get("umbrella_id")
+    customer = db.Customers.find_one({"_id": ObjectId(customer_id), "umbrella_id": umbrella_id})
+
+    if not customer:
+        flash("Customer not found.", "danger")
+        return redirect(url_for("new_connections"))
+
+    report_path = generate_customer_report(customer)
+    return send_file(
+        report_path,
+        as_attachment=False,
+        download_name=f"{customer.get('name', 'customer')}_report.pdf",
+        mimetype="application/pdf"
+    )

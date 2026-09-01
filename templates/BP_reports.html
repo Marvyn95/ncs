@@ -27,7 +27,7 @@
       <div class="modal fade" id="addMonthlyPaymentSheetModal" tabindex="-1" aria-labelledby="addMonthlyPaymentSheetModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
-            <form method="POST" action="{{ url_for('add_monthly_payment_sheet') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ url_for('customer_monthly_payment_sheet_update') }}" enctype="multipart/form-data">
               <div class="modal-header py-2">
                 <h5 class="modal-title" id="addMonthlyPaymentSheetModalLabel">Add Monthly Payment Sheet</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -52,7 +52,7 @@
       <div class="modal fade" id="addMonthlyBillingSheetModal" tabindex="-1" aria-labelledby="addMonthlyBillingSheetModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
-            <form method="POST" action="{{ url_for('add_monthly_billing_sheet') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ url_for('customer_monthly_billing_sheet_update') }}" enctype="multipart/form-data">
               <div class="modal-header py-2">
                 <h5 class="modal-title" id="addMonthlyBillingSheetModalLabel">Add Monthly Billing Sheet</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

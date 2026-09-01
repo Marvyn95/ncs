@@ -41,27 +41,21 @@ def login_required(f):
 
 
 def roll_down_balances(customer, bpb_object):
-    if bpb_object:
-        bpb = sorted(bpb_object, key=lambda x: x["period"])
-    else:
-        bpb = []
-    if customer:
-        if customer.get("connection_fee", 0) >= customer.get("amount_paid", 0):
-            due_amount = int(customer.get("connection_fee", 0)) - int(customer.get("amount_paid", 0))
-            monthly_connection_deduction = due_amount/int(customer.get("payment_period", 6))
-        elif customer.get("connection_fee", 0) < customer.get("amount_paid", 0):
-            due_amount = 0
-            monthly_connection_deduction = 0
-            
 
-    # populating the payment flow data
-    ## MARVINS MWUMBRELLA ES CUSTOMER PAYMENT TRACKING ALGORITHM
+    bpb = sorted(bpb_object, key=lambda x: x["period"]) if bpb_object else []
+
+    if customer and customer.get("connection_fee", 0) >= customer.get("amount_paid", 0):
+        due_amount = int(customer.get("connection_fee", 0)) - int(customer.get("amount_paid", 0))
+        monthly_connection_deduction = due_amount/int(customer.get("payment_period", 6))
+    elif customer and customer.get("connection_fee", 0) < customer.get("amount_paid", 0):
+        due_amount = 0
+        monthly_connection_deduction = 0
+            
     for i in range(len(bpb)):
         if i == 0:
-    
+
     # =====================================================================================================================
             if customer.get("connection_fee", 0) >= customer.get("amount_paid", 0):
-
                 if bpb[0].get("payment", 0) <= bpb[0].get("bill", 0):
                     bpb[0]["balance_on_connection"] = due_amount
                     bpb[0]["balance_on_bill"] = bpb[0].get("bill", 0) - bpb[0].get("payment", 0)
@@ -70,9 +64,7 @@ def roll_down_balances(customer, bpb_object):
                     bpb[0]["balance_on_connection"] = due_amount
                     bpb[0]["balance_on_bill"] = 0
                     bpb[0]["prepayment_balance"] = bpb[0].get("payment", 0) - bpb[0].get("bill", 0)
-
             elif customer.get("connection_fee", 0) < customer.get("amount_paid", 0):
-
                 if bpb[0].get("payment", 0) + (customer.get("amount_paid", 0) - customer.get("connection_fee", 0)) <= bpb[0].get("bill", 0):
                     bpb[0]["balance_on_connection"] = 0
                     bpb[0]["balance_on_bill"] = bpb[0].get("bill", 0) - (bpb[0].get("payment", 0) + (customer.get("amount_paid", 0) - customer.get("connection_fee", 0)))
@@ -81,34 +73,6 @@ def roll_down_balances(customer, bpb_object):
                     bpb[0]["balance_on_connection"] = 0
                     bpb[0]["balance_on_bill"] = 0
                     bpb[0]["prepayment_balance"] = (bpb[0].get("payment", 0) + (customer.get("amount_paid", 0) - customer.get("connection_fee", 0))) - bpb[0].get("bill", 0)
-            
-    # =====================================================================================================================
-
-            # if customer.get("connection_fee", 0) >= customer.get("amount_paid", 0):
-                
-            #     if bpb[0].get("payment", 0) < monthly_connection_deduction:
-            #         bpb[0]["balance_on_connection"] = due_amount - bpb[0].get("payment", 0)
-            #         bpb[0]["balance_on_bill"] = bpb[0].get("bill", 0)
-            #         bpb[0]["prepayment_balance"] = 0
-            #     if bpb[0].get("payment", 0) >= monthly_connection_deduction:
-            #         bpb[0]["balance_on_connection"] = due_amount - monthly_connection_deduction
-            #         if bpb[0].get("bill", 0) >= bpb[0].get("payment", 0) - monthly_connection_deduction:
-            #             bpb[0]["balance_on_bill"] = bpb[0].get("bill", 0) - (bpb[0].get("payment", 0) - monthly_connection_deduction)
-            #             bpb[0]["prepayment_balance"] = 0
-            #         elif bpb[0].get("bill", 0) < bpb[0].get("payment", 0) - monthly_connection_deduction:
-            #             bpb[0]["balance_on_bill"] = 0
-            #             bpb[0]["prepayment_balance"] = bpb[0]["payment"] - (monthly_connection_deduction + bpb[0].get("bill", 0))
-            
-            # elif customer.get("connection_fee", 0) < customer.get("amount_paid", 0):
-
-            #     bpb[0]["balance_on_connection"] = 0
-            #     if bpb[0].get("bill", 0) >= bpb[0].get("payment", 0) + (customer.get("amount_paid", 0) - customer.get("connection_fee", 0)):
-            #         bpb[0]["balance_on_bill"] = bpb[0].get("bill", 0) - (bpb[0].get("payment", 0) + (customer.get("amount_paid", 0) - customer.get("connection_fee", 0)))
-            #         bpb[0]["prepayment_balance"] = 0
-            #     elif bpb[0].get("bill", 0) < bpb[0].get("payment", 0) + (customer.get("amount_paid", 0) - customer.get("connection_fee", 0)):
-            #         bpb[0]["balance_on_bill"] = 0
-            #         bpb[0]["prepayment_balance"] = bpb[0]["payment"] + (customer.get("amount_paid", 0) - customer.get("connection_fee", 0)) - (bpb[0].get("bill", 0))
-           
         if i != 0:
             
             sorted_bpb_object = sorted(bpb, key=lambda x: x["period"], reverse=True)
@@ -198,7 +162,7 @@ def generate_customer_report(customer):
         right_labels.append(("Initial Connection Fee Deposit", f"{customer.get('amount_paid', 0):,}"))
         right_labels.append(("Payment Period (months)", customer.get('payment_period', '')))
 
-    elif customer.get("type") == "BP":
+    elif customer.get("type") in ["BP", "MS"]:
         right_labels.append(("Amount Paid for connection", f"{customer.get('amount_paid', 0):,}"))
         right_labels.append(("Total Debt", f"{sum(int(i.get('bill', 0)) for i in customer.get('bpb', [])) - sum(int(i.get('payment', 0)) for i in customer.get('bpb', [])):,}"))
 
@@ -248,7 +212,7 @@ def generate_customer_report(customer):
             pdf.cell(col_widths[5], 7, f"{int(row.get('prepayment_balance', 0)):,}", border='T')
             pdf.ln()
 
-    elif customer.get("type") == "BP":
+    elif customer.get("type") in ["BP", "MS"]:
         # Table header
         col_widths = [40, 40, 40]
         headers = ["Month", "Bills", "Payments"]
@@ -266,9 +230,6 @@ def generate_customer_report(customer):
             pdf.cell(col_widths[1], 7, f"{row.get('bill', 0):,}", border='T')
             pdf.cell(col_widths[2], 7, f"{row.get('payment', 0):,}", border='T')
             pdf.ln()
-
-
-
         
     # Output PDF to memory and return as Flask response
     pdf_output = io.BytesIO()
