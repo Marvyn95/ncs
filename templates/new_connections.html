@@ -231,7 +231,7 @@
       </div>
 
       <div class="col-auto">
-        <form method="POST" action="{{ url_for('new_connection_date_filter_data') }}" style="display: flex; align-items: center; flex-wrap: nowrap;" id="dateFilterForm">
+        <form method="POST" action="{{ url_for('new_connections_date_filter_data') }}" style="display: flex; align-items: center; flex-wrap: nowrap;" id="dateFilterForm">
           <div class="input-group input-group-sm" style="flex: 1; min-width: 250px;">
             <label class="input-group-text" for="filter_select">Date Filter</label>
             <select class="form-select" id="filter_select" name="filter_field" required onchange="toggleDateFields(); handleFieldChange()">

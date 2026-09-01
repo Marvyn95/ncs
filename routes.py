@@ -2470,7 +2470,11 @@ def upload_customers():
 @app.route("/search_new_connections", methods=["POST"])
 def search_new_connections():
     search_query = request.form.get("new_connections_search", "").strip()
-    session["new_connections_search_query"] = search_query if search_query else None
+    if search_query:
+        session["new_connections_search_query"] = search_query
+    else:
+        session.pop("new_connections_search_query", None)
+    
     session["new_connections_page"] = 1
     return redirect(url_for("new_connections"))
 
@@ -2607,8 +2611,8 @@ def set_new_connections_status():
     return redirect(url_for("new_connections"))
 
 
-@app.route("/new_connection_date_filter_data", methods=["POST"])
-def new_connection_date_filter_data():
+@app.route("/new_connections_date_filter_data", methods=["POST"])
+def new_connections_date_filter_data():
 
     filter_field = request.form.get("filter_field")
     start_date_str = request.form.get("start_date")
