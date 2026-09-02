@@ -1116,6 +1116,7 @@ def add_customer():
     id_document = request.files.get("id_document")
     recommendation_letter = request.files.get("recommendation_letter")
     date_applied = request.form.get("date_applied")
+    application_form_comment = request.form.get("application_form_comment")
 
     customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
     if next((x for x in customers if x.get("application_id") == request.form.get("application_id")), None):
@@ -1133,7 +1134,8 @@ def add_customer():
         "recommendation_letter": save_file(recommendation_letter),
         "status": "applied",
         "date_applied": datetime.datetime.strptime(date_applied, "%Y-%m-%d"),
-        "umbrella_id": user.get("umbrella_id")
+        "umbrella_id": user.get("umbrella_id"),
+        "application_form_comment": application_form_comment
     })
     flash("Customer added successfully!", "success")
     return redirect(url_for("new_connections"))
@@ -1163,6 +1165,33 @@ def edit_customer():
         "village_id": request.form.get("village_id"),
         "application_id": request.form.get("application_id")
     }
+
+    if request.form.get("application_form_comment"):
+        update_data["application_form_comment"] = request.form.get("application_form_comment")
+
+    if request.form.get("survey_form_comment"):
+        update_data["survey_form_comment"] = request.form.get("survey_form_comment")
+
+    if request.form.get("approval_form_comment"):
+        update_data["approval_form_comment"] = request.form.get("approval_form_comment")
+
+    if request.form.get("payment_form_comment"):
+        update_data["payment_form_comment"] = request.form.get("payment_form_comment")
+
+    if request.form.get("verification_form_comment"):
+        update_data["verification_form_comment"] = request.form.get("verification_form_comment")
+
+    if request.form.get("material_issuance_comment"):
+        update_data["material_issuance_comment"] = request.form.get("material_issuance_comment")
+
+    if request.form.get("connection_form_comment"):
+        update_data["connection_form_comment"] = request.form.get("connection_form_comment")
+
+    if request.form.get("confirmation_form_comment"):
+        update_data["confirmation_form_comment"] = request.form.get("confirmation_form_comment")
+
+    if request.form.get("location"):
+        update_data["location"] = request.form.get("location")
 
     if customer.get("application_id") != request.form.get("application_id"):
         if next((x for x in customers if x.get("application_id") == request.form.get("application_id")), None):
@@ -1286,7 +1315,7 @@ def edit_customer():
             flash("Customer reference already exists!", "danger")
             return redirect(url_for("new_connections"))
         update_data["customer_reference"] = str(request.form.get("customer_reference"))
-    
+
     if 'transaction_id' in request.form:
         if request.form.get("transaction_id") != customer.get("transaction_id"):
             if next((x for x in customers if x.get("transaction_id") == request.form.get("transaction_id")), None):
@@ -1317,6 +1346,8 @@ def customer_survey():
     tap_pipe_type = request.form.get("tap_pipe_type")
     wealth_assessment_form = request.files.get("wealth_assessment_form")
     survey_date = request.form.get("survey_date")
+    survey_form_comment = request.form.get("survey_form_comment")
+    location = request.form.get("location")
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
     
@@ -1331,7 +1362,9 @@ def customer_survey():
         "tap_pipe_size": int(tap_pipe_size),
         "tap_pipe_type": tap_pipe_type,
         "status": "surveyed",
-        "survey_date": datetime.datetime.strptime(survey_date, "%Y-%m-%d") if survey_date else None
+        "survey_date": datetime.datetime.strptime(survey_date, "%Y-%m-%d") if survey_date else None,
+        "survey_form_comment": survey_form_comment,
+        "location": location
     }
 
     if wealth_assessment_form and wealth_assessment_form.filename:
@@ -1349,6 +1382,7 @@ def customer_survey():
 def customer_approval():
     customer_id = request.form.get("customer_id")
     approval = request.form.get("approval")
+    approval_form_comment = request.form.get("approval_form_comment")
     
     if approval == "approved":
         connection_fee = request.form.get("connection_fee")
@@ -1366,6 +1400,8 @@ def customer_approval():
             "status": 'disapproved'
         }
 
+    update_data["approval_form_comment"] = approval_form_comment
+
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
         {"$set": update_data}
@@ -1382,6 +1418,7 @@ def customer_payment():
     date_paid = request.form.get("date_paid")
     transaction_id = request.form.get("transaction_id")
     proof_of_payment = request.files.get("proof_of_payment")
+    payment_form_comment = request.form.get("payment_form_comment")
 
     customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
 
@@ -1404,7 +1441,8 @@ def customer_payment():
         "date_paid": datetime.datetime.strptime(date_paid, "%Y-%m-%d"),
         "amount_due": int(customer.get("amount_due", customer.get("connection_fee", 0))) - int(amount_paid),
         "transaction_id": transaction_id,
-        "status": 'paid'
+        "status": 'paid',
+        "payment_form_comment": payment_form_comment
     }
 
     if proof_of_payment and proof_of_payment.filename:
@@ -1428,14 +1466,15 @@ def customer_verification():
     customer_id = request.form.get("customer_id")
     verification_date = request.form.get("verification_date")
     verification_status = request.form.get("verification_status")
+    verification_form_comment = request.form.get("verification_form_comment")
 
     update_data = {
         "status": verification_status,
         "verification_date": datetime.datetime.strptime(verification_date, "%Y-%m-%d") if verification_date else None
     }
 
-    if verification_status == "not verified":
-        update_data["verification_query"] = request.form.get("verification_query")
+    if verification_form_comment:
+        update_data["verification_form_comment"] = verification_form_comment
 
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
@@ -1451,10 +1490,11 @@ def materials_issuance():
     customer_id = request.form.get("customer_id")
     issuance_status = request.form.get("issuance_status")
     issuance_date = request.form.get("issuance_date")
+    materials_issuance_comment = request.form.get("materials_issuance_comment")
 
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
-        {"$set": {"status": "materials issued", "issuance_date": datetime.datetime.strptime(issuance_date, "%Y-%m-%d")}}
+        {"$set": {"status": "materials issued", "issuance_date": datetime.datetime.strptime(issuance_date, "%Y-%m-%d"), "materials_issuance_comment": materials_issuance_comment}}
     )
 
     flash("Customer status updated successfully!", "success")
@@ -1468,6 +1508,7 @@ def customer_connection():
     meter_serial = request.form.get("meter_serial")
     first_meter_reading = request.form.get("first_meter_reading")
     customer_category = request.form.get("customer_category")
+    connection_form_comment = request.form.get("connection_form_comment")
 
     if float(first_meter_reading) > 2**63 - 1:
         flash("First meter reading is too large!", "danger")
@@ -1485,7 +1526,8 @@ def customer_connection():
             "connection_date": datetime.datetime.strptime(connection_date, "%Y-%m-%d"),
             "meter_serial": meter_serial,
             "first_meter_reading": float(first_meter_reading) if first_meter_reading else 0,
-            "category": customer_category
+            "category": customer_category,
+            "connection_form_comment": connection_form_comment
         }
         db.Customers.update_one({"_id": ObjectId(customer_id)}, {"$set": update_data})
         return redirect(url_for("new_connections"))
@@ -1495,13 +1537,15 @@ def customer_connection():
         "connection_date": datetime.datetime.strptime(connection_date, "%Y-%m-%d"),
         "meter_serial": meter_serial,
         "first_meter_reading": first_meter_reading if first_meter_reading else 0,
-        "category": customer_category
+        "category": customer_category,
+        "connection_form_comment": connection_form_comment
     }
 
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
         {"$set": update_data}
     )
+    session.pop("schemes_customers", None)
     flash("Connection status updated!", "success")
     return redirect(url_for("new_connections"))
 
@@ -1509,10 +1553,11 @@ def customer_connection():
 @app.route('/customer_confirmation', methods=["POST"])
 @login_required
 def customer_confirmation():
-    user = db.Users.find_one({"_id": ObjectId(session.get("user_id"))})
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
 
     customer_id = request.form.get("customer_id")
     customer_reference = request.form.get("customer_reference")
+    confirmation_form_comment = request.form.get("confirmation_form_comment")
 
     if abs(int(customer_reference)) > 2**63 - 1:
         flash("Customer reference is too large!", "danger")
@@ -1525,7 +1570,7 @@ def customer_confirmation():
 
     db.Customers.update_one(
         {"_id": ObjectId(customer_id)},
-        {"$set": {"customer_reference": str(customer_reference), "status": "confirmed"}}
+        {"$set": {"customer_reference": str(customer_reference), "status": "confirmed", "confirmation_form_comment": confirmation_form_comment}}
     )
     
     session.pop("schemes_customers", None)
@@ -1558,7 +1603,7 @@ def delete_customer():
         flash("Cannot delete customer, payments have been made by customer!", "danger")
         return redirect(url_for("new_connections"))
 
-    if customer.get("customer_reference") is not None:
+    if customer.get("id_document") is not None:
         delete_file(customer.get("id_document"))
     if customer.get("recommendation_letter"):
         delete_file(customer.get("recommendation_letter"))
@@ -2393,8 +2438,14 @@ def bp_reports():
     skip = (page - 1) * per_page
     
     customers = list(db.Customers.find(query).sort("name", 1).skip(skip).limit(per_page))
+    all_customers_unoptimized = list(db.Customers.find(query))
 
     overall_sum_paid = 0
+
+    for k in all_customers_unoptimized:
+        total_payment = sum(int(entry.get("payment", 0)) for entry in k.get("bpb", []))
+        overall_sum_paid += total_payment
+
     
     for c in customers:
         c["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == c.get("scheme_id")), 'N/A')
@@ -2414,8 +2465,6 @@ def bp_reports():
             c["total_bill"] = sum(int(entry.get("bill", 0)) for entry in c.get("bpb", []))
             c["total_payment"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
             c["total_debt"] = c["total_bill"] - c["total_payment"]
-
-        overall_sum_paid += c["total_payment"]
 
     total_pages = (total_customers + per_page - 1) // per_page
     

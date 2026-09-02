@@ -153,6 +153,11 @@
                       <label for="recommendation_letter" class="form-label">Recommendation Letter</label>
                       <input type="file" class="form-control" id="recommendation_letter" name="recommendation_letter" accept="application/pdf,image/*" required>
                     </div>
+                    <div class="col-md-12 mb-2">
+                      <label for="application_form_comment" class="form-label">Comment</label>
+                      <input type="text" class="form-control" id="application_form_comment" name="application_form_comment" placeholder="Optional" rows="3">
+                    </div>
+                    
                   </div>
                 </div>
 
@@ -164,6 +169,7 @@
             </div>
           </div>
         </div>
+        
       </div>
     </div>
 
@@ -325,7 +331,7 @@
                 <button class="btn btn-outline-primary btn-sm p-1" data-bs-toggle="modal" data-bs-target="#viewModal-{{ customer._id }}">
                   <i class="bi bi-list-columns-reverse"></i>
                 </button>
-                {% if user.role in ["administrator"] or user.role in ["area_manager"] and customer.status in ["applied", "surveyed"] %}
+                {% if user.role in ["administrator"] or user.role in ["area_manager", "scheme_manager"] and customer.status in ["applied", "surveyed", "not verified", "disapproved", ] %}
                   <button class="btn btn-outline-primary btn-sm p-1 d-none d-sm-table-cell" data-bs-toggle="modal" data-bs-target="#editModal-{{ customer._id }}">
                     <i class="bi bi-pencil"></i>
                   </button>
@@ -373,6 +379,7 @@
                     <li class="list-group-item py-1"><strong>Meter Serial:</strong> {{ customer.meter_serial or '-' }}</li>
                     <li class="list-group-item py-1"><strong>First Meter Reading:</strong> {{ customer.first_meter_reading or '-' }}</li>
                     <li class="list-group-item py-1"><strong>Tapping:</strong> DN {{ customer.tap_pipe_size or '-' }}mm, {{ customer.tap_pipe_type or '-' }}</li>
+                    <li class="list-group-item py-1"><strong>Location:</strong> {{ customer.location or '-' }}</li>
                     <li class="list-group-item py-1"><strong>Docs:</strong>
                       {% if customer.id_document %}<a href="{{ url_for('static', filename='uploads/' ~ customer.id_document) }}" target="_blank">ID document</a>{% endif %}
                       {% if customer.recommendation_letter %} | <a href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">Recommendation Letter</a>{% endif %}
@@ -386,6 +393,14 @@
                     <li class="list-group-item py-1"><strong>Date of Connection:</strong> {{ customer.connection_date.strftime('%d %b %Y') if customer.connection_date else '-' }}</li>
                     <li class="list-group-item py-1"><strong>Customer Category:</strong> {{ customer.category or '-' }}</li>
                     <li class="list-group-item py-1"><strong>Customer Reference:</strong> {{ customer.customer_reference or '-' }}</li>
+                    {% if customer.application_form_comment %} <li class="list-group-item py-1"><strong>Application Form Comment:</strong> {{ customer.application_form_comment }}</li>{% endif %}
+                    {% if customer.survey_form_comment %} <li class="list-group-item py-1"><strong>Survey Form Comment:</strong> {{ customer.survey_form_comment }}</li>{% endif %}
+                    {% if customer.approval_form_comment %} <li class="list-group-item py-1"><strong>Approval Form Comment:</strong> {{ customer.approval_form_comment }}</li>{% endif %}
+                    {% if customer.payment_form_comment %} <li class="list-group-item py-1"><strong>Payment Form Comment:</strong> {{ customer.payment_form_comment }}</li>{% endif %}
+                    {% if customer.verification_form_comment %} <li class="list-group-item py-1"><strong>Verification Form Comment:</strong> {{ customer.verification_form_comment }}</li>{% endif %}
+                    {% if customer.materials_issuance_comment %} <li class="list-group-item py-1"><strong>Materials Issuance Comment:</strong> {{ customer.materials_issuance_comment }}</li>{% endif %}
+                    {% if customer.connection_form_comment %} <li class="list-group-item py-1"><strong>Connection Form Comment:</strong> {{ customer.connection_form_comment }}</li>{% endif %}
+                    {% if customer.confirmation_form_comment %} <li class="list-group-item py-1"><strong>Confirmation Form Comment:</strong> {{ customer.confirmation_form_comment }}</li>{% endif %}
                   </ul>
                 </div>
                 <div class="modal-footer py-1">
@@ -463,8 +478,7 @@
                       <div class="col-6 mb-1">
                         <label for="application_id_{{ customer._id }}" class="form-label">Application ID</label>
                         <input type="text" class="form-control form-control-sm" id="application_id_{{ customer._id }}" name="application_id" value="{{ customer.application_id }}" required>
-                      </div>
-                      <div class="col-6 mb-1">
+                      </div>                      <div class="col-6 mb-1">
                         <label for="id_document_{{ customer._id }}" class="form-label">ID Document</label>
                         <input type="file" class="form-control form-control-sm" id="id_document_{{ customer._id }}" name="id_document" accept="application/pdf,image/*">
                         {% if customer.id_document %}
@@ -477,6 +491,10 @@
                         {% if customer.recommendation_letter %}
                           <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.recommendation_letter) }}" target="_blank">View</a>
                         {% endif %}
+                      </div>
+                      <div class="col-12 mb-1">
+                        <label for="application_form_comment_{{ customer._id }}" class="form-label">Application Comment</label>
+                        <input type="text" class="form-control form-control-sm" id="application_form_comment_{{ customer._id }}" name="application_form_comment" value="{{ customer.application_form_comment or '' }}">
                       </div>
 
                       {% if customer.status in ["surveyed", "approved", "disapproved", "not approved", 'paid', 'verified','not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
@@ -546,6 +564,32 @@
                             <option value="GI" {% if customer.tap_pipe_type == "GI" %}selected{% endif %}>GI</option>
                           </select>
                         </div>
+
+                      <div class="mb-2">
+                        <label for="location" class="form-label">Location</label>
+                        <div class="input-group">
+                          <input type="text" class="form-control" id="location" name="location" value="{{ customer.location or '' }}">
+                          <button type="button" class="btn btn-primary" onclick="getLocation()">Get My Location</button>
+                        </div>
+                      </div>
+
+                      <script>
+                      function getLocation() {
+                        if (navigator.geolocation) {
+                          navigator.geolocation.getCurrentPosition(function(position) {
+                            document.getElementById("location").value =
+                              position.coords.latitude + ", " + position.coords.longitude;
+                          });
+                        } else {
+                          alert("Geolocation is not supported by this browser.");
+                        }
+                      }
+                      </script>
+                        
+                      <div class="col-12 mb-1">
+                        <label for="survey_form_comment_{{ customer._id }}" class="form-label">Survey Comment</label>
+                        <input type="text" class="form-control form-control-sm" id="survey_form_comment_{{ customer._id }}" name="survey_form_comment" value="{{ customer.survey_form_comment or '' }}">
+                      </div>
                       {% endif %}
 
                       {% if customer.status in ['approved', 'paid', 'verified', 'not verified', 'materials issued', 'materials pending', 'connected', 'confirmed', 'not connected'] %}
@@ -587,6 +631,10 @@
                             togglePaymentPeriodEdit_{{ customer._id }}(document.getElementById('customer_type_{{ customer._id }}'));
                           });
                         </script>
+                      <div class="col-12 mb-1">
+                        <label for="approval_form_comment_{{ customer._id }}" class="form-label">Approval Comment</label>
+                        <input type="text" class="form-control form-control-sm" id="approval_form_comment_{{ customer._id }}" name="approval_form_comment" value="{{ customer.approval_form_comment or '' }}">
+                      </div>
                       {% endif %}
 
                       {% if customer.status in ["paid", "verified", "not verified", "materials issued", "materials pending", "connected", 'not connected', 'confirmed'] %}
@@ -610,6 +658,10 @@
                             <a class="text-primary small" href="{{ url_for('static', filename='uploads/' ~ customer.proof_of_payment) }}" target="_blank">View</a>
                           {% endif %}
                         </div>
+                      <div class="col-12 mb-1">
+                        <label for="payment_form_comment_{{ customer._id }}" class="form-label">Payment Comment</label>
+                        <input type="text" class="form-control form-control-sm" id="payment_form_comment_{{ customer._id }}" name="payment_form_comment" value="{{ customer.payment_form_comment or '' }}">
+                      </div>
                       {% endif %}
 
                       {% if customer.status in ["verified", "not verified", "materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
@@ -618,13 +670,10 @@
                           <input type="date" class="form-control form-control-sm" id="verification_date_{{ customer._id }}" name="verification_date"
                             value="{{ customer.verification_date.strftime('%Y-%m-%d') if customer.verification_date else '' }}">
                         </div>
-                      {% endif %}
-
-                      {% if customer.status == "not verified" %}
-                        <div class="col-6 mb-1">
-                          <label for="verification_query_{{ customer._id }}" class="form-label">Verification Query</label>
-                          <input type="text" class="form-control form-control-sm" id="verification_query_{{ customer._id }}" name="verification_query" value="{{ customer.verification_query or '' }}">
-                        </div>
+                      <div class="col-12 mb-1">
+                        <label for="verification_form_comment_{{ customer._id }}" class="form-label">Verification Comment</label>
+                        <input type="text" class="form-control form-control-sm" id="verification_form_comment_{{ customer._id }}" name="verification_form_comment" value="{{ customer.verification_form_comment or '' }}">
+                      </div>
                       {% endif %}
 
                       {% if customer.status in ["materials issued", "materials pending", "connected", "confirmed", "not connected"] %}
@@ -633,6 +682,10 @@
                           <input type="date" class="form-control form-control-sm" id="issuance_date_{{ customer._id }}" name="issuance_date"
                             value="{{ customer.issuance_date.strftime('%Y-%m-%d') if customer.issuance_date else '' }}">
                         </div>
+                      <div class="col-12 mb-1">
+                        <label for="materials_issuance_comment_{{ customer._id }}" class="form-label">Materials Issuance Comment</label>
+                        <input type="text" class="form-control form-control-sm" id="materials_issuance_comment_{{ customer._id }}" name="materials_issuance_comment" value="{{ customer.materials_issuance_comment or '' }}">
+                      </div>
                       {% endif %}
 
                       {% if customer.status in ["connected", "confirmed", "not connected"] %}
@@ -662,6 +715,10 @@
                             <option value="psp" {% if customer.category == 'psp' %}selected{% endif %}>PSP</option>
                           </select>
                         </div>
+                      <div class="col-12 mb-1">
+                        <label for="connection_form_comment_{{ customer._id }}" class="form-label">Connection Comment</label>
+                        <input type="text" class="form-control form-control-sm" id="connection_form_comment_{{ customer._id }}" name="connection_form_comment" value="{{ customer.connection_form_comment or '' }}">
+                      </div>
                       {% endif %}
 
                       {% if customer.status in ["verified", "not verified", "materials issued", "materials pending", "connected", "confirmed", "not connected", "paid", "approved", "disapproved", "not approved"] %}
@@ -687,6 +744,10 @@
                           <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
                           <input type="number" class="form-control form-control-sm" id="customer_reference_{{ customer._id }}" name="customer_reference" value="{{ customer.customer_reference or '' }}" required>
                         </div>
+                      <div class="col-12 mb-1">
+                        <label for="confirmation_form_comment_{{ customer._id }}" class="form-label">Confirmation Comment</label>
+                        <input type="text" class="form-control form-control-sm" id="confirmation_form_comment_{{ customer._id }}" name="confirmation_form_comment" value="{{ customer.confirmation_form_comment or '' }}">
+                      </div>            
                       {% endif %}
                     </div>
                   </div>
@@ -816,6 +877,29 @@
                         <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (meters)</label>
                         <input type="number" class="form-control" id="pipe_length_{{ customer._id }}" name="pipe_length" min="0" step="0.01" required>
                       </div>
+
+                      <div class="mb-2">
+                        <label for="location" class="form-label">Location</label>
+                        <div class="input-group">
+                          <input type="text" class="form-control" id="location" name="location" readonly>
+                          <button type="button" class="btn btn-primary" onclick="getLocation()">Get My Location</button>
+                        </div>
+                      </div>
+
+                      <script>
+                      function getLocation() {
+                        if (navigator.geolocation) {
+                          navigator.geolocation.getCurrentPosition(function(position) {
+                            document.getElementById("location").value =
+                              position.coords.latitude + ", " + position.coords.longitude;
+                          });
+                        } else {
+                          alert("Geolocation is not supported by this browser.");
+                        }
+                      }
+                      </script>
+
+
                       <div class="mb-2">
                         <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
                         <input type="file" class="form-control" id="wealth_assessment_form_{{ customer._id }}" name="wealth_assessment_form"
@@ -827,6 +911,10 @@
                             </a>
                           </div>
                         {% endif %}
+                      </div>
+                      <div class="mb-2">
+                        <label for="survey_form_comment_{{ customer._id }}" class="form-label">Survey Comment</label>
+                        <input class="form-control" id="survey_form_comment_{{ customer._id }}" placeholder="Optional" name="survey_form_comment" rows="3">
                       </div>
                       <div class="modal-footer py-1">
                         <button type="submit" class="btn btn-primary btn-sm">Submit</button>
@@ -864,7 +952,12 @@
                           <label for="connection_fee_{{ customer._id }}" class="form-label">Connection Fee</label>
                           <input type="number" class="form-control" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" required>
                         </div>
+                        <div class="mb-2">
+                          <label for="approval_form_comment_{{ customer._id }}" class="form-label">Approval Comment</label>
+                          <input class="form-control" id="approval_form_comment_{{ customer._id }}" name="approval_form_comment" placeholder="Optional">
+                        </div>
                       </div>
+                      
                       <div class="modal-footer py-1">
                         <button type="submit" class="btn btn-primary btn-sm">Submit</button>
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
@@ -926,6 +1019,10 @@
                         <label for="proof_of_payment_{{ customer._id }}" class="form-label">Proof of Payment</label>
                         <input type="file" class="form-control" id="proof_of_payment_{{ customer._id }}" name="proof_of_payment" accept="application/pdf,image/*" required>
                       </div>
+                      <div class="mb-2">
+                        <label for="payment_form_comment_{{ customer._id }}" class="form-label">Payment Comment</label>
+                        <input type="text" class="form-control" id="payment_form_comment_{{ customer._id }}" name="payment_form_comment" placeholder="Optional">
+                      </div>
                       <div class="modal-footer py-1">
                         <button type="submit" class="btn btn-primary btn-sm">Submit Payment</button>
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
@@ -948,29 +1045,14 @@
                           <option value="not verified">Not Verified</option>
                         </select>
                       </div>
-                      <div class="mb-2" id="verification_query_field_{{ customer._id }}" style="display:none;">
-                        <label for="verification_query_{{ customer._id }}" class="form-label">Verification Query</label>
-                        <textarea class="form-control" id="verification_query_{{ customer._id }}" name="verification_query" rows="3" placeholder="Enter verification query or reason for not verified status"></textarea>
+                      <div class="mb-2">
+                        <label for="verification_form_comment_{{ customer._id }}" class="form-label">Verification Comment</label>
+                        <input type="text" class="form-control" id="verification_form_comment_{{ customer._id }}" name="verification_form_comment" placeholder="Optional">
                       </div>
                       <div class="modal-footer py-1">
                         <button type="submit" class="btn btn-primary btn-sm">Update</button>
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                       </div>
-                      <script>
-                        function toggleVerificationQuery(customerId) {
-                          const select = document.getElementById('customer_reference_' + customerId);
-                          const field = document.getElementById('verification_query_field_' + customerId);
-                          const textarea = document.getElementById('verification_query_' + customerId);
-                          if (select.value === 'not verified') {
-                            field.style.display = 'block';
-                            textarea.required = true;
-                          } else {
-                            field.style.display = 'none';
-                            textarea.required = false;
-                            textarea.value = '';
-                          }
-                        }
-                      </script>
                     </form>
 
                   {% elif customer.status == 'verified' and user.role in ['administrator', 'stores_officer'] or customer.status == 'materials pending' and user.role in ['administrator', 'stores_officer'] %}
@@ -980,6 +1062,10 @@
                       <div class="mb-2">
                         <label for="issuance_date_{{ customer._id }}" class="form-label">Materials Issuance Date</label>
                         <input type="date" class="form-control" id="issuance_date_{{ customer._id }}" name="issuance_date" value="{{ customer.issuance_date.strftime('%Y-%m-%d') if customer.issuance_date else now().strftime('%Y-%m-%d') }}" required>
+                      </div>
+                      <div class="mb-2">
+                        <label for="materials_issuance_comment_{{ customer._id }}" class="form-label">Materials Issuance Comment</label>
+                        <input type="text" class="form-control" id="materials_issuance_comment_{{ customer._id }}" name="materials_issuance_comment" placeholder="Optional">
                       </div>
                       <div class="modal-footer py-1">
                         <button type="submit" class="btn btn-primary btn-sm">Materials Issued</button>
@@ -1018,6 +1104,11 @@
                       </div>
 
                       <div class="mb-2">
+                        <label for="connection_form_comment_{{ customer._id }}" class="form-label">Connection Comment</label>
+                        <input type="text" class="form-control" id="connection_form_comment_{{ customer._id }}" name="connection_form_comment" placeholder="Optional">
+                      </div>
+
+                      <div class="mb-2">
                         <p>Are you sure you want to confirm connection for <strong class="text-primary">{{ customer.name }}</strong>?</p>
                       </div>
                       <div class="modal-footer py-1">
@@ -1033,6 +1124,12 @@
                         <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
                         <input type="number" class="form-control" id="customer_reference_{{ customer._id }}" name="customer_reference" required>
                       </div>
+
+                      <div class="mb-2">
+                        <label for="confirmation_form_comment_{{ customer._id }}" class="form-label">Confirmation Comment</label>
+                        <input type="text" class="form-control" id="confirmation_form_comment_{{ customer._id }}" name="confirmation_form_comment" placeholder="Optional">
+                      </div>
+
                       <div class="mb-2">
                         <p>Confirm customer <strong class="text-primary">{{ customer.name }}</strong> by entering the reference number.</p>
                       </div>
