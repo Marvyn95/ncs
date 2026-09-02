@@ -2063,7 +2063,13 @@ def upload_customers():
         name = str(name).strip().upper() if not pd.isna(name) else None
         contact = str(phone).strip() if not pd.isna(phone) else None
         status = "confirmed"
-        type = "ES" if "ES-" in str(name) else "MS"
+        if "ES-" in str(name) or "ES -" in str(name) or "es-" in str(name) or "es -" in str(name) or str(name).startswith("ES ") or str(name).startswith("es "):
+            type = "ES"
+        elif "BP-" in str(name) or "BP -" in str(name) or "bp-" in str(name) or "bp -" in str(name) or str(name).startswith("BP ") or str(name).startswith("bp "):
+            type = "BP"
+        else:
+            type = "MS"
+            
         meter_serial = str(meter_serial).strip() if not pd.isna(meter_serial) else None
         customer_reference = str(meter_ref) if not pd.isna(meter_ref) else None
 
@@ -2142,13 +2148,15 @@ def upload_customers():
 
         if type == "ES":
             es_no += 1
+        elif type == "BP":
+            bp_no += 1
         elif type == "MS":
             ms_no += 1
         
 
     session.pop("schemes_customers", None)
 
-    flash(f"{cust_no} Customers processed!, {es_no} ES, {ms_no} MS, {es_no + ms_no} uploaded", "success")
+    flash(f"{cust_no} Customers processed!, {es_no} ES, {ms_no} MS, {bp_no} BP, {es_no + ms_no + bp_no} uploaded", "success")
     return redirect(url_for("new_connections"))
 
 
