@@ -1012,16 +1012,21 @@ def new_connections():
     query = {"umbrella_id": user.get("umbrella_id")}
     schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
 
+    if session.get("selected_new_connections_area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": session.get("selected_new_connections_area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
+
     if user.get("area_id"):
         schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
         scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
         query["scheme_id"] = {"$in": scheme_ids_for_area}
 
-    if user.get("scheme_id"):
-        query["scheme_id"] = user.get("scheme_id")
-
     if session.get("new_connections_selected_scheme_id"):
         query["scheme_id"] = session.get("new_connections_selected_scheme_id")
+
+    if user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
 
     if session.get("new_connections_status_filter") and session.get("new_connections_status_filter") != "all":
         query["status"] = session.get("new_connections_status_filter")
@@ -1041,6 +1046,9 @@ def new_connections():
             {"contact": {"$regex": session.get("new_connections_search_query"), "$options": "i"}},
         ]
 
+    print("Query:", query)
+    print("Area:", db.Areas.find_one({"_id": session.get("new_connections_selected_area_id")}))
+
     customers = list(db.Customers.find(query))
     
     status_order = {"applied": 0, "surveyed": 1, "approved": 2, "disapproved": 3, "paid": 4, "verified": 5, "not verified": 6, "materials issued": 7, "materials pending": 8, "connected": 9, "not connected": 10, "confirmed": 11}
@@ -1055,10 +1063,13 @@ def new_connections():
     customers = customers[(page - 1) * per_page : (page) * per_page]
 
     villages = sorted(list(db.Villages.find()), key=lambda x: x["village"].lower())
+    areas = sorted(list(db.Areas.find()), key=lambda x: x["area"].lower())
 
     for customer in customers:
-        customer["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == customer.get("scheme_id")), None)
+        customer_scheme = next((item for item in schemes if str(item["_id"]) == customer.get("scheme_id")), None)
+        customer["scheme"] = customer_scheme.get("scheme") if customer_scheme else None
         customer["village"] = next((item["village"] for item in villages if str(item["_id"]) == customer.get("village_id")), None)
+        customer["area"] = next((item["area"] for item in areas if str(item["_id"]) == customer.get("area_id")), None)
 
     total_pages = (total + per_page - 1) // per_page
 
@@ -1073,7 +1084,8 @@ def new_connections():
                            page=page,
                            total_pages=total_pages,
                            per_page=per_page,
-                           total=total
+                           total=total,
+                           areas=areas,
                            )
 
 
@@ -1653,6 +1665,11 @@ def es_reports():
 
     query = {"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"}
 
+    if session.get("selected_es_reports_area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": session.get("selected_es_reports_area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
+
     if user.get("area_id"):
         schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
         scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
@@ -1676,6 +1693,7 @@ def es_reports():
 
     villages = sorted(list(db.Villages.find()), key=lambda x: x["village"].lower())
     schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
+    areas = sorted(list(db.Areas.find()), key=lambda x: x["area"].lower())
 
 
     for customer in customers:
@@ -1708,7 +1726,8 @@ def es_reports():
                            page=page,
                            total_pages=total_pages,
                            per_page=per_page,
-                           total=total
+                           total=total,
+                           areas=areas
                            )
 
 
@@ -2232,11 +2251,16 @@ def download_es_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     date = datetime.datetime.now().strftime("%d.%B.%Y")
 
-    query = {"umbrella_id": user.get("umbrella_id"), "type": "ES", "status": "confirmed"}
+    query = {"umbrella_id": user.get("umbrella_id"), "type": "ES", "status": "confirmed", "customer_reference": {"$exists": True}}
+
+    if user and user.get("area_id") and not user.get("scheme_id"):
+        query["area_id"] = user.get("area_id")
+
+    if user and user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
 
     if session.get("es_reports_selected_scheme_id"):
         query["scheme_id"] = session.get("es_reports_selected_scheme_id")
-    
 
     if session.get("es_reports_search_query"):
         query["$or"] = [
@@ -2246,6 +2270,7 @@ def download_es_reports():
         ]
     
     customers = list(db.Customers.find(query).sort("name", 1))
+    attachment_name = f"es_report_{date}.xlsx"
     
     data = []
     villages = list(db.Villages.find())
@@ -2289,8 +2314,6 @@ def download_es_reports():
                 "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
             })  
 
-        attachment_name = f"es_report_{es_report_start_date.strftime('%d.%B.%Y')}_to_{es_report_end_date.strftime('%d.%B.%Y')}.xlsx"
-
     else:     
         for c in customers:
             data.append({
@@ -2315,8 +2338,6 @@ def download_es_reports():
                 "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
             })
         
-        attachment_name = f"es_report_{date}.xlsx"
-
     df = pd.DataFrame(data)
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -2414,9 +2435,23 @@ def bp_reports():
     # villages = sorted(villages, key=lambda x: x["village"].lower())
 
     query = {"umbrella_id": user.get("umbrella_id"), "type": "BP", "status": "confirmed", "customer_reference": {"$ne": None}}
+
+    if session.get("selected_bp_reports_area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": session.get("selected_bp_reports_area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(s.get("_id")) for s in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
+
+    if user.get("area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(s.get("_id")) for s in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
+
+    if user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
     
     if session.get("bp_reports_selected_scheme_id"):
         query["scheme_id"] = session.get("bp_reports_selected_scheme_id")
+
     
     if session.get("bp_reports_search_query"):
         search_regex = re.compile(re.escape(session.get("bp_reports_search_query")), re.IGNORECASE)
@@ -2439,6 +2474,8 @@ def bp_reports():
     
     customers = list(db.Customers.find(query).sort("name", 1).skip(skip).limit(per_page))
     all_customers_unoptimized = list(db.Customers.find(query))
+
+    areas = sorted(list(db.Areas.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["area"].lower())
 
     overall_sum_paid = 0
 
@@ -2478,6 +2515,7 @@ def bp_reports():
         section="bp_reports",
         overall_sum_paid=overall_sum_paid,
         total_customers=total_customers,
+        areas=areas,
         )
 
 
@@ -2511,15 +2549,28 @@ def download_bp_reports():
     selected_scheme_id = session.get("bp_reports_selected_scheme_id")
     date = datetime.datetime.now().strftime("%d.%B.%Y")
 
-    if selected_scheme_id:
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": selected_scheme_id, "type": "BP"}).sort("name", 1))
-        scheme = db.Schemes.find_one({"_id": ObjectId(selected_scheme_id)})
-        attachment_name = f"{scheme.get('scheme')}_bp_report_{date}.xlsx"
-    else:
-        customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "type": "BP"}).sort("name", 1))
-        attachment_name = f"bp_report_{date}.xlsx"
+    query = {"umbrella_id": user.get("umbrella_id"), "type": "BP", "customer_reference": {"$exists": True}, "status": "confirmed"}
 
+    if user and user.get("area_id") and not user.get("scheme_id"):
+        query["area_id"] = user.get("area_id")
+
+    if user and user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
+
+    if selected_scheme_id:
+        query["scheme_id"] = selected_scheme_id
+
+    if session.get("bp_reports_search_query"):
+        search_regex = re.compile(re.escape(session.get("bp_reports_search_query")), re.IGNORECASE)
+        query["$or"] = [
+            {"name": search_regex},
+            {"contact": search_regex},
+            {"customer_reference": search_regex}
+        ]
+
+    customers = list(db.Customers.find(query).sort("name", 1))
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+    attachment_name = f"bp_report_{date}.xlsx"
     
     data = []
     for c in customers:
@@ -2672,9 +2723,22 @@ def ms_reports():
     # villages = sorted(villages, key=lambda x: x["village"].lower())
 
     query = {"umbrella_id": user.get("umbrella_id"), "status": "confirmed", "customer_reference": {"$ne": None}}
+
+    if session.get("selected_ms_reports_area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": session.get("selected_ms_reports_area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids = [str(s.get("_id")) for s in schemes]
+        query["scheme_id"] = {"$in": scheme_ids}
+
+    if user.get("area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids = [str(s.get("_id")) for s in schemes]
+        query["scheme_id"] = {"$in": scheme_ids}
     
     if session.get("ms_reports_selected_scheme_id"):
         query["scheme_id"] = session.get("ms_reports_selected_scheme_id")
+
+    if user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
     
     if session.get("ms_reports_search_query"):
         search_regex = re.compile(re.escape(session.get("ms_reports_search_query")), re.IGNORECASE)
@@ -2683,16 +2747,21 @@ def ms_reports():
             {"contact": search_regex},
             {"customer_reference": search_regex}
         ]
+
+    if session.get("ms_reports_active_status") == "inactive":
+        query["active_status"] = session.get("ms_reports_active_status")
     
     # Pagination
     page = request.args.get("page")
     page = int(page) if page else session.get("ms_reports_page", 1)
     session["ms_reports_page"] = page
+
     per_page = 200
     total_customers = db.Customers.count_documents(query)
     skip = (page - 1) * per_page
     
     customers = list(db.Customers.find(query).sort("name", 1).skip(skip).limit(per_page))
+    areas = sorted(list(db.Areas.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["area"].lower())
 
     overall_sum_paid = 0
     
@@ -2729,6 +2798,7 @@ def ms_reports():
         section="ms_reports",
         overall_sum_paid=overall_sum_paid,
         total_customers=total_customers,
+        areas=areas,
         )
 
 @app.route('/set_ms_reports_scheme', methods=['POST'])
@@ -2972,10 +3042,14 @@ def customer_monthly_payment_sheet_update():
 @login_required
 def download_ms_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-
     date = datetime.datetime.now().strftime("%d.%B.%Y")
-
     query = {"umbrella_id": user.get("umbrella_id"), "status": "confirmed"}
+
+    if user and user.get("area_id") and not user.get("scheme_id"):
+        query["area_id"] = user.get("area_id")
+
+    if user and user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
 
     if session.get("ms_reports_selected_scheme_id"):
         query["scheme_id"] = session.get("ms_reports_selected_scheme_id")
@@ -2988,6 +3062,7 @@ def download_ms_reports():
         ]    
     
     customers = list(db.Customers.find(query).sort("name", 1))
+    attachment_name = f"ms_report_{date}.xlsx"
     
     data = []
     villages = list(db.Villages.find())
@@ -3028,9 +3103,6 @@ def download_ms_reports():
                 "Total Cumulative Bill": sum(entry.get("bill", 0) for entry in c.get("bpb", [])),
                 "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
             })  
-
-        attachment_name = f"ms_report_{ms_report_start_date.strftime('%d.%B.%Y')}_to_{ms_report_end_date.strftime('%d.%B.%Y')}.xlsx"
-
     else:     
         for c in customers:
             data.append({
@@ -3054,8 +3126,6 @@ def download_ms_reports():
                 "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
             })
         
-        attachment_name = f"ms_report_{date}.xlsx"
-
     df = pd.DataFrame(data)
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -3084,3 +3154,92 @@ def ms_customer_report_download():
         download_name=f"{customer.get('name', 'customer')}_report.pdf",
         mimetype="application/pdf"
     )
+
+
+@app.route("/change_active_status", methods=["POST"])
+@login_required
+def change_active_status():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    customer_id = request.form.get("customer_id")
+    active_status = request.form.get("active_status")
+
+    if not customer_id or not active_status:
+        flash("Invalid request.", "danger")
+        return redirect(request.referrer)
+
+    result = db.Customers.update_one(
+        {"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(customer_id)},
+        {"$set": {"active_status": active_status}}
+    )
+
+    if result.modified_count:
+        flash("Active status updated successfully.", "success")
+    else:
+        flash("Failed to update active status.", "danger")
+
+    return redirect(url_for("ms_reports"))
+
+
+@app.route("/set_ms_active_status", methods=["POST"])
+@login_required
+def set_ms_active_status():
+    active_status = request.form.get("active_status")
+    if active_status:
+        session["ms_reports_active_status"] = active_status
+    else:
+        session.pop("ms_reports_active_status", None)
+    session.pop("ms_reports_page", None)
+    return redirect(url_for("ms_reports"))
+
+
+@app.route("/set_new_connections_area", methods=["POST"])
+@login_required
+def set_new_connections_area():
+    area_id = request.form.get("area_id")
+    if area_id:
+        session["selected_new_connections_area_id"] = area_id
+    else:
+        session.pop("selected_new_connections_area_id", None)
+    session.pop("new_connections_selected_scheme_id", None)
+    session.pop("new_connections_page", None)
+    return redirect(url_for("new_connections"))
+
+
+@app.route("/set_ms_reports_area", methods=["POST"])
+@login_required
+def set_ms_reports_area():
+    area_id = request.form.get("area_id")
+    if area_id:
+        session["selected_ms_reports_area_id"] = area_id
+    else:
+        session.pop("selected_ms_reports_area_id", None)
+    session.pop("ms_reports_selected_scheme_id", None)
+    session.pop("ms_reports_page", None)
+    return redirect(url_for("ms_reports"))
+
+
+@app.route("/set_es_reports_area", methods=["POST"])
+@login_required
+def set_es_reports_area():
+    area_id = request.form.get("area_id")
+    if area_id:
+        session["selected_es_reports_area_id"] = area_id
+    else:
+        session.pop("selected_es_reports_area_id", None)
+    session.pop("es_reports_selected_scheme_id", None)
+    session.pop("es_reports_page", None)
+    return redirect(url_for("es_reports"))
+
+
+@app.route("/set_bp_reports_area", methods=["POST"])
+@login_required
+def set_bp_reports_area():
+    area_id = request.form.get("area_id")
+    if area_id:
+        session["selected_bp_reports_area_id"] = area_id
+    else:
+        session.pop("selected_bp_reports_area_id", None)
+    session.pop("bp_reports_selected_scheme_id", None)
+    session.pop("bp_reports_page", None)
+    return redirect(url_for("bp_reports"))

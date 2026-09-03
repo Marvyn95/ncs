@@ -77,7 +77,7 @@
   </div>
 
   <div class="row mb-3">
-    <div class="col-3">
+    <div class="col-2">
       <form method="POST" action="{{ url_for('ms_customer_search') }}">
         <div class="input-group input-group-sm">
           <span class="input-group-text bg-white px-1">
@@ -90,7 +90,32 @@
       </form>
     </div>
 
-    <div class="col-3">
+      <div class="col-2">
+        <form method="POST" action="{{ url_for('set_ms_reports_area') }}">
+          <div class="input-group input-group-sm">
+            <label class="input-group-text" for="area_select">Area</label>
+            <select class="form-select" id="area_select" name="area_id" required onchange="this.form.submit()"
+              {% if user.area_id %}
+                {% for area in areas %}
+                  {% if user.area_id|string == area._id|string %}
+                    disabled
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            >
+              <option value="" {% if not session.get("selected_ms_reports_area_id") %}selected{% endif %}>All Areas</option>
+              {% for area in areas %}
+                <option value="{{ area._id }}"
+                  {% if session.get("selected_ms_reports_area_id")|string == area._id|string or (user.area_id|string == area._id|string) %}selected{% endif %}>
+                  {{ area.area }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+      </div>
+
+    <div class="col-2">
       <form method="POST" action="{{ url_for('set_ms_reports_scheme') }}" class="d-flex align-items-center flex-wrap">
         <div class="input-group input-group-sm me-1">
           <label class="input-group-text" for="scheme_select">Scheme</label>
@@ -105,6 +130,19 @@
         {{ scheme.scheme }}
           </option>
         {% endfor %}
+          </select>
+        </div>
+      </form>
+    </div>
+
+    <div class="col-2">
+      <form method="POST" action="{{ url_for('set_ms_active_status') }}" class="d-flex align-items-center flex-wrap">
+        <div class="input-group input-group-sm me-1">
+          <label class="input-group-text" for="active_status_select">Active Status</label>
+          <select class="form-select" id="active_status_select" name="active_status" required onchange="this.form.submit()"
+        <option value="" selected>All Statuses</option>
+        <option value="active" {% if session.get("ms_reports_active_status") == "active" %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if session.get("ms_reports_active_status") == "inactive" %}selected{% endif %}>Inactive</option>
           </select>
         </div>
       </form>
@@ -150,7 +188,7 @@
           <tbody style="font-size:0.70rem;">
             {% for customer in customers %}
             <tr class="table-light my-1" style="font-size:0.65rem;">
-              <td class="fw-semibold text-truncate" style="max-width: 120px;">{{ customer.name or '-' }}</td>
+              <td class="fw-semibold text-truncate {% if customer.active_status == 'inactive' %}text-danger{% endif %}" style="max-width: 120px;">{{ customer.name or '-' }}</td>
               <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell" style="max-width: 120px;">{{ customer.customer_reference or '-' }}</td>
               <td class="fw-semibold text-muted text-truncate" style="max-width: 100px;">{{ customer.type or '-' }}</td>
               <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell" style="max-width: 100px;">
@@ -202,7 +240,7 @@
             {% endif %}
               </td>
 
-              <td>
+              <td class="d-flex gap-1">
           <form method="POST" action="{{ url_for('ms_customer_history') }}" style="display:inline;">
             <input type="hidden" name="customer_id" value="{{ customer._id }}">
             <input type="hidden" name="customer_reference" value="{{ customer.customer_reference }}">
@@ -210,8 +248,43 @@
               <i class="bi bi-list-columns-reverse"></i>
             </button>
           </form>
+          {% if user.role in ['administrator', 'commercial_officer', 'area_manager'] %}
+          <button class="btn btn-outline-danger btn-sm p-1" data-bs-toggle="modal" data-bs-target="#actionModal-{{ customer._id }}">
+            <i class="bi bi-lightning"></i>
+          </button>
+          {% endif %}
               </td>
             </tr>
+
+          <!-- Action Modal -->
+          <div class="modal fade" id="actionModal-{{ customer._id }}" tabindex="-1" aria-labelledby="actionModalLabel-{{ customer._id }}" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content" style="font-size:0.85rem;">
+                <div class="modal-header py-1">
+                  <h6 class="modal-title" id="actionModalLabel-{{ customer._id }}">
+                      <span class="text-primary">Change Active Status for {{ customer.name }}</span>
+                  </h6>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-1">
+                    <form method="POST" action="{{ url_for('change_active_status') }}">
+                      <input type="hidden" name="customer_id" value="{{ customer._id }}">
+                      <div class="mb-2">
+                        <label for="customer_reference_{{ customer._id }}" class="form-label">Active Status</label>
+                        <select class="form-select" id="customer_reference_{{ customer._id }}" name="active_status" required onchange="toggleVerificationQuery('{{ customer._id }}')">
+                          <option value="active" {{ 'selected' if customer.active_status == 'active' else '' }}>Active</option>
+                          <option value="inactive" {{ 'selected' if customer.active_status == 'inactive' else '' }}>Inactive</option>
+                        </select>
+                      </div>
+                      <div class="modal-footer py-1">
+                        <button type="submit" class="btn btn-primary btn-sm">Update Customer Activation Status</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                      </div>
+                    </form>
+                </div>
+              </div>
+            </div>
+          </div>
             {% endfor %}
           </tbody>
         </table>
