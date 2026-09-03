@@ -1797,6 +1797,7 @@ def subcounties():
                            total_pages=total_pages)
 
 @app.route('/add_subcounty', methods=['POST'])
+@login_required
 def add_subcounty():
     subcounty = request.form.get('subcounty')
     subcounty = subcounty.strip().upper()
@@ -1817,6 +1818,7 @@ def add_subcounty():
 
 
 @app.route('/edit_subcounty', methods=['POST'])
+@login_required
 def edit_subcounty():
     subcounty_id = request.form.get('subcounty_id')
     new_name = request.form.get('subcounty')
@@ -1838,6 +1840,7 @@ def edit_subcounty():
 
 
 @app.route('/delete_subcounty', methods=['POST'])
+@login_required
 def delete_subcounty():
     subcounty_id = request.form.get('subcounty_id')
 
@@ -1856,6 +1859,7 @@ def delete_subcounty():
 
 
 @app.route("/parishes")
+@login_required
 def parishes():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
 
