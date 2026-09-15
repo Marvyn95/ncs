@@ -450,11 +450,11 @@
                     <div class="row g-1">
                       <div class="col-6 mb-1">
                         <label for="name_{{ customer._id }}" class="form-label">Name</label>
-                        <input type="text" class="form-control form-control-sm" id="name_{{ customer._id }}" name="name" value="{{ customer.name }}" required>
+                        <input type="text" class="form-control form-control-sm" id="name_{{ customer._id }}" name="name" value="{{ customer.name }}">
                       </div>
                       <div class="col-6 mb-1">
                         <label for="contact_{{ customer._id }}" class="form-label">Contact</label>
-                        <input type="text" class="form-control form-control-sm" id="contact_{{ customer._id }}" name="contact" value="{{ customer.contact }}" required>
+                        <input type="text" class="form-control form-control-sm" id="contact_{{ customer._id }}" name="contact" value="{{ customer.contact }}">
                       </div>
 
                       <div class="col-6 mb-1">
@@ -467,7 +467,7 @@
                       </div>
                       <div class="col-6 mb-1">
                         <label for="village_id_{{ customer._id }}" class="form-label">Village</label>
-                        <select name="village_id" class="form-select form-select-sm" id="village_id_{{ customer._id }}" required>
+                        <select name="village_id" class="form-select form-select-sm" id="village_id_{{ customer._id }}">
                           {% for village in villages %}
                             <option value="{{ village._id }}" data-scheme="{{ village.scheme_id }}" {% if village._id|string == customer.village_id|string %}selected{% endif %}>{{ village.village }}</option>
                           {% endfor %}
@@ -498,13 +498,13 @@
                           class="form-control form-control-sm"
                           id="date_applied_{{ customer._id }}"
                           name="date_applied"
-                          value="{{ customer.date_applied.strftime('%Y-%m-%d') if customer.date_applied else now().strftime('%Y-%m-%d') }}"
-                          required>
+                          value="{{ customer.date_applied.strftime('%Y-%m-%d') if customer.date_applied else now().strftime('%Y-%m-%d') }}">
                       </div>
                       <div class="col-6 mb-1">
                         <label for="application_id_{{ customer._id }}" class="form-label">Application ID</label>
-                        <input type="text" class="form-control form-control-sm" id="application_id_{{ customer._id }}" name="application_id" value="{{ customer.application_id }}" required>
-                      </div>                      <div class="col-6 mb-1">
+                        <input type="text" class="form-control form-control-sm" id="application_id_{{ customer._id }}" name="application_id" value="{{ customer.application_id or '' }}">
+                      </div>
+                      <div class="col-6 mb-1">
                         <label for="id_document_{{ customer._id }}" class="form-label">ID Document</label>
                         <input type="file" class="form-control form-control-sm" id="id_document_{{ customer._id }}" name="id_document" accept="application/pdf,image/*">
                         {% if customer.id_document %}
@@ -527,7 +527,7 @@
                         <div class="col-6 mb-1">
                           <label for="survey_date_{{ customer._id }}" class="form-label">Survey Date</label>
                           <input type="date" class="form-control form-control-sm" id="survey_date_{{ customer._id }}" name="survey_date"
-                            value="{{ customer.survey_date.strftime('%Y-%m-%d') if customer.survey_date else now().strftime('%Y-%m-%d') }}" required>
+                            value="{{ customer.survey_date.strftime('%Y-%m-%d') if customer.survey_date else now().strftime('%Y-%m-%d') }}">
                         </div>
                         <div class="col-6 mb-1">
                           <label for="wealth_assessment_form_{{ customer._id }}" class="form-label">Wealth Assessment Form</label>
@@ -539,7 +539,7 @@
                         </div>
                         <div class="col-6 mb-1">
                           <label for="pipe_type_{{ customer._id }}" class="form-label">Pipe Type</label>
-                          <select class="form-select form-select-sm" id="pipe_type_{{ customer._id }}" name="pipe_type" required>
+                          <select class="form-select form-select-sm" id="pipe_type_{{ customer._id }}" name="pipe_type">
                             <option value="HDPE" {% if customer.pipe_type == "HDPE" or not customer.pipe_type %}selected{% endif %}>HDPE</option>
                             <option value="PVC" {% if customer.pipe_type == "PVC" %}selected{% endif %}>PVC</option>
                             <option value="GI" {% if customer.pipe_type == "GI" %}selected{% endif %}>GI</option>
@@ -547,7 +547,7 @@
                         </div>
                         <div class="col-6 mb-1">
                           <label for="pipe_diameter_{{ customer._id }}" class="form-label">Pipe Diameter (mm)</label>
-                          <select class="form-select form-select-sm" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter" required>
+                          <select class="form-select form-select-sm" id="pipe_diameter_{{ customer._id }}" name="pipe_diameter">
                             <option value="15" {% if customer.pipe_diameter|string == "15" %}selected{% endif %}>15</option>
                             <option value="20" {% if customer.pipe_diameter|string == "20" or customer.pipe_diameter is none or customer.pipe_diameter == "" %}selected{% endif %}>20</option>
                             <option value="25" {% if customer.pipe_diameter|string == "25" %}selected{% endif %}>25</option>
@@ -560,11 +560,11 @@
                         </div>
                         <div class="col-6 mb-1">
                           <label for="pipe_length_{{ customer._id }}" class="form-label">Pipe Length (m)</label>
-                          <input type="number" class="form-control form-control-sm" id="pipe_length_{{ customer._id }}" name="pipe_length" value="{{ customer.pipe_length or '' }}" min="0" step="0.01" required>
+                          <input type="number" class="form-control form-control-sm" id="pipe_length_{{ customer._id }}" name="pipe_length" value="{{ customer.pipe_length or '' }}" min="0" step="0.01">
                         </div>
                         <div class="col-6 mb-1">
                           <label for="tap_pipe_size_{{ customer._id }}" class="form-label">Tapping Point Size (mm)</label>
-                          <select class="form-select form-select-sm" id="tap_pipe_size_{{ customer._id }}" name="tap_pipe_size" required>
+                          <select class="form-select form-select-sm" id="tap_pipe_size_{{ customer._id }}" name="tap_pipe_size">
                             <option value="" {% if customer.tap_pipe_size is none or customer.tap_pipe_size == "" %}selected{% endif %}>Select Size</option>
                             <option value="15" {% if customer.tap_pipe_size|string == "15" %}selected{% endif %}>15</option>
                             <option value="20" {% if customer.tap_pipe_size|string == "20" %}selected{% endif %}>20</option>
@@ -583,7 +583,7 @@
                         </div>
                         <div class="col-6 mb-1">
                           <label for="tap_pipe_type_{{ customer._id }}" class="form-label">Tapping Point Type</label>
-                          <select class="form-select form-select-sm" id="tap_pipe_type_{{ customer._id }}" name="tap_pipe_type" required>
+                          <select class="form-select form-select-sm" id="tap_pipe_type_{{ customer._id }}" name="tap_pipe_type">
                             <option value="" {% if customer.tap_pipe_type is none or customer.tap_pipe_type == "" %}selected{% endif %}>Select Type</option>
                             <option value="HDPE" {% if customer.tap_pipe_type == "HDPE" %}selected{% endif %}>HDPE</option>
                             <option value="PVC" {% if customer.tap_pipe_type == "PVC" %}selected{% endif %}>PVC</option>
@@ -636,7 +636,7 @@
 
                         <div class="col-6 mb-1">
                           <label for="connection_fee_{{ customer._id }}" class="form-label">Connection Fee</label>
-                          <input type="number" class="form-control form-control-sm" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" value="{{ customer.connection_fee or 0 }}" required>
+                          <input type="number" class="form-control form-control-sm" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" value="{{ customer.connection_fee or 0 }}">
                         </div>
 
                         <script>
@@ -666,16 +666,16 @@
                       {% if customer.status in ["paid", "verified", "not verified", "materials issued", "materials pending", "connected", 'not connected', 'confirmed'] %}
                         <div class="col-6 mb-1">
                           <label for="amount_paid_{{ customer._id }}" class="form-label">Initial connection deposit</label>
-                          <input type="number" class="form-control form-control-sm" id="amount_paid_{{ customer._id }}" name="amount_paid" value="{{ customer.amount_paid or '' }}" min="0" step="0.01" required>
+                          <input type="number" class="form-control form-control-sm" id="amount_paid_{{ customer._id }}" name="amount_paid" value="{{ customer.amount_paid or '' }}" min="0" step="0.01">
                         </div>
                         <div class="col-6 mb-1">
                           <label for="date_paid_{{ customer._id }}" class="form-label">Payment Date</label>
                           <input type="date" class="form-control form-control-sm" id="date_paid_{{ customer._id }}" name="date_paid"
-                            value="{{ customer.date_paid.strftime('%Y-%m-%d') if customer.date_paid else now().strftime('%Y-%m-%d') }}" required>
+                            value="{{ customer.date_paid.strftime('%Y-%m-%d') if customer.date_paid else now().strftime('%Y-%m-%d') }}">
                         </div>
                         <div class="col-6 mb-1">
                           <label for="transaction_id_{{ customer._id }}" class="form-label">Transaction ID</label>
-                          <input type="text" class="form-control form-control-sm" id="transaction_id_{{ customer._id }}" name="transaction_id" value="{{ customer.transaction_id or '' }}" required>
+                          <input type="text" class="form-control form-control-sm" id="transaction_id_{{ customer._id }}" name="transaction_id" value="{{ customer.transaction_id or '' }}">
                         </div>
                         <div class="col-6 mb-1">
                           <label for="proof_of_payment_{{ customer._id }}" class="form-label">Proof of Payment</label>
@@ -718,22 +718,22 @@
                         <div class="col-6 mb-1">
                           <label for="connection_date_{{ customer._id }}" class="form-label">Connection Date</label>
                           <input type="date" class="form-control form-control-sm" id="connection_date_{{ customer._id }}" name="connection_date"
-                            value="{{ customer.connection_date.strftime('%Y-%m-%d') if customer.connection_date else '' }}" required>
+                            value="{{ customer.connection_date.strftime('%Y-%m-%d') if customer.connection_date else '' }}">
                         </div>
                         <div class="col-6 mb-1">
                           <label for="meter_serial_{{ customer._id }}" class="form-label">Meter Serial Number</label>
                           <input type="text" class="form-control form-control-sm" id="meter_serial_{{ customer._id }}" name="meter_serial"
-                            value="{{ customer.meter_serial or '' }}" required>
+                            value="{{ customer.meter_serial or '' }}">
                         </div>
                         <div class="col-6 mb-1">
                           <label for="first_meter_reading_{{ customer._id }}" class="form-label">Initial Meter Reading</label>
                           <input type="number" class="form-control form-control-sm" id="first_meter_reading_{{ customer._id }}" name="first_meter_reading"
-                            value="{{ customer.first_meter_reading or '' }}" min="0" step="1" required>
+                            value="{{ customer.first_meter_reading or '' }}" min="0" step="1">
                         </div>
 
                         <div>
                           <label for="customer_category_{{ customer._id }}" class="form-label">Customer Category</label>
-                          <select class="form-select" id="customer_category_{{ customer._id }}" name="customer_category" required>
+                          <select class="form-select" id="customer_category_{{ customer._id }}" name="customer_category">
                             <option value="" disabled>Select Category</option>
                             <option value="domestic" {% if customer.category == 'domestic' or not customer.category %}selected{% endif %}>Domestic</option>
                             <option value="institutional" {% if customer.category == 'institutional' %}selected{% endif %}>Institutional</option>
@@ -768,7 +768,7 @@
                       {% if customer.status == "confirmed" %}
                         <div class="col-6 mb-1">
                           <label for="customer_reference_{{ customer._id }}" class="form-label">Customer Reference Number</label>
-                          <input type="number" class="form-control form-control-sm" id="customer_reference_{{ customer._id }}" name="customer_reference" value="{{ customer.customer_reference or '' }}" required>
+                          <input type="number" class="form-control form-control-sm" id="customer_reference_{{ customer._id }}" name="customer_reference" value="{{ customer.customer_reference or '' }}">
                         </div>
                       <div class="col-12 mb-1">
                         <label for="confirmation_form_comment_{{ customer._id }}" class="form-label">Confirmation Comment</label>

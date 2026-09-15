@@ -1001,9 +1001,9 @@ def new_connections():
         user["scheme"] = scheme_doc.get("scheme") if scheme_doc else None
     
     page = request.args.get('page', None)
-    page = int(page) if page != None else int(session.get("customers_page", 1))
+    page = int(page) if page != None else int(session.get("new_connections_page", 1))
 
-    session['customers_page'] = page
+    session['new_connections_page'] = page
 
     per_page = 50
 
@@ -1045,9 +1045,6 @@ def new_connections():
             {"name": {"$regex": session.get("new_connections_search_query"), "$options": "i"}},
             {"contact": {"$regex": session.get("new_connections_search_query"), "$options": "i"}},
         ]
-
-    print("Query:", query)
-    print("Area:", db.Areas.find_one({"_id": session.get("new_connections_selected_area_id")}))
 
     customers = list(db.Customers.find(query))
     
@@ -1156,18 +1153,19 @@ def add_customer():
 @app.route('/edit_customer', methods=["POST"])
 @login_required
 def edit_customer():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     customer_id = request.form.get("customer_id")
     id_document = request.files.get("id_document")
     recommendation_letter = request.files.get("recommendation_letter")
     wealth_assessment_form = request.files.get("wealth_assessment_form")
     proof_of_payment = request.files.get("proof_of_payment")
 
-    if abs(int(request.form.get("customer_reference", 0))) > 2**63 - 1:
+    if request.form.get("customer_reference") and abs(int(request.form.get("customer_reference", 0))) > 2**63 - 1:
         flash("Customer reference is too large!", "danger")
         return redirect(url_for("new_connections"))
 
-    customer = db.Customers.find_one({"_id": ObjectId(customer_id)})
-    customers = list(db.Customers.find())
+    customer = db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(customer_id)})
+    customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id")}))
 
     update_data = {
         "name": request.form.get("name").strip().upper(),
@@ -1205,7 +1203,7 @@ def edit_customer():
     if request.form.get("location"):
         update_data["location"] = request.form.get("location")
 
-    if customer.get("application_id") != request.form.get("application_id"):
+    if request.form.get("application_id") != customer.get("application_id"):
         if next((x for x in customers if x.get("application_id") == request.form.get("application_id")), None):
             flash("Application ID already exists!", "danger")
             return redirect(url_for("new_connections"))
@@ -1239,7 +1237,7 @@ def edit_customer():
             update_data["date_applied"] = None
 
     if "tap_pipe_size" in request.form:
-        update_data["tap_pipe_size"] = int(request.form.get("tap_pipe_size"))
+        update_data["tap_pipe_size"] = str(request.form.get("tap_pipe_size"))
 
     if "tap_pipe_type" in request.form:
         update_data["tap_pipe_type"] = request.form.get("tap_pipe_type")
@@ -1274,10 +1272,10 @@ def edit_customer():
         update_data["payment_period"] = int(request.form.get("payment_period")) if request.form.get("payment_period") else 1
 
     if "connection_fee" in request.form:
-        update_data["connection_fee"] = int(request.form.get("connection_fee"))
+        update_data["connection_fee"] = int(request.form.get("connection_fee", 0)) if request.form.get("connection_fee") != '' else 0
 
     if "amount_paid" in request.form:
-        update_data["amount_paid"] = int(request.form.get("amount_paid"))
+        update_data["amount_paid"] = int(request.form.get("amount_paid", 0)) if request.form.get("amount_paid") != '' else 0
 
     if "date_paid" in request.form:
         if request.form.get("date_paid"):
@@ -1285,7 +1283,7 @@ def edit_customer():
         else:
             update_data["date_paid"] = None
 
-    if 'connection_fee' in request.form or 'amount_paid' in request.form:
+    if 'connection_fee' in request.form and request.form.get("connection_fee") != '' and 'amount_paid' in request.form and request.form.get("amount_paid") != '':
         update_data["amount_due"] = int(request.form.get("connection_fee", 0)) - int(request.form.get("amount_paid", 0))
 
     if 'connection_date' in request.form:
@@ -1665,6 +1663,7 @@ def es_reports():
 
     query = {"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"}
 
+    schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
     if session.get("selected_es_reports_area_id"):
         schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": session.get("selected_es_reports_area_id")})), key=lambda x: x["scheme"].lower())
         scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
@@ -1692,12 +1691,12 @@ def es_reports():
     customers = customers[(page - 1) * per_page : (page) * per_page]
 
     villages = sorted(list(db.Villages.find()), key=lambda x: x["village"].lower())
-    schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
+    all_schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
     areas = sorted(list(db.Areas.find()), key=lambda x: x["area"].lower())
 
 
     for customer in customers:
-        customer["scheme"] = next((item["scheme"] for item in schemes if str(item["_id"]) == customer.get("scheme_id")), None)
+        customer["scheme"] = next((item["scheme"] for item in all_schemes if str(item["_id"]) == customer.get("scheme_id")), None)
         customer["village"] = next((item["village"] for item in villages if str(item["_id"]) == customer.get("village_id")), None)
 
         bpb_filter_start_date_str = session.get("es_reports_start_date")
@@ -1973,6 +1972,12 @@ def download_new_connections():
     date = datetime.datetime.now().strftime("%d.%B.%Y")
 
     query = {"umbrella_id": user.get("umbrella_id")}
+    schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
+
+    if session.get("selected_new_connections_area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": session.get("selected_new_connections_area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
     
     if user.get("area_id"):
         schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
@@ -1982,25 +1987,25 @@ def download_new_connections():
     if user.get("scheme_id"):
         query["scheme_id"] = user.get("scheme_id")
 
-    if session.get("selected_scheme_id"):
-        query["scheme_id"] = session.get("selected_scheme_id")
+    if session.get("new_connections_selected_scheme_id"):
+        query["scheme_id"] = session.get("new_connections_selected_scheme_id")
 
-    if session.get("selected_status_filter") and session.get("selected_status_filter") != "all":
-        query["status"] = session.get("selected_status_filter")
+    if session.get("new_connections_status_filter") and session.get("new_connections_status_filter") != "all":
+        query["status"] = session.get("new_connections_status_filter")
 
-    if session.get("filter_field") and session.get("customers_start_date") and session.get("customers_end_date"):
-        customers_start_date = datetime.datetime.strptime(session.get("customers_start_date"), "%Y-%m-%d")
-        customers_end_date = datetime.datetime.strptime(session.get("customers_end_date"), "%Y-%m-%d")
+    if session.get("new_connections_date_filter_field") and session.get("new_connections_start_date") and session.get("new_connections_end_date"):
+        customers_start_date = datetime.datetime.strptime(session.get("new_connections_start_date"), "%Y-%m-%d")
+        customers_end_date = datetime.datetime.strptime(session.get("new_connections_end_date"), "%Y-%m-%d")
 
-        query[session.get("filter_field")] = {
+        query[session.get("new_connections_date_filter_field")] = {
             "$gte": customers_start_date,
             "$lte": customers_end_date
         }
     
-    if session.get("search_query"):
+    if session.get("new_connections_search_query"):
         query["$or"] = [
-            {"name": {"$regex": session.get("search_query"), "$options": "i"}},
-            {"contact": {"$regex": session.get("search_query"), "$options": "i"}},
+            {"name": {"$regex": session.get("new_connections_search_query"), "$options": "i"}},
+            {"contact": {"$regex": session.get("new_connections_search_query"), "$options": "i"}},
         ]
 
     customers = list(db.Customers.find(query))
@@ -2037,6 +2042,7 @@ def download_new_connections():
             "Verification Date": c.get("verification_date").strftime("%Y-%m-%d") if isinstance(c.get("verification_date"), datetime.datetime) else c.get("verification_date"),
             "Initial Connection Payment Transaction ID": c.get("transaction_id"),
             "Date of Initial Connection Payment": c.get("date_paid").strftime("%Y-%m-%d") if isinstance(c.get("date_paid"), datetime.datetime) else c.get("date_paid"),
+            "Material Issuance Date": c.get("issuance_date").strftime("%Y-%m-%d") if isinstance(c.get("issuance_date"), datetime.datetime) else c.get("issuance_date"),
             "Connection Date": c.get("connection_date").strftime("%Y-%m-%d") if isinstance(c.get("connection_date"), datetime.datetime) else c.get("connection_date"),
             "Meter Serial": c.get("meter_serial"),
             "First Meter Reading": c.get("first_meter_reading"),
@@ -2255,25 +2261,32 @@ def download_es_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     date = datetime.datetime.now().strftime("%d.%B.%Y")
 
-    query = {"umbrella_id": user.get("umbrella_id"), "type": "ES", "status": "confirmed", "customer_reference": {"$exists": True}}
+    query = {"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed", "type": "ES"}
 
-    if user and user.get("area_id") and not user.get("scheme_id"):
-        query["area_id"] = user.get("area_id")
+    schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
+    if session.get("selected_es_reports_area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": session.get("selected_es_reports_area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
 
-    if user and user.get("scheme_id"):
-        query["scheme_id"] = user.get("scheme_id")
-
+    if user.get("area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
+    
     if session.get("es_reports_selected_scheme_id"):
         query["scheme_id"] = session.get("es_reports_selected_scheme_id")
 
+    if user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
+    
     if session.get("es_reports_search_query"):
         query["$or"] = [
             {"name": {"$regex": session.get("es_reports_search_query"), "$options": "i"}},
             {"contact": {"$regex": session.get("es_reports_search_query"), "$options": "i"}},
-            {"customer_reference": {"$regex": session.get("es_reports_search_query"), "$options": "i"}},
         ]
     
-    customers = list(db.Customers.find(query).sort("name", 1))
+    customers = sorted(list(db.Customers.find(query)), key=lambda x: x.get("name", "").lower())
     attachment_name = f"es_report_{date}.xlsx"
     
     data = []
@@ -2550,20 +2563,28 @@ def search_bp_reports():
 @app.route('/download_bp_reports', methods=['GET'])
 def download_bp_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    selected_scheme_id = session.get("bp_reports_selected_scheme_id")
     date = datetime.datetime.now().strftime("%d.%B.%Y")
+    schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
 
-    query = {"umbrella_id": user.get("umbrella_id"), "type": "BP", "customer_reference": {"$exists": True}, "status": "confirmed"}
+    query = {"umbrella_id": user.get("umbrella_id"), "type": "BP", "status": "confirmed", "customer_reference": {"$ne": None}}
 
-    if user and user.get("area_id") and not user.get("scheme_id"):
-        query["area_id"] = user.get("area_id")
+    if session.get("selected_bp_reports_area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": session.get("selected_bp_reports_area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(s.get("_id")) for s in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
 
-    if user and user.get("scheme_id"):
+    if user.get("area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids_for_area = [str(s.get("_id")) for s in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
+
+    if user.get("scheme_id"):
         query["scheme_id"] = user.get("scheme_id")
+    
+    if session.get("bp_reports_selected_scheme_id"):
+        query["scheme_id"] = session.get("bp_reports_selected_scheme_id")
 
-    if selected_scheme_id:
-        query["scheme_id"] = selected_scheme_id
-
+    
     if session.get("bp_reports_search_query"):
         search_regex = re.compile(re.escape(session.get("bp_reports_search_query")), re.IGNORECASE)
         query["$or"] = [
@@ -2572,7 +2593,7 @@ def download_bp_reports():
             {"customer_reference": search_regex}
         ]
 
-    customers = list(db.Customers.find(query).sort("name", 1))
+    customers = sorted(list(db.Customers.find(query)), key=lambda x: x.get("name", "").lower())
     schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
     attachment_name = f"bp_report_{date}.xlsx"
     
@@ -2646,7 +2667,14 @@ def bp_customer_report_download():
 
 
 @app.route("/upload_customers_reference", methods=["POST"])
+@login_required
 def upload_customers_reference():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if not user:
+        flash("User not found!", "danger")
+        return redirect(url_for("new_connections"))
+
     file = request.files.get("customers_file")
 
     if not file or file.filename == "":
@@ -2668,33 +2696,61 @@ def upload_customers_reference():
     if df.columns[0] != "MeterRef" or df.columns[1] != "MeterSerial" or df.columns[3] != "Name" or df.columns[4] != "Phone" or df.columns[5] != "VillageName":
         flash("Unexpected file column structure!", "danger")
         return redirect(url_for("new_connections"))
-    
 
-    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    # 1. PRE-PROCESS DATAFRAME COLUMNS ONCE (OUTSIDE THE LOOP)
+    df["Name_clean"] = df["Name"].astype(str).str.lower().str.strip()
 
-    if not user:
-        flash("User not found!", "danger")
-        return redirect(url_for("new_connections"))
-    
+    df["MeterSerial_clean"] = (
+        df["MeterSerial"]
+        .astype(str)
+        .str.lower()
+        .str.replace(" ", "")
+        .str.replace("-", "")
+    )
+
+    df["Phone_clean"] = (
+        df["Phone"]
+        .astype(str)
+        .str.replace(r'\.0$', '', regex=True)
+        .str.replace(r'\D', '', regex=True)
+    )
+    df["Phone_stripped"] = df["Phone_clean"].str.replace(r'^(?:\+?256|0)?', '', regex=True)
+
+
     customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "status": "connected"}))
-    villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
-    schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
-
     matches = 0
     for cust in customers:
-
-        cust["village"] = next((v.get("village") for v in villages if str(v.get("_id")) == cust.get("village_id")), None)
-        cust["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == cust.get("scheme_id")), None)
+        # DB Value Prep
+        cust_name = str(cust.get("name", "")).lower().strip()
+        db_contact_raw = re.sub(r'\D', '', str(cust.get("contact", "")))
+        db_contact_stripped = re.sub(r'^(?:\+?256|0)?', '', db_contact_raw)
+        cust_meter = str(cust.get("meter_serial", "")).lower().replace(" ", "").replace("-", "")
 
         matching_row = df[
-            (df["Name"].str.lower().isin([cust.get("name").lower(), f'ES-{cust.get("name")}'.lower(), f'BP-{cust.get("name")}'.lower(), f'ES {cust.get("name")}'.lower(), f'BP {cust.get("name")}'.lower(), f'ES- {cust.get("name")}'.lower(), f'BP- {cust.get("name")}'.lower(), f'', cust.get("name")[3:].lower()])) &
-            (df["Phone"].astype(str).str.strip().isin([str(cust.get("contact")).strip(), str(cust.get("contact")).strip()[1:]])) &
-            (df["MeterSerial"].str.lower().str.replace(" ", "").str.replace("-", "").isin([cust.get("meter_serial", "").lower().replace(" ", "").replace("-", "")]))
-            ]
-        
+            # Name Matching
+            (df["Name_clean"].isin([
+                cust_name,
+                f'es-{cust_name}', f'bp-{cust_name}',
+                f'es {cust_name}', f'bp {cust_name}',
+                f'es- {cust_name}', f'bp- {cust_name}',
+                f'es - {cust_name}', f'bp - {cust_name}',
+                f'es -{cust_name}', f'bp -{cust_name}'
+            ]))
+            &
+            (
+                (df["Phone_clean"] == db_contact_raw) |
+                (df["Phone_stripped"] == db_contact_stripped)
+            )
+            &
+            (df["MeterSerial_clean"] == cust_meter)
+        ]
+
         if not matching_row.empty:
             matches += 1
-            db.Customers.update_one({"_id": ObjectId(cust.get("_id")), "umbrella_id": user.get("umbrella_id")}, {"$set": {"customer_reference": int(matching_row["MeterRef"].values[0]), "status": "confirmed"}})
+            db.Customers.update_one(
+                {"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(cust.get("_id"))},
+                {"$set": {"customer_reference": str(matching_row["MeterRef"].values[0]), "status": "confirmed"}}
+            )
             
     flash(f"{matches} Customer references updated successfully!", "success")
     return redirect(url_for("new_connections"))
@@ -3047,25 +3103,37 @@ def customer_monthly_payment_sheet_update():
 def download_ms_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     date = datetime.datetime.now().strftime("%d.%B.%Y")
-    query = {"umbrella_id": user.get("umbrella_id"), "status": "confirmed"}
+    schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")})), key=lambda x: x["scheme"].lower())
+    query = {"umbrella_id": user.get("umbrella_id"), "status": "confirmed", "customer_reference": {"$ne": None}}
 
-    if user and user.get("area_id") and not user.get("scheme_id"):
-        query["area_id"] = user.get("area_id")
+    if session.get("selected_ms_reports_area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": session.get("selected_ms_reports_area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids = [str(s.get("_id")) for s in schemes]
+        query["scheme_id"] = {"$in": scheme_ids}
 
-    if user and user.get("scheme_id"):
-        query["scheme_id"] = user.get("scheme_id")
-
+    if user.get("area_id"):
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
+        scheme_ids = [str(s.get("_id")) for s in schemes]
+        query["scheme_id"] = {"$in": scheme_ids}
+    
     if session.get("ms_reports_selected_scheme_id"):
         query["scheme_id"] = session.get("ms_reports_selected_scheme_id")
+
+    if user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
     
     if session.get("ms_reports_search_query"):
+        search_regex = re.compile(re.escape(session.get("ms_reports_search_query")), re.IGNORECASE)
         query["$or"] = [
-            {"name": {"$regex": session.get("ms_reports_search_query"), "$options": "i"}},
-            {"contact": {"$regex": session.get("ms_reports_search_query"), "$options": "i"}},
-            {"customer_reference": {"$regex": session.get("ms_reports_search_query"), "$options": "i"}},
-        ]    
+            {"name": search_regex},
+            {"contact": search_regex},
+            {"customer_reference": search_regex}
+        ]
+
+    if session.get("ms_reports_active_status") == "inactive":
+        query["active_status"] = session.get("ms_reports_active_status")
     
-    customers = list(db.Customers.find(query).sort("name", 1))
+    customers = sorted(list(db.Customers.find(query)), key=lambda x: x.get("name", "").lower())
     attachment_name = f"ms_report_{date}.xlsx"
     
     data = []
