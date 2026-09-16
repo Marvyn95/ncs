@@ -1,119 +1,398 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="w-100 h-100 d-flex flex-column overflow-hidden">
+<!-- Main Viewport Container -->
+<div class="d-flex flex-column vh-100 w-100 overflow-hidden bg-light p-0">
 
-  <div class="row align-items-start mt-4">
-    <div class="col-4">
-      <h4 class="fw-bold text-primary mb-0 mt-0">Dash Board</h4>
-      <p class="text-muted">Overview and quick actions</p>
+  <!-- Fixed Header -->
+  <div class="row align-items-start px-3 pt-3 mb-2 flex-shrink-0 me-0 ms-0">
+    <div class="col-12 px-0">
+      <h5 class="fw-bold text-primary mb-0">Dashboard</h5>
+      <p class="text-muted small mb-0">Overview and summary of key metrics</p>
     </div>
-
   </div>
 
-
-{% endblock %}
-
-
-<div class="row">
-  <div class="col-6">
-    <div class="row">
-      <div class="col-6">
-        <div class="card">
-          <div class="card-body">
-            <div class="small">Total Customers: <span class="fw-bold fs-6 text-primary">{{ confirmed_count }}</span></div>
-            <div class="small">ES Customers: <span class="fw-bold fs-6 text-primary">{{ es_customers }}</span></div>
+  <!-- Scrollable Inner Content Body -->
+  <div class="flex-grow-1 overflow-y-auto px-3 pb-3 me-0">
+    
+    <!-- Top Metric Cards (Compact 4-Column Layout) -->
+    <div class="row g-2 g-md-3 mb-3">
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-2">
+          <div class="card-body p-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted small">Total Revenue</span>
+              <span class="bg-primary bg-opacity-10 text-primary rounded-circle p-1">
+                <i class="bi bi-wallet2 small"></i>
+              </span>
+            </div>
+            <h4 class="fw-bold mt-1 mb-0">$950,000</h4>
+            <small class="text-success custom-small"><i class="bi bi-arrow-up me-1"></i>12.5%</small>
+            <small class="text-muted custom-small ms-1">vs last month</small>
           </div>
         </div>
       </div>
-      <div class="col-6">
-        <div class="card">
-          <div class="card-body">
-            <div class="small">Total Schemes: <span class="fw-bold fs-6 text-primary">{{ schemes_count }}</span></div>
-            <div class="small">Total Villages: <span class="fw-bold fs-6 text-primary">{{ villages_count }}</span></div>
+
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-2">
+          <div class="card-body p-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted small">Total Expenses</span>
+              <span class="bg-warning bg-opacity-10 text-warning rounded-circle p-1">
+                <i class="bi bi-credit-card small"></i>
+              </span>
+            </div>
+            <h4 class="fw-bold mt-1 mb-0">$432,000</h4>
+            <small class="text-danger custom-small"><i class="bi bi-arrow-down me-1"></i>4.2%</small>
+            <small class="text-muted custom-small ms-1">vs last month</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-2">
+          <div class="card-body p-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted small">Net Profit</span>
+              <span class="bg-success bg-opacity-10 text-success rounded-circle p-1">
+                <i class="bi bi-graph-up-arrow small"></i>
+              </span>
+            </div>
+            <h4 class="fw-bold mt-1 mb-0">$518,000</h4>
+            <small class="text-success custom-small"><i class="bi bi-arrow-up me-1"></i>18.7%</small>
+            <small class="text-muted custom-small ms-1">vs last month</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-2">
+          <div class="card-body p-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted small">Active Customers</span>
+              <span class="bg-info bg-opacity-10 text-info rounded-circle p-1">
+                <i class="bi bi-people small"></i>
+              </span>
+            </div>
+            <h4 class="fw-bold mt-1 mb-0">14,290</h4>
+            <small class="text-success custom-small"><i class="bi bi-arrow-up me-1"></i>8.4%</small>
+            <small class="text-muted custom-small ms-1">vs last month</small>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="row mt-4">
-      <div class="col-12">
-        <div class="d-flex flex-column gap-2">
-            <div class="card bg-white rounded-2 shadow-sm p-2 h-100 border-0">
-              <div class="row align-items-start">  
-                <div class="col-6">
-                  <div class="small">Pending Surveys: <span class="fw-bold fs-6 text-danger">{{ application_count or '-' }}</span></div>
-                  <div class="small">Pending Approvals: <span class="fw-bold fs-6 text-danger">{{ survey_count or '-' }}</span></div>
-                  <div class="small">Pending Payments: <span class="fw-bold fs-6 text-danger">{{ approval_count or '-' }}</span></div>
-                  <div class="small">Pending Verifications: <span class="fw-bold fs-6 text-danger">{{ paid_count or '-' }}</span></div>
-                  <div class="small">Pending Materials: <span class="fw-bold fs-6 text-danger">{{ verified_count or '-' }}</span></div>
-                  <div class="small">Pending Connections: <span class="fw-bold fs-6 text-danger">{{ pending_connection_count or '-' }}</span></div>
-                  <div class="small">Pending Confirmations: <span class="fw-bold fs-6 text-danger">{{ connected_count or '-' }}</span></div>
-                  <div class="small">Confirmed: <span class="fw-bold fs-6 text-primary">{{ confirmed_count or '-' }}</span></div>
-                </div>
+    <!-- Main Content Grid (Chart & Side Panel) -->
+    <div class="row g-2 g-md-3 mb-3">
+      <!-- Chart Section -->
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-2 h-100">
+          <div class="card-body p-2 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div>
+                <strong class="d-block h6 fw-bold mb-0">Metrics &amp; Figures Overview</strong>
+                <small class="text-muted custom-small">Scroll horizontally to view all metric breakdown bars</small>
+              </div>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-primary py-0 px-2 custom-small">Month</button>
+                <button class="btn btn-light py-0 px-2 custom-small">Year</button>
+              </div>
+            </div>
+
+            <!-- Scrollable Bar Chart Area -->
+            <div class="overflow-x-auto flex-grow-1 pt-2 pb-1">
+              <div class="d-flex align-items-end gap-2" style="min-width: 800px; height: 140px;">
                 
-                <div class="col-6">
-                  <div class="small">Total Applications: <span class="fw-bold fs-6 text-primary">{{ total_applicants or '-' }}</span></div>
-                  <div class="small">Total Surveys: <span class="fw-bold fs-6 text-primary">{{ total_surveys or '-' }}</span></div>
-                  <div class="small">Total Approvals: <span class="fw-bold fs-6 text-primary">{{ total_approvals or '-' }}</span></div>
-                  <div class="small">Total Disqualified: <span class="fw-bold fs-6 text-danger">{{ total_disapprovals or '-' }}</span></div>
-                  <div class="small">Total Payments: <span class="fw-bold fs-6 text-primary">{{ total_payments or '-' }}</span></div>
-                  <div class="small">Total Verifications: <span class="fw-bold fs-6 text-primary">{{ total_verifications or '-' }}</span></div>
-                  <div class="small">Total Not Verified: <span class="fw-bold fs-6 text-danger">{{ total_not_verified or '-' }}</span></div>
-                  <div class="small">Total Materials Issued: <span class="fw-bold fs-6 text-primary">{{ total_materials_issued or '-' }}</span></div>
-                  <div class="small">Total Connections: <span class="fw-bold fs-6 text-primary">{{ total_connections or '-' }}</span></div>
-                  <div class="small">Total Confirmations: <span class="fw-bold fs-6 text-primary">{{ total_confirmations or '-' }}</span></div>
+                <!-- Metric 1 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-primary custom-small">$95k</span>
+                  <div class="bg-primary rounded-top w-100" style="height: 85%"></div>
+                  <span class="text-muted custom-small mt-1">Sales</span>
                 </div>
+
+                <!-- Metric 2 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-danger custom-small">$43k</span>
+                  <div class="bg-danger bg-opacity-75 rounded-top w-100" style="height: 45%"></div>
+                  <span class="text-muted custom-small mt-1">Expenses</span>
+                </div>
+
+                <!-- Metric 3 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-success custom-small">$52k</span>
+                  <div class="bg-success rounded-top w-100" style="height: 60%"></div>
+                  <span class="text-muted custom-small mt-1">Profit</span>
+                </div>
+
+                <!-- Metric 4 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-info custom-small">$78k</span>
+                  <div class="bg-info rounded-top w-100" style="height: 75%"></div>
+                  <span class="text-muted custom-small mt-1">Revenue</span>
+                </div>
+
+                <!-- Metric 5 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-warning custom-small">$12k</span>
+                  <div class="bg-warning rounded-top w-100" style="height: 25%"></div>
+                  <span class="text-muted custom-small mt-1">Tax</span>
+                </div>
+
+                <!-- Metric 6 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-primary custom-small">$64k</span>
+                  <div class="bg-primary bg-opacity-75 rounded-top w-100" style="height: 68%"></div>
+                  <span class="text-muted custom-small mt-1">Subs</span>
+                </div>
+
+                <!-- Metric 7 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-secondary custom-small">$8k</span>
+                  <div class="bg-secondary rounded-top w-100" style="height: 18%"></div>
+                  <span class="text-muted custom-small mt-1">Refunds</span>
+                </div>
+
+                <!-- Metric 8 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-success custom-small">$38k</span>
+                  <div class="bg-success bg-opacity-75 rounded-top w-100" style="height: 50%"></div>
+                  <span class="text-muted custom-small mt-1">Upgrades</span>
+                </div>
+
+                <!-- Metric 9 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-danger custom-small">$15k</span>
+                  <div class="bg-danger rounded-top w-100" style="height: 28%"></div>
+                  <span class="text-muted custom-small mt-1">Churn</span>
+                </div>
+
+                <!-- Metric 10 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-info custom-small">$29k</span>
+                  <div class="bg-info bg-opacity-75 rounded-top w-100" style="height: 42%"></div>
+                  <span class="text-muted custom-small mt-1">Affiliates</span>
+                </div>
+
+                <!-- Metric 11 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-warning custom-small">$18k</span>
+                  <div class="bg-warning bg-opacity-75 rounded-top w-100" style="height: 32%"></div>
+                  <span class="text-muted custom-small mt-1">Support</span>
+                </div>
+
+                <!-- Metric 12 -->
+                <div class="d-flex flex-column align-items-center flex-fill h-100 justify-content-end">
+                  <span class="fw-bold text-primary custom-small">$88k</span>
+                  <div class="bg-primary rounded-top w-100" style="height: 80%"></div>
+                  <span class="text-muted custom-small mt-1">Ads</span>
+                </div>
+
               </div>
             </div>
 
-          <!-- Image Card -->
-          <!-- <div class="card bg-white rounded-3 shadow-sm border-0 d-flex flex-column align-items-center justify-content-center flex-grow-2 p-3">
-            <h5 class="mb-1 text-primary">Areas of operation</h5>
-            <h1 class="small text-muted">midwestern region, Uganda</h1>
-            <div class="d-flex align-items-center w-100">
-              <img src="{{ url_for('static', filename='uploads/mwuws_jurisdiction.png') }}" 
-              alt="Jurisdiction Map" 
-              class="img-fluid rounded-2 me-3" 
-              style="max-width: 80%; max-height: 100%; object-fit: contain;">
-              <div class="small text-muted">
-              <i class="bi bi-suit-diamond-fill me-1"></i>
-                <div>Districts: <span class="text-primary">15</span></div>
-                <div>Villages: <span class="text-primary">{{ villages_count }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side Panel -->
+      <div class="col-lg-4 d-flex flex-column gap-2 gap-md-3">
+        <!-- Currency Rates Card -->
+        <div class="card border-0 shadow-sm rounded-2">
+          <div class="card-body p-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <strong class="d-block h6 fw-bold mb-0">Currency Rates</strong>
+              <i class="bi bi-three-dots text-muted custom-small"></i>
+            </div>
+            <div class="d-flex justify-content-between border-bottom py-1 small">
+              <span class="text-muted">USD / EUR</span>
+              <strong>0.92 <small class="text-success">+0.4%</small></strong>
+            </div>
+            <div class="d-flex justify-content-between border-bottom py-1 small">
+              <span class="text-muted">USD / GBP</span>
+              <strong>0.78 <small class="text-success">+0.7%</small></strong>
+            </div>
+            <div class="d-flex justify-content-between border-bottom py-1 small">
+              <span class="text-muted">USD / JPY</span>
+              <strong>155.40 <small class="text-danger">-0.3%</small></strong>
+            </div>
+            <div class="d-flex justify-content-between py-1 small">
+              <span class="text-muted">BTC / USD</span>
+              <strong>$64,250 <small class="text-success">+3.8%</small></strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scrollable Activity Card -->
+        <div class="card border-0 shadow-sm rounded-2">
+          <div class="card-body p-2">
+            <strong class="d-block h6 fw-bold mb-1">Recent Activity</strong>
+            <div class="overflow-y-auto" style="max-height: 120px;">
+              <div class="d-flex align-items-center mb-1">
+                <i class="bi bi-receipt bg-primary bg-opacity-10 text-primary rounded-2 p-1 me-2 custom-small"></i>
+                <div class="flex-grow-1">
+                  <strong class="d-block small">Figma Personal</strong>
+                  <small class="text-muted custom-small">Subscription</small>
+                </div>
+                <strong class="small">$45.00</strong>
+              </div>
+              <div class="d-flex align-items-center mb-1">
+                <i class="bi bi-receipt bg-primary bg-opacity-10 text-primary rounded-2 p-1 me-2 custom-small"></i>
+                <div class="flex-grow-1">
+                  <strong class="d-block small">Freepik</strong>
+                  <small class="text-muted custom-small">Subscription</small>
+                </div>
+                <strong class="small">$89.99</strong>
+              </div>
+              <div class="d-flex align-items-center mb-1">
+                <i class="bi bi-receipt bg-primary bg-opacity-10 text-primary rounded-2 p-1 me-2 custom-small"></i>
+                <div class="flex-grow-1">
+                  <strong class="d-block small">Dropbox</strong>
+                  <small class="text-muted custom-small">Storage plan</small>
+                </div>
+                <strong class="small">$24.00</strong>
+              </div>
+              <div class="d-flex align-items-center mb-1">
+                <i class="bi bi-receipt bg-primary bg-opacity-10 text-primary rounded-2 p-1 me-2 custom-small"></i>
+                <div class="flex-grow-1">
+                  <strong class="d-block small">AWS Infrastructure</strong>
+                  <small class="text-muted custom-small">Cloud Hosting</small>
+                </div>
+                <strong class="small">$184.20</strong>
+              </div>
+              <div class="d-flex align-items-center">
+                <i class="bi bi-receipt bg-primary bg-opacity-10 text-primary rounded-2 p-1 me-2 custom-small"></i>
+                <div class="flex-grow-1">
+                  <strong class="d-block small">GitHub Enterprise</strong>
+                  <small class="text-muted custom-small">Developer License</small>
+                </div>
+                <strong class="small">$21.00</strong>
               </div>
             </div>
-          </div> -->
+          </div>
+        </div>
 
+      </div>
+    </div>
+
+    <!-- Additional Bottom Cards Grid -->
+    <div class="row g-2 g-md-3">
+      <!-- Card 1: Quick Actions / Transfer -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-2 h-100">
+          <div class="card-body p-2">
+            <strong class="d-block h6 fw-bold mb-1">Quick Transfer</strong>
+            <div class="mb-1">
+              <label class="form-label custom-small text-muted mb-0">Select Recipient</label>
+              <select class="form-select form-select-sm py-0 px-2 small">
+                <option selected>Alex Johnson</option>
+                <option>Sarah Smith</option>
+                <option>Dev Team Account</option>
+              </select>
+            </div>
+            <div class="mb-1">
+              <label class="form-label custom-small text-muted mb-0">Amount ($)</label>
+              <input type="number" class="form-control form-control-sm py-0 px-2 small" placeholder="0.00" value="250.00">
+            </div>
+            <button class="btn btn-primary btn-sm py-1 px-2 w-100 small">Send Funds</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Top Products / Services -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-2 h-100">
+          <div class="card-body p-2">
+            <strong class="d-block h6 fw-bold mb-1">Top Performing</strong>
+            <div class="d-flex align-items-center justify-content-between mb-1 small">
+              <span>SaaS Enterprise</span>
+              <span class="fw-bold">$42,500</span>
+            </div>
+            <div class="progress mb-1" style="height: 4px;">
+              <div class="progress-bar bg-primary" style="width: 75%"></div>
+            </div>
+            <div class="d-flex align-items-center justify-content-between mb-1 small">
+              <span>Cloud Storage API</span>
+              <span class="fw-bold">$28,100</span>
+            </div>
+            <div class="progress mb-1" style="height: 4px;">
+              <div class="progress-bar bg-info" style="width: 55%"></div>
+            </div>
+            <div class="d-flex align-items-center justify-content-between mb-1 small">
+              <span>Mobile Pro Plan</span>
+              <span class="fw-bold">$14,800</span>
+            </div>
+            <div class="progress" style="height: 4px;">
+              <div class="progress-bar bg-success" style="width: 35%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Invoices Status -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-2 h-100">
+          <div class="card-body p-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <strong class="d-block h6 fw-bold mb-0">Invoices</strong>
+              <span class="badge bg-success-subtle text-success custom-small">8 Paid</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom small">
+              <div>
+                <strong class="d-block">INV-2026-004</strong>
+                <span class="text-muted custom-small">Acme Corp</span>
+              </div>
+              <span class="badge bg-warning text-dark custom-small">Pending</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center py-1 border-bottom small">
+              <div>
+                <strong class="d-block">INV-2026-003</strong>
+                <span class="text-muted custom-small">Starlight LLC</span>
+              </div>
+              <span class="badge bg-success custom-small">Paid</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center pt-1 small">
+              <div>
+                <strong class="d-block">INV-2026-002</strong>
+                <span class="text-muted custom-small">Nexus Inc</span>
+              </div>
+              <span class="badge bg-danger custom-small">Overdue</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: System / Server Status -->
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-2 h-100">
+          <div class="card-body p-2">
+            <strong class="d-block h6 fw-bold mb-1">System Status</strong>
+            <div class="d-flex justify-content-between align-items-center mb-1 small">
+              <span class="text-muted"><i class="bi bi-hdd-network me-1"></i>Server Uptime</span>
+              <span class="fw-bold text-success">99.98%</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-1 small">
+              <span class="text-muted"><i class="bi bi-cpu me-1"></i>CPU Load</span>
+              <span class="fw-bold text-primary">34%</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-1 small">
+              <span class="text-muted"><i class="bi bi-memory me-1"></i>Memory Usage</span>
+              <span class="fw-bold text-warning">68%</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center small">
+              <span class="text-muted"><i class="bi bi-database me-1"></i>DB Connections</span>
+              <span class="fw-bold text-info">142/200</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="col-6">
-      <div class="card bg-secondary-subtle rounded-2 shadow-sm p-3 border-0">
-        <h6 class="mb-2 text-primary">No. of Customers by Scheme</h6>
-        <div class="table-responsive" style="max-height: 500px; overflow-y: auto; scrollbar-width: none; -webkit-scrollbar { display: none; }">
-          <table class="table table-hover table-striped table-secondary align-middle mb-0 small">
-          <thead class="table-light" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa; font-size:0.75rem;">
-          <tr>
-          <th>Scheme</th>
-          <th class="text-center">Customers</th>
-          <th class="text-center">ES Cust</th>
-          <th class="text-center">BP Cust</th>
-          </tr>
-          </thead>
-          <tbody style="font-size:0.70rem;">
-          {% for item in schemes_customers %}
-          <tr>
-          <td>{{ item.scheme }}</td>
-          <td class="text-center" style="font-size:0.8rem;">{{ item.number_of_customers }}</td>
-          <td class="text-center" style="font-size:0.8rem;">{{ item.es_customers }}</td>
-          <td class="text-center" style="font-size:0.8rem;">{{ item.bp_customers }}</td>
-          </tr>
-          {% endfor %}
-          </tbody>
-          </table>
-        </div>
-      </div>
   </div>
 </div>
+
+<style>
+  .custom-small {
+    font-size: 0.8rem;
+  }
+</style>
+{% endblock %}
