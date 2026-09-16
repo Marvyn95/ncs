@@ -1,10 +1,22 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="w-100 h-100 d-flex flex-column overflow-hidden">
+
+  <div class="row align-items-start mt-4">
+    <div class="col-4">
+      <h4 class="fw-bold text-primary mb-0 mt-0">Dash Board</h4>
+      <p class="text-muted">Overview and quick actions</p>
+    </div>
+
+  </div>
+
+
+{% endblock %}
+
 
 <div class="row">
   <div class="col-6">
-    <!-- Content for first column -->
     <div class="row">
       <div class="col-6">
         <div class="card">
@@ -78,7 +90,6 @@
   </div>
 
   <div class="col-6">
-    <!-- Content for second column -->
       <div class="card bg-secondary-subtle rounded-2 shadow-sm p-3 border-0">
         <h6 class="mb-2 text-primary">No. of Customers by Scheme</h6>
         <div class="table-responsive" style="max-height: 500px; overflow-y: auto; scrollbar-width: none; -webkit-scrollbar { display: none; }">
@@ -106,5 +117,3 @@
       </div>
   </div>
 </div>
-
-{% endblock %}
