@@ -12,15 +12,12 @@ from dateutil.relativedelta import relativedelta
 import pandas as pd
 import io
 import secrets
+from collections import defaultdict
 
 @app.route('/home', methods=["GET", "POST"])
 @login_required
 def home():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
-    
-    if user is None:
-        flash("User not found!", "danger")
-        return redirect(url_for("logout"))
     
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
     user["area"] = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))}).get("area") if user.get("area_id") else None
@@ -30,47 +27,89 @@ def home():
     
     if user.get("area_id") is None and user.get("scheme_id") is None:
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
-        scheme_count = len(schemes)
-
         villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id")}))
+        scheme_count = len(schemes)
         villages_count = len(villages)
 
     if user.get("area_id"):
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
         scheme_count = len(schemes)
-
+        villages_count = len(villages)
         scheme_ids = [str(scheme["_id"]) for scheme in schemes]
+        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}))
         customer_query["scheme_id"] = {"$in": scheme_ids}
 
-        villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}))
-        villages_count = len(villages)
-
-    if user.get("scheme_id"):
-        customer_query["scheme_id"] = user.get("scheme_id")
-        
+    if user.get("scheme_id"):        
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(user.get("scheme_id"))}))
-        scheme_count = len(schemes)
-        
         villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
+        scheme_count = len(schemes)
         villages_count = len(villages)
+        customer_query["scheme_id"] = user.get("scheme_id")
 
+    schemes_customers = defaultdict(lambda: {"number_of_customers": 0, "ms_customers": 0, "es_customers": 0, "bp_customers": 0})
     customers = list(db.Customers.find(customer_query))
     customers_count = len(customers)
 
+    # Initialize counter variables
+    application_count = 0
+    survey_count = 0
+    approval_count = 0
+    paid_count = 0
+    verified_count = 0
+    pending_connection_count = 0
+    connected_count = 0
+    confirmed_count = 0
+    total_disapprovals = 0
+    total_not_verified = 0
+    ms_customers = 0
+    es_customers = 0
+    bp_customers = 0
 
-    application_count = len([a for a in customers if a.get("status") == "applied"])
-    survey_count = len([s for s in customers if s.get("status") == "surveyed"])
-    approval_count = len([a for a in customers if a.get("status") == "approved"])
-    paid_count = len([p for p in customers if p.get("status") == "paid"])
-    verified_count = len([v for v in customers if v.get("status") == "verified"])
-    pending_connection_count = len([c for c in customers if c.get("status") == "materials issued"])
-    connected_count = len([c for c in customers if c.get("status") == "connected"])
-    confirmed_count = len([c for c in customers if c.get("status") == "confirmed"])
-    es_customers = len([e for e in customers if e.get("type") == "ES" and e.get("status") in ["confirmed"]])
+    for c in customers:
+        if c.get("status") == "applied":
+            application_count += 1
+        elif c.get("status") == "surveyed":
+            survey_count += 1
+        elif c.get("status") == "approved":
+            approval_count += 1
+        elif c.get("status") == "disapproved":
+            total_disapprovals += 1
+        elif c.get("status") == "paid":
+            paid_count += 1
+        elif c.get("status") == "verified":
+            verified_count += 1
+        elif c.get("status") == "not verified":
+            total_not_verified += 1
+        elif c.get("status") == "materials issued":
+            pending_connection_count += 1
+        elif c.get("status") == "connected":
+            connected_count += 1
+        elif c.get("status") == "confirmed":
+            confirmed_count += 1
+            if c.get("type") == "ES":
+                es_customers += 1
+            elif c.get("type") == "BP":
+                bp_customers += 1
+            else:
+                ms_customers += 1
 
+        scheme_id = c.get("scheme_id")
+        if not scheme_id:
+            continue
 
-    total_disapprovals = len([d for d in customers if d.get("status") == "disapproved"])
-    total_not_verified = len([n for n in customers if n.get("status") == "not verified"])
+        scheme_id_string = str(scheme_id)
+        schemes_customers[scheme_id_string]["number_of_customers"] += 1
+        if c.get("type") == "ES":
+            schemes_customers[scheme_id_string]["es_customers"] += 1
+        elif c.get("type") == "BP":
+            schemes_customers[scheme_id_string]["bp_customers"] += 1
+        else:
+            schemes_customers[scheme_id_string]["ms_customers"] += 1
+
+    for k, v in schemes_customers.items():
+        v["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == str(k)), "Unknown Scheme")
+
+    schemes_customers_list = sorted(list(schemes_customers.values()), key=lambda x: x["scheme"].lower())
 
     total_applicants = application_count + survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_disapprovals + total_not_verified
     total_surveys = survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_disapprovals + total_not_verified
@@ -81,26 +120,7 @@ def home():
     total_connections = connected_count + confirmed_count
     total_confirmations = confirmed_count
 
-    date = datetime.datetime.now()
-
-    current_day = date.strftime("%A")
-    current_date = date.strftime("%d") 
-    current_month = date.strftime("%B")
-    current_year = date.strftime("%Y")
-    timezone = 'East Africa time (EAT), UTC +3'
-
-    schemes_customers = []
-    for scheme in schemes:
-
-        count = len([c for c in customers if c.get("scheme_id") == str(scheme["_id"])])
-        es_cust = len([e for e in customers if e.get("scheme_id") == str(scheme["_id"]) and e.get("type") == "ES" and e.get("status") in ["confirmed"]])
-        bp_cust = len([b for b in customers if b.get("scheme_id") == str(scheme["_id"]) and b.get("type") == "BP" and b.get("status") in ["confirmed"]])
-
-        schemes_customers.append({"scheme": scheme["scheme"], "number_of_customers": count, "es_customers": es_cust, "bp_customers": bp_cust})
-
-    schemes_customers = sorted(schemes_customers, key=lambda x: x["scheme"].lower())
-
-    return render_template("home.html",
+    return render_template("home.html", 
                            section="home",
                            user=user,
                            customers_count=customers_count,
@@ -114,24 +134,20 @@ def home():
                            pending_connection_count= pending_connection_count,
                            connected_count=connected_count,
                            confirmed_count=confirmed_count,
+                           ms_customers=ms_customers,
                            es_customers=es_customers,
-                           date = date,
-                           current_day=current_day,
-                           current_date=current_date,
-                           current_month=current_month,
-                           current_year=current_year,
-                           timezone=timezone,
-                           schemes_customers=schemes_customers,
-                            total_applicants=total_applicants,
-                            total_surveys=total_surveys,
-                            total_approvals=total_approvals,
-                            total_payments=total_payments,
-                            total_verifications=total_verifications,
-                            total_materials_issued=total_materials_issued,
-                            total_connections=total_connections,
-                            total_confirmations=total_confirmations,
-                            total_disapprovals=total_disapprovals,
-                            total_not_verified=total_not_verified,
+                           bp_customers=bp_customers,
+                           schemes_customers_list=schemes_customers_list,
+                           total_applicants=total_applicants,
+                           total_surveys=total_surveys,
+                           total_approvals=total_approvals,
+                           total_payments=total_payments,
+                           total_verifications=total_verifications,
+                           total_materials_issued=total_materials_issued,
+                           total_connections=total_connections,
+                           total_confirmations=total_confirmations,
+                           total_disapprovals=total_disapprovals,
+                           total_not_verified=total_not_verified,
                            )
 
 
