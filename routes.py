@@ -23,6 +23,8 @@ def home():
     user["area"] = db.Areas.find_one({"_id": ObjectId(user.get("area_id"))}).get("area") if user.get("area_id") else None
     user["scheme"] = db.Schemes.find_one({"_id": ObjectId(user.get("scheme_id"))}).get("scheme") if user.get("scheme_id") else None
 
+    areas_count = len(list(db.Areas.find({"umbrella_id": user.get("umbrella_id")})))
+
     customer_query = {"umbrella_id": user.get("umbrella_id")}
     
     if user.get("area_id") is None and user.get("scheme_id") is None:
@@ -46,7 +48,7 @@ def home():
         villages_count = len(villages)
         customer_query["scheme_id"] = user.get("scheme_id")
 
-    schemes_customers = defaultdict(lambda: {"number_of_customers": 0, "ms_customers": 0, "es_customers": 0, "bp_customers": 0})
+    schemes_customers = defaultdict(lambda: {"number_of_customers": 0, "ms_customers": 0, "es_customers": 0, "bp_customers": 0, "active_customers": 0, "inactive_customers": 0})
     customers = list(db.Customers.find(customer_query))
     customers_count = len(customers)
 
@@ -64,6 +66,9 @@ def home():
     ms_customers = 0
     es_customers = 0
     bp_customers = 0
+
+    active_customers = 0
+    inactive_customers = 0
 
     for c in customers:
         if c.get("status") == "applied":
@@ -93,6 +98,11 @@ def home():
             else:
                 ms_customers += 1
 
+        if c.get("active_status") == "inactive":
+            inactive_customers += 1
+        else:
+            active_customers += 1
+
         scheme_id = c.get("scheme_id")
         if not scheme_id:
             continue
@@ -105,6 +115,11 @@ def home():
             schemes_customers[scheme_id_string]["bp_customers"] += 1
         else:
             schemes_customers[scheme_id_string]["ms_customers"] += 1
+
+        if c.get("active_status") == "inactive":
+            schemes_customers[scheme_id_string]["inactive_customers"] += 1
+        else:
+            schemes_customers[scheme_id_string]["active_customers"] += 1
 
     for k, v in schemes_customers.items():
         v["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == str(k)), "Unknown Scheme")
@@ -148,6 +163,7 @@ def home():
                            total_confirmations=total_confirmations,
                            total_disapprovals=total_disapprovals,
                            total_not_verified=total_not_verified,
+                           areas_count=areas_count,
                            )
 
 
@@ -1336,11 +1352,12 @@ def edit_customer():
         update_data["first_meter_reading"] = request.form.get("first_meter_reading")
 
     if 'customer_reference' in request.form:
-        existing_customer = db.Customers.find_one({"customer_reference": str(request.form.get("customer_reference"))})
-        if existing_customer and str(existing_customer.get("_id")) != customer_id:
+        existing_customer = db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "customer_reference": str(request.form.get("customer_reference"))})
+        if existing_customer and str(existing_customer.get("_id")) != str(customer_id):
             flash("Customer reference already exists!", "danger")
             return redirect(url_for("new_connections"))
-        update_data["customer_reference"] = str(request.form.get("customer_reference"))
+        else:
+            update_data["customer_reference"] = str(request.form.get("customer_reference"))
 
     if 'transaction_id' in request.form:
         if request.form.get("transaction_id") != customer.get("transaction_id"):
@@ -2097,6 +2114,8 @@ def customer_report_download():
 
 @app.route("/upload_customers", methods=["POST"])
 def upload_customers():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
     file = request.files.get("customers_file")
 
     if not file or file.filename == "":
@@ -2123,14 +2142,15 @@ def upload_customers():
         flash("Customer upload file must have 'MeterRef', 'MeterSerial', 'CustomerRef', 'Name', 'Phone', 'VillageName', 'SchemeName', 'UmbrellaName', 'CustomerType', and 'CreationDate' as the first ten columns respectively!", "danger")
         return redirect(url_for("new_connections"))
 
-    schemes = list(db.Schemes.find())
+    schemes = list(db.Schemes.find({"umbrella_id": str(user.get("umbrella_id"))}))
     umbrellas = list(db.Umbrellas.find())
-    villages = list(db.Villages.find())
+    villages = list(db.Villages.find({"umbrella_id": str(user.get("umbrella_id"))}))
     
     cust_no = 0
     es_no = 0
     ms_no = 0
-    
+    bp_no = 0
+
     for row in df.itertuples(index=False):
         cust_no += 1
         meter_ref = row[0]
@@ -2153,9 +2173,9 @@ def upload_customers():
         name = str(name).strip().upper() if not pd.isna(name) else None
         contact = str(phone).strip() if not pd.isna(phone) else None
         status = "confirmed"
-        if "ES-" in str(name) or "ES -" in str(name) or "es-" in str(name) or "es -" in str(name) or str(name).startswith("ES ") or str(name).startswith("es "):
+        if str(name.lower()).startswith("es-") or str(name.lower()  ).startswith("es ") or str(name.lower()).startswith("es -"):
             type = "ES"
-        elif "BP-" in str(name) or "BP -" in str(name) or "bp-" in str(name) or "bp -" in str(name) or str(name).startswith("BP ") or str(name).startswith("bp "):
+        elif str(name.lower()).startswith("bp-") or str(name.lower()).startswith("bp ") or str(name.lower()).startswith("bp -"):
             type = "BP"
         else:
             type = "MS"
@@ -2167,49 +2187,48 @@ def upload_customers():
         creation_date_formatted = pd.to_datetime(creation_date)
 
         # umbrella info
-        umbrella = next((u for u in umbrellas
-                        if (u.get("umbrella", "").lower() == str(umbrella_name).lower()
-                        or u.get("umbrella", "").split(" ")[0].lower() == str(umbrella_name).split(" ")[0].lower()
-                        )),
-                        None
-        )
+        umbrella_id = None
+        for u in umbrellas:
+            if str(u.get("umbrella", "").split(" ")[0].lower()) == str(umbrella_name).split(" ")[0].lower():
+                umbrella_id = str(u.get("_id"))
+                break
 
-        if umbrella is not None:
-            umbrella_id = str(umbrella.get("_id"))
-        else:
-            db.Umbrellas.insert_one({"umbrella": str(umbrella_name).strip().upper()})
-            umbrellas = list(db.Umbrellas.find())
-            umbrella = next((u for u in umbrellas if u.get("umbrella", "").lower() == str(umbrella_name).lower()), None)
-            umbrella_id = str(umbrella.get("_id"))
-
+        if umbrella_id is None:
+            flash("Umbrella not found in the database, make sure the umbrella 'NAME' for your uploads in your upload is the same as your umbrella", "error")
+            return redirect(url_for("new_connections"))
+        
         # checking if customer exists
         existing_customer = db.Customers.find_one({
             "customer_reference": {"$in": [customer_reference, str(customer_reference)]},
-            "umbrella_id": str(umbrella.get("_id"))
+            "umbrella_id": str(umbrella_id)
         })
 
         if existing_customer:
             continue
         
         # scheme info
-        scheme = next((s for s in schemes if s.get("scheme", "").lower() == str(scheme_name).lower() and s.get("umbrella_id") == umbrella_id), None)
-        if scheme is not None:
-            scheme_id = str(scheme.get("_id"))
-        else:
-            db.Schemes.insert_one({"scheme": str(scheme_name).strip().upper(), "umbrella_id": str(umbrella_id)})
-            schemes = list(db.Schemes.find())
-            scheme = next((s for s in schemes if s.get("scheme", "").lower() == str(scheme_name).lower() and s.get("umbrella_id") == str(umbrella_id)), None)
-            scheme_id = str(scheme.get("_id"))
+        scheme_id = None
+        for s in schemes:
+            if str(s.get("scheme", "")).strip().lower() == str(scheme_name).strip().lower() and str(s.get("umbrella_id")) == str(umbrella_id):
+                scheme_id = str(s.get("_id"))
+                break
+
+        if scheme_id is None:
+            result = db.Schemes.insert_one({"scheme": str(scheme_name).strip().upper(), "umbrella_id": str(umbrella_id)})
+            scheme_id = str(result.inserted_id)
+            schemes = list(db.Schemes.find({"umbrella_id": str(umbrella_id)}))
 
         #village info
-        village = next((v for v in villages if v.get("village", "").lower() == str(village_name).lower() and v.get("scheme_id") == str(scheme_id)), None)
-        if village is not None:
-            village_id = str(village.get("_id"))
-        else:
-            db.Villages.insert_one({"village": str(village_name).strip().upper(), "scheme_id": str(scheme_id), "umbrella_id": str(umbrella_id)})
-            villages = list(db.Villages.find())
-            village = next((v for v in villages if v.get("village", "").lower() == str(village_name).lower() and v.get("scheme_id") == str(scheme_id)), None)
-            village_id = str(village.get("_id")) if village else None
+        village_id = None
+        for v in villages:
+            if str(v.get("village", "")).strip().lower() == str(village_name).strip().lower() and str(v.get("scheme_id")) == str(scheme_id) and str(v.get("umbrella_id")) == str(umbrella_id):
+                village_id = str(v.get("_id"))
+                break
+
+        if village_id is None:
+            result = db.Villages.insert_one({"village": str(village_name).strip().upper(), "scheme_id": str(scheme_id), "umbrella_id": str(umbrella_id)})
+            village_id = str(result.inserted_id)
+            villages = list(db.Villages.find({"umbrella_id": str(umbrella_id)}))
 
         new_customer = {
             "name": name,
@@ -2219,7 +2238,7 @@ def upload_customers():
             "umbrella_id": umbrella_id,
             "status": status,
             "connection_date": creation_date_formatted,
-            "customer_reference": customer_reference,
+            "customer_reference": str(customer_reference),
             "type": type,
             "meter_serial": meter_serial,
             "transaction_id": secrets.token_hex(16),
@@ -2242,10 +2261,9 @@ def upload_customers():
             bp_no += 1
         elif type == "MS":
             ms_no += 1
-        
 
-    session.pop("schemes_customers", None)
-
+        print(ms_no+es_no+bp_no)
+         
     flash(f"{cust_no} Customers processed!, {es_no} ES, {ms_no} MS, {bp_no} BP, {es_no + ms_no + bp_no} uploaded", "success")
     return redirect(url_for("new_connections"))
 
@@ -2647,7 +2665,7 @@ def download_bp_reports():
 def bp_customer_history():
     customer_id = request.form.get("customer_id")
     customer_reference = request.form.get("customer_reference")
-    customer = db.Customers.find_one({"_id": ObjectId(customer_id), "customer_reference": int(customer_reference)})
+    customer = db.Customers.find_one({"_id": ObjectId(customer_id), "customer_reference": {"$in": [str(customer_reference), int(customer_reference)]}})
 
     customer["bpb"] = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
     customer["scheme"] = db.Schemes.find_one({"_id": ObjectId(customer.get("scheme_id"))}).get("scheme") if customer.get("scheme_id") else 'N/A'
@@ -2920,7 +2938,7 @@ def ms_customer_history():
     if request.method == "POST":
         customer_id = request.form.get("customer_id")
         customer_reference = request.form.get("customer_reference")
-        customer = db.Customers.find_one({"_id": ObjectId(customer_id), "customer_reference": str(customer_reference)})
+        customer = db.Customers.find_one({"_id": ObjectId(customer_id), "customer_reference": {"$in": [str(customer_reference), int(customer_reference)]}})
 
         customer["bpb"] = sorted(customer.get("bpb", []), key=lambda x: x.get("period"))
         customer["scheme"] = db.Schemes.find_one({"_id": ObjectId(customer.get("scheme_id"))}).get("scheme") if customer.get("scheme_id") else 'N/A'
