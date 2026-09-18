@@ -25,7 +25,9 @@ def home():
 
     areas_count = len(list(db.Areas.find({"umbrella_id": user.get("umbrella_id")})))
 
-    customer_query = {"umbrella_id": user.get("umbrella_id")}
+    customer_query, connection_totals_query, applicant_totals_query = {"umbrella_id": user.get("umbrella_id")}, {"umbrella_id": user.get("umbrella_id")}, {"umbrella_id": user.get("umbrella_id")}
+    applicant_totals_query = {"umbrella_id": user.get("umbrella_id")}
+    connection_totals_query = {"umbrella_id": user.get("umbrella_id")}
     
     if user.get("area_id") is None and user.get("scheme_id") is None:
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
@@ -36,17 +38,23 @@ def home():
     if user.get("area_id"):
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
         scheme_count = len(schemes)
-        villages_count = len(villages)
         scheme_ids = [str(scheme["_id"]) for scheme in schemes]
         villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}))
+        villages_count = len(villages)
+
         customer_query["scheme_id"] = {"$in": scheme_ids}
+        connection_totals_query["scheme_id"] = {"$in": scheme_ids}
+        applicant_totals_query["scheme_id"] = {"$in": scheme_ids}
 
     if user.get("scheme_id"):        
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(user.get("scheme_id"))}))
         villages = list(db.Villages.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}))
         scheme_count = len(schemes)
         villages_count = len(villages)
+
         customer_query["scheme_id"] = user.get("scheme_id")
+        connection_totals_query["scheme_id"] = user.get("scheme_id")
+        applicant_totals_query["scheme_id"] = user.get("scheme_id")
 
     schemes_customers = defaultdict(lambda: {"number_of_customers": 0, "ms_customers": 0, "es_customers": 0, "bp_customers": 0, "active_customers": 0, "inactive_customers": 0})
     customers = list(db.Customers.find(customer_query))
@@ -123,17 +131,20 @@ def home():
 
     for k, v in schemes_customers.items():
         v["scheme"] = next((s.get("scheme") for s in schemes if str(s.get("_id")) == str(k)), "Unknown Scheme")
-
     schemes_customers_list = sorted(list(schemes_customers.values()), key=lambda x: x["scheme"].lower())
 
-    total_applicants = application_count + survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_disapprovals + total_not_verified
-    total_surveys = survey_count + approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_disapprovals + total_not_verified
-    total_approvals = approval_count + paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_not_verified
-    total_payments = paid_count + verified_count + pending_connection_count + connected_count + confirmed_count + total_not_verified
-    total_verifications = verified_count + pending_connection_count + connected_count + confirmed_count
-    total_materials_issued = pending_connection_count + connected_count + confirmed_count
-    total_connections = connected_count + confirmed_count
-    total_confirmations = confirmed_count
+    if 'dashboard_new_connections_cumulative_totals_selected_year' in session:
+        year = int(session.get('dashboard_new_connections_cumulative_totals_selected_year'))
+        first_date_of_year = datetime.datetime(year, 1, 1)
+        last_date_of_year = datetime.datetime(year, 12, 31)
+        applicant_totals_query["date_applied"] = {"$gte": first_date_of_year, "$lte": last_date_of_year}
+        connection_totals_query["connection_date"] = {"$gte": first_date_of_year, "$lte": last_date_of_year}
+
+    print("Applicant Totals Query:", applicant_totals_query)
+    print("Connection Totals Query:", connection_totals_query)
+    applicant_totals_count = db.Customers.count_documents(applicant_totals_query)
+    connection_totals_count = db.Customers.count_documents(connection_totals_query)
+
 
     return render_template("home.html", 
                            section="home",
@@ -153,18 +164,19 @@ def home():
                            es_customers=es_customers,
                            bp_customers=bp_customers,
                            schemes_customers_list=schemes_customers_list,
-                           total_applicants=total_applicants,
-                           total_surveys=total_surveys,
-                           total_approvals=total_approvals,
-                           total_payments=total_payments,
-                           total_verifications=total_verifications,
-                           total_materials_issued=total_materials_issued,
-                           total_connections=total_connections,
-                           total_confirmations=total_confirmations,
                            total_disapprovals=total_disapprovals,
                            total_not_verified=total_not_verified,
                            areas_count=areas_count,
+                           applicant_totals_count=applicant_totals_count,
+                           connection_totals_count=connection_totals_count,
+                           today=datetime.datetime.now()
                            )
+
+@app.route('/set_dashboard_new_connections_cumulative_totals_selected_year', methods=["POST"])
+def set_dashboard_new_connections_cumulative_totals_selected_year():
+    selected_year = request.form.get('year')
+    session['dashboard_new_connections_cumulative_totals_selected_year'] = int(selected_year)
+    return redirect(url_for('home'))
 
 
 
@@ -1148,7 +1160,7 @@ def set_es_reports_scheme():
 def add_customer():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     name = request.form.get("name")
-    name = str(name).strip().upper()  # Convert to uppercase for consistency
+    name = str(name).strip().upper()
     contact = request.form.get("contact")
     scheme_id = request.form.get("scheme_id")
     area_id = db.Schemes.find_one({"_id": ObjectId(scheme_id)}).get("area_id") if scheme_id else None
