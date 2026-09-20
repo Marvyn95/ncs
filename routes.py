@@ -27,7 +27,7 @@ def home():
 
     customer_query, connection_totals_query, applicant_totals_query = {"umbrella_id": user.get("umbrella_id")}, {"umbrella_id": user.get("umbrella_id")}, {"umbrella_id": user.get("umbrella_id")}
     applicant_totals_query = {"umbrella_id": user.get("umbrella_id")}
-    connection_totals_query = {"umbrella_id": user.get("umbrella_id")}
+    connection_totals_query = {"umbrella_id": user.get("umbrella_id"), "status": {"$in": ["connected", "confirmed"]}}
     
     if user.get("area_id") is None and user.get("scheme_id") is None:
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
