@@ -200,7 +200,7 @@
     <tbody style="font-size:0.70rem;">
       {% for customer in customers %}
       <tr class="table-light my-1" style="font-size:0.65rem;">
-        <td class="fw-semibold text-truncate {% if customer.active_status == 'inactive' %}text-danger{% endif %}" style="max-width: 120px;">{{ customer.name or '-' }}</td>
+        <td class="fw-semibold text-truncate {% if customer.active_status == 'inactive' %}text-danger{% endif %}" style="max-width: 120px;">{{ (customer.name or '-') | truncate(24, True, '...') }}</td>
         <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 120px;">{{ customer.customer_reference or '-' }}</td>
         <td class="fw-semibold text-muted text-truncate" style="max-width: 100px;">{{ customer.type or '-' }}</td>
         <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 100px;">

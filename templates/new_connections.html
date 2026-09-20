@@ -345,7 +345,7 @@
       <tbody class="table-light" style="font-size:0.65rem;">
         {% for customer in customers %}
           <tr class=" table-light">
-            <td class="fw-semibold text-truncate">{{ customer.name or '-' }}</td>
+            <td class="fw-semibold text-truncate">{{ (customer.name or '-') | truncate(24, True, '...') }} </td>
             <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.type or '-' }}</td>
             <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.contact or '-' }}</td>
             <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.scheme or '-' }}</td>
