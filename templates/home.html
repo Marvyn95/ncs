@@ -365,9 +365,9 @@
                 <strong class="d-block h6 fw-bold mb-0">New Connection Annual Totals</strong>
                 <small class="text-muted custom-small">Annual Connection performance</small>
               </div>
-              <form method="POST" class="d-flex align-items-center gap-1" action="{{ url_for('set_dashboard_new_connections_cumulative_totals_selected_year') }}">
-                <label for="yearSelect" class="custom-small text-muted mb-0 me-1">Year:</label>
-                <select id="yearSelect" name="year" class="form-select form-select-sm py-0 custom-small fw-bold border-secondary-subtle" onchange="this.form.submit()">
+              <form method="POST" class="d-flex align-items-center gap-1 flex-shrink-0" action="{{ url_for('set_dashboard_new_connections_cumulative_totals_selected_year') }}">
+                <label for="yearSelect" class="custom-small text-muted mb-0 me-1 text-nowrap">Year:</label>
+                <select id="yearSelect" name="year" class="form-select form-select-sm py-0 custom-small fw-bold border-secondary-subtle flex-shrink-0" style="width: 5rem; min-width: 5rem;" onchange="this.form.submit()">
                   {% set current_year = today.year %}
                   {% for y in range(current_year - 5, current_year + 1)|reverse %}
                   <option value="{{ y }}" {% if y == session.get('dashboard_new_connections_cumulative_totals_selected_year')|int %}selected{% endif %}>
