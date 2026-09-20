@@ -250,24 +250,24 @@
 
 
 
-<div class="row mt-2 align-items-start">
+<div class="row mt-1 align-items-start g-2">
 
-  <div class="col-3">
-    <div class="align-items-center">
+  <div class="col-6 col-md-3">
+    <div class="d-flex align-items-center">
       <!-- <small class="text-muted">Total: </small> -->
       <span class="fw-semibold">{{ total_customers }}</span>
     </div>
   </div>
 
-  <div class="col-3">
-    <div class="align-items-center">
+  <div class="col-6 col-md-3">
+    <div class="d-flex align-items-center">
       <small class="text-muted">Paid Sum: </small>
       <span class="fw-semibold">{{ "{:,}".format(overall_sum_paid|int) if overall_sum_paid else '0' }}</span>
     </div>
   </div>
 
-  <div class="col-3">
-    <ul class="pagination pagination-sm justify-content-start align-items-center mb-0" >
+  <div class="col-12 col-md-6">
+    <ul class="pagination pagination-sm flex-wrap justify-content-start align-items-center mb-0 gap-1">
       <!-- Previous button -->
       {% if page > 1 %}
         <li class="page-item">
