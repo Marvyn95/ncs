@@ -182,8 +182,8 @@
 </div>
 
 <div class="table-responsive" style="overflow-y: auto; overscroll-behavior: contain;">
-  <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.70rem;">
-    <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa; font-size:0.70rem;">
+  <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.65rem;">
+    <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa; font-size:0.75rem;">
       <tr class="table-secondary">
         <th>Customer</th>
         <th class="d-none d-lg-table-cell">Reference No.</th>
@@ -197,7 +197,7 @@
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody style="font-size:0.70rem;">
+    <tbody style="font-size:0.65rem;">
       {% for customer in customers %}
       <tr class="table-light my-1" style="font-size:0.65rem;">
         <td class="fw-semibold text-truncate {% if customer.active_status == 'inactive' %}text-danger{% endif %}" style="max-width: 120px;">{{ (customer.name or '-') | truncate(24, True, '...') }}</td>
