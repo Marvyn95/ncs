@@ -3,56 +3,177 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NCS System Login</title>
+  <title>New Connection System - MWUWS</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f3d6b 0%, #1e5ba8 50%, #0d6efd 100%);
+      color: white;
+      min-height: 100vh;
+    }
+    .charter-card {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+  </style>
 </head>
-<body class="bg-light d-flex justify-content-center align-items-center vh-100">
+<body class="d-flex flex-column min-vh-100 justify-content-between">
 
-  <!-- Login Card -->
-  <div class="card shadow-lg rounded-4 p-4" style="max-width: 400px; width: 100%;">
-    
-    <!-- Logo / Title -->
-    <div class="text-center mb-4">
-      <i class="bi bi-people-fill display-4 text-primary mb-2"></i>
-      <h2 class="fw-bold text-primary">NCS</h2>
-      <p class="text-muted small">Sign in to continue</p>
+  <!-- Header -->
+  <header class="py-2 px-3 bg-black bg-opacity-20 border-bottom border-light border-opacity-25">
+    <div class="container d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-droplet-fill text-warning fs-4"></i>
+        <span class="fw-bold fs-5 text-white tracking-wide">NEW CONNECTION SYSTEM</span>
+      </div>
+      <span class="badge bg-warning text-dark px-2 py-1 rounded-pill small fw-semibold d-none d-md-inline">
+        Ministry of Water and Environment
+      </span>
     </div>
+  </header>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  <!-- Main Content -->
+  <main class="container my-auto py-3">
+    <div class="row align-items-center justify-content-center g-4">
+      
+      <!-- Left Column: Login Card -->
+      <div class="col-lg-4 col-md-7">
+        <div class="card shadow-lg border-0 rounded-4 p-4 text-dark bg-white">
+          
+          <div class="text-center mb-3">
+            <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle p-2 mb-2">
+              <i class="bi bi-person-circle fs-2"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-0">Sign In</h4>
+            <p class="text-muted small mb-0">Access The Portal Here</p>
           </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
 
-    <!-- Login Form -->
-    <form method="POST" action="{{ url_for('login') }}">
-      <div class="mb-3">
-        <label for="email" class="form-label fw-semibold">Email</label>
-        <input type="email" class="form-control rounded-3" id="email" name="email" placeholder="Enter your email" required>
+          <!-- Flash Messages -->
+          <!-- {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show p-2 small mb-2" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close p-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %} -->
+
+          <!-- Form -->
+          <form method="POST" action="{{ url_for('login') }}">
+            <div class="mb-3">
+              <label for="email" class="form-label fw-semibold small mb-1">Email Address</label>
+              <input type="email" class="form-control form-control-sm rounded-3" id="email" name="email" placeholder="Enter your email" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label fw-semibold small mb-1">Password</label>
+              <input type="password" class="form-control form-control-sm rounded-3" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-sm w-100 rounded-3 mb-2 py-2 fw-semibold">
+              Sign In <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+
+            <!-- <div class="text-center">
+              <p class="small mb-0 text-muted">Don't have an account? 
+                <a href="{{ url_for('register') }}" class="text-primary fw-semibold text-decoration-none">Sign Up</a>
+              </p>
+            </div> -->
+          </form>
+
+        </div>
       </div>
 
-      <div class="mb-3">
-        <label for="password" class="form-label fw-semibold">Password</label>
-        <input type="password" class="form-control rounded-3" id="password" name="password" placeholder="Enter your password" required>
+      <!-- Right Column: MWUWS Identity, Onboarding & Customer Charter -->
+      <div class="col-lg-8 text-white">
+        <div class="ps-lg-2">
+          
+          <!-- Prominent Organization Title -->
+          <h2 class="fw-bold mb-1 text-uppercase text-warning fs-3">
+            MID-WESTERN UMBRELLA OF WATER AND SANITATION
+          </h2>
+          
+          <h5 class="fw-semibold mb-2 text-white-50 fs-6">NCS - A New Customer Service Onboarding Platform</h5>
+          
+          <p class="small opacity-90 mb-3">
+            Designed to support new applicant onboarding through the organization's new connection process, manage customers under specialized programs aimed at ensuring equitable access to water services for pro-poor communities, and facilitate effective customer debt management.
+          </p>
+
+          <!-- Vision & Mission Compact Row -->
+          <div class="row g-2 mb-3">
+            <div class="col-sm-6">
+              <div class="p-2 px-3 rounded-3 charter-card">
+                <h6 class="fw-bold text-warning mb-1 small"><i class="bi bi-eye-fill me-1"></i>Vision</h6>
+                <p class="mb-0 opacity-90" style="font-size: 0.78rem;">
+                  To be the lead provider of safe and sustainable water and sanitation services in Uganda.
+                </p>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="p-2 px-3 rounded-3 charter-card">
+                <h6 class="fw-bold text-warning mb-1 small"><i class="bi bi-bullseye me-1"></i>Mission</h6>
+                <p class="mb-0 opacity-90" style="font-size: 0.78rem;">
+                  To provide quality and affordable water and sanitation services with utmost customer satisfaction.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Customer Charter Guarantees -->
+          <h6 class="fw-bold text-warning mb-2 small text-uppercase"><i class="bi bi-shield-check me-1"></i>Our Customer Charter Commitments</h6>
+          <div class="row g-2">
+            <div class="col-6 col-sm-4">
+              <div class="p-2 rounded-3 charter-card h-100">
+                <h6 class="fw-bold text-white mb-1" style="font-size: 0.8rem;"><i class="bi bi-clock-history text-warning me-1"></i>14-Day Connection</h6>
+                <p class="mb-0 text-white-50" style="font-size: 0.73rem;">Installed within 14 days of application.</p>
+              </div>
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="p-2 rounded-3 charter-card h-100">
+                <h6 class="fw-bold text-white mb-1" style="font-size: 0.8rem;"><i class="bi bi-patch-check text-warning me-1"></i>Water Quality</h6>
+                <p class="mb-0 text-white-50" style="font-size: 0.73rem;">Strictly meeting national drinking water standards.</p>
+              </div>
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="p-2 rounded-3 charter-card h-100">
+                <h6 class="fw-bold text-white mb-1" style="font-size: 0.8rem;"><i class="bi bi-headset text-warning me-1"></i>2-Day Response</h6>
+                <p class="mb-0 text-white-50" style="font-size: 0.73rem;">Customer inquiries addressed within 2 days.</p>
+              </div>
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="p-2 rounded-3 charter-card h-100">
+                <h6 class="fw-bold text-white mb-1" style="font-size: 0.8rem;"><i class="bi bi-phone text-warning me-1"></i>Affordable Bills</h6>
+                <p class="mb-0 text-white-50" style="font-size: 0.73rem;">Ensuring monthly water bills remain affordable for all customers, with various payment options available through MTN/Airtel (*272#) & Centenary Bank.</p>
+              </div>
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="p-2 rounded-3 charter-card h-100">
+                <h6 class="fw-bold text-white mb-1" style="font-size: 0.8rem;"><i class="bi bi-megaphone text-warning me-1"></i>Supply Updates</h6>
+                <p class="mb-0 text-white-50" style="font-size: 0.73rem;">Keeping customers informed of service interruptions.</p>
+              </div>
+            </div>
+            <div class="col-6 col-sm-4">
+              <div class="p-2 rounded-3 charter-card h-100">
+                <h6 class="fw-bold text-white mb-1" style="font-size: 0.8rem;"><i class="bi bi-heart text-warning me-1"></i>Customer Equity</h6>
+                <p class="mb-0 text-white-50" style="font-size: 0.73rem;">Services customized for everyone in our area.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
 
-      <button type="submit" class="btn btn-primary w-100 rounded-3 mb-3">Sign In</button>
+    </div>
+  </main>
 
-      <div class="text-center">
-        <p class="small mb-0">Don't have an account? 
-          <a href="{{ url_for('register') }}" class="text-primary fw-semibold text-decoration-none">Sign Up</a>
-        </p>
-      </div>
-    </form>
-
-  </div>
+  <!-- Footer -->
+  <footer class="py-2 text-center text-white-50 border-top border-light border-opacity-25 bg-black bg-opacity-20" style="font-size: 0.75rem;">
+    <p class="mb-0">&copy; {{ now().year if now else '2026' }} Mid-Western Umbrella of Water and Sanitation (MWUWS)</p>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
