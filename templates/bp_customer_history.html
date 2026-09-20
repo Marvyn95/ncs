@@ -3,39 +3,47 @@
 {% block content %}
 <div class="w-100 h-100 d-flex flex-column overflow-hidden">
 
-  <div class="row align-items-start mt-4">
+  <!-- Header Section -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 flex-shrink-0">
     
-    <div class="col-3">
+    <!-- Heading Section (Never wraps) -->
+    <div class="text-nowrap flex-shrink-0 me-3">
       <h5 class="fw-bold mb-0 mt-0">
         <span class="mb-1 text-primary fw-semibold">{{ customer.name }}</span>
       </h5>
-      <p class="text-muted">customer payment history</p>
+      <p class="text-muted mb-0 small">customer payment history</p>
     </div>
 
-    <div class="col-8 text-end">
-      <form method="post" action="{{ url_for('bp_customer_report_download') }}" class="d-inline">
-        <input type="hidden" name="customer_id" value="{{ customer._id }}">
-        <input type="hidden" name="umbrella_id" value="{{ customer.umbrella_id }}">
-        <button type="submit" class="btn btn-sm btn-primary">
-          <i class="bi bi-download"></i> Download Report
-        </button>
-      </form>
-      <a href="{{ url_for('bp_reports') }}" class="btn btn-sm btn-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Back to Reports
-      </a>
+    <!-- Action Buttons Container (Left-aligned on mobile, right-aligned on desktop) -->
+    <div class="d-flex flex-wrap align-items-center justify-content-start justify-content-sm-end gap-2 flex-grow-1">
+      <div class="d-flex flex-wrap gap-2 align-items-center me-auto ms-sm-auto">
+        <form method="post" action="{{ url_for('bp_customer_report_download') }}" class="d-inline">
+          <input type="hidden" name="customer_id" value="{{ customer._id }}">
+          <input type="hidden" name="umbrella_id" value="{{ customer.umbrella_id }}">
+          <button type="submit" class="btn btn-sm btn-primary text-nowrap d-inline-flex align-items-center">
+            <i class="bi bi-download me-1"></i> Download Report
+          </button>
+        </form>
+        <a href="{{ url_for('bp_reports') }}" class="btn btn-sm btn-secondary text-nowrap d-inline-flex align-items-center">
+          <i class="bi bi-arrow-left me-1"></i> Back to Reports
+        </a>
+      </div>
     </div>
 
- </div>
+  </div>
 
-  <div class="row mb-3">
+  <!-- Customer Details Card -->
+  <div class="row mb-3 flex-shrink-0">
     <div class="col-12">
       <div class="card border-0 shadow-sm bg-opacity-10 mb-2">
         <div class="card-body py-2 px-3">
-          <div class="row row-cols-1 row-cols-md-4 g-2 align-items-center" style="font-size:0.8rem;">
+          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-2 align-items-center" style="font-size:0.8rem;">
+            
             <div class="col">
               <span class="fw-semibold text-dark">Customer Reference:</span>
               <span class="text-primary">{{ customer.customer_reference or '-' }}</span>
             </div>
+            
             <div class="col">
               <span class="fw-semibold text-dark">Connection Date:</span>
               <span class="text-primary">
@@ -46,28 +54,17 @@
                 {% endif %}
               </span>
             </div>
+            
             <div class="col">
               <span class="fw-semibold text-dark">Scheme:</span>
               <span class="text-primary">{{ customer.scheme or '-' }}</span>
             </div>
+            
             <div class="col">
               <span class="fw-semibold text-dark">Village:</span>
               <span class="text-primary">{{ customer.village or '-' }}</span>
             </div>
-            <!-- <div class="col">
-              <span class="fw-semibold text-dark">Payment Period:</span>
-              <span class="text-primary">{{ customer.payment_period or '-' }}</span> months
-            </div> -->
-            <!-- <div class="col">
-              <span class="fw-semibold text-dark">Monthly Installment:</span>
-              <span class="text-primary">
-                {% if customer.connection_fee and customer.payment_period %}
-                  {{ "{:,}".format((customer.amount_due|int // customer.payment_period|int)) }} ugx
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-            </div> -->
+            
             <div class="col">
               <span class="fw-semibold text-dark">Connection Fee:</span>
               <span class="text-primary">
@@ -78,26 +75,7 @@
                 {% endif %}
               </span>
             </div>
-            <!-- <div class="col">
-              <span class="fw-semibold text-dark">Initial Clearance:</span>
-              <span class="text-primary">
-                {% if customer.amount_paid %}
-                  {{ "{:,}".format(customer.amount_paid|int) }} ugx
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-            </div> -->
-            <!-- <div class="col">
-              <span class="fw-semibold text-dark">Initial Deficit:</span>
-              <span class="text-primary">
-                {% if customer.connection_fee and customer.amount_paid %}
-                  {{ "{:,}".format(customer.connection_fee|int - customer.amount_paid|int) }} ugx
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-            </div> -->
+            
             <div class="col">
               <span class="fw-semibold text-dark">Total Debt:</span>
               <span class="text-primary">
@@ -108,6 +86,7 @@
                 {% endif %}
               </span>
             </div>
+            
             <div class="col">
               <span class="fw-semibold text-dark">Contact:</span>
               <span class="text-primary">
@@ -117,8 +96,11 @@
                   -
                 {% endif %}
               </span>
+            </div>
+
           </div>
-          <div class="row">
+
+          <div class="row mt-2">
             <div class="col text-end">
               <span class="small text-muted">As of {{ date.strftime('%d %b %Y') }}</span>
             </div>
@@ -128,64 +110,62 @@
     </div>
   </div>
 
-  <!-- customer table -->
-  <div class="table-responsive" style="overflow-y: auto; overscroll-behavior: contain;">
+  <!-- Customer Table -->
+  <div class="table-responsive flex-grow-1" style="overflow-y: auto; overscroll-behavior: contain;">
     <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.8rem;">
       <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-secondary">
           <th>Month</th>
-          <th>Consumption (m3)</th>
+          <th>Consumption</th>
           <th>Bill</th>
           <th>Payment</th>
         </tr>
       </thead>
       <tbody>
         {% if customer.bpb %}
-        {% for bpb in customer.bpb %}
-        <tr class="table-light my-1" style="font-size:0.65rem;">
-          <td class="fw-semibold text-truncate" style="max-width: 100px;">
-            {% if bpb.period %}
-              {{ bpb.period.strftime('%b %Y') }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
+          {% for bpb in customer.bpb %}
+          <tr class="table-light my-1" style="font-size:0.65rem;">
+            <td class="fw-semibold text-truncate" style="max-width: 100px;">
+              {% if bpb.period %}
+                {{ bpb.period.strftime('%b %Y') }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
 
-          <td class="text-truncate" style="max-width: 100px;">
-            {% if bpb.consumption %}
-              {{ "{:,}".format(bpb.consumption|int) }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
+            <td class="text-truncate" style="max-width: 100px;">
+              {% if bpb.consumption %}
+                {{ "{:,}".format(bpb.consumption|int) }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
 
-          <td class="text-truncate" style="max-width: 100px;">
-            {% if bpb.bill %}
-              {{ "{:,}".format(bpb.bill|int) }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
-          <td class="text-truncate" style="max-width: 100px;">
-            {% if bpb.payment %}
-              {{ "{:,}".format(bpb.payment|int) }}
-            {% else %}
-              -
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
+            <td class="text-truncate" style="max-width: 100px;">
+              {% if bpb.bill %}
+                {{ "{:,}".format(bpb.bill|int) }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td class="text-truncate" style="max-width: 100px;">
+              {% if bpb.payment %}
+                {{ "{:,}".format(bpb.payment|int) }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
         {% else %}
-        <tr>
-          <td colspan="4" class="text-center text-muted">No payment history found.</td>
-        </tr>
+          <tr>
+            <td colspan="4" class="text-center text-muted py-3">No payment history found.</td>
+          </tr>
         {% endif %}
       </tbody>
     </table>
   </div>
 
 </div>
-
-
-
 {% endblock %}

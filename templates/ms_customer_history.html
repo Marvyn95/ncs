@@ -3,107 +3,113 @@
 {% block content %}
 <div class="w-100 h-100 d-flex flex-column overflow-hidden">
 
-  <!-- Header Section -->
-  <div class="row align-items-start mt-4 flex-shrink-0">
-    <div class="col-3">
-      <h5 class="fw-bold mb-0 mt-0">
-        <span class="mb-1 text-primary fw-semibold">{{ customer.name }}</span>
-      </h5>
-      <p class="text-muted">customer payment history</p>
-    </div>
+<!-- Header Section -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 flex-shrink-0">
+  
+  <!-- Heading Section (Never wraps) -->
+  <div class="text-nowrap flex-shrink-0 me-3">
+    <h5 class="fw-bold mb-0 mt-0">
+      <span class="mb-1 text-primary fw-semibold">{{ customer.name }}</span>
+    </h5>
+    <p class="text-muted mb-0 small">customer payment history</p>
+  </div>
 
-    <div class="col-9 text-end">
+  <!-- Action Buttons Container (Left-aligned on mobile, right-aligned on desktop) -->
+  <div class="d-flex flex-wrap align-items-center justify-content-start justify-content-sm-end gap-2 flex-grow-1">
+    <div class="d-flex flex-wrap gap-2 align-items-center me-auto ms-sm-auto">
       <form method="post" action="{{ url_for('ms_customer_report_download') }}" class="d-inline">
         <input type="hidden" name="customer_id" value="{{ customer._id }}">
         <input type="hidden" name="umbrella_id" value="{{ customer.umbrella_id }}">
-        <button type="submit" class="btn btn-sm btn-primary">
-          <i class="bi bi-download"></i> Download Report
+        <button type="submit" class="btn btn-sm btn-primary text-nowrap d-inline-flex align-items-center">
+          <i class="bi bi-download me-1"></i> Download Report
         </button>
       </form>
-      <a href="{{ url_for('ms_reports') }}" class="btn btn-sm btn-secondary">
+      <a href="{{ url_for('ms_reports') }}" class="btn btn-sm btn-secondary text-nowrap d-inline-flex align-items-center">
         <i class="bi bi-arrow-left me-1"></i> Back to Reports
       </a>
     </div>
   </div>
 
-  <!-- Customer Details Card -->
-  <div class="row mb-1 flex-shrink-0">
-    <div class="col-12">
-      <div class="card border-0 shadow-sm bg-opacity-10 mb-2">
-        <div class="card-body py-2 px-3">
-          <div class="row row-cols-1 row-cols-md-4 g-2 align-items-center" style="font-size:0.8rem;">
-            <div class="col">
-              <span class="fw-semibold text-dark">Customer Reference:</span>
-              <span class="text-primary">{{ customer.customer_reference or '-' }}</span>
-            </div>
-            <div class="col">
-              <span class="fw-semibold text-dark">Connection Date:</span>
-              <span class="text-primary">
-                {% if customer.connection_date %}
-                  {{ customer.connection_date.strftime('%d %b %Y') }}
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-            </div>
-            <div class="col">
-              <span class="fw-semibold text-dark">Scheme:</span>
-              <span class="text-primary">{{ customer.scheme or '-' }}</span>
-            </div>
-            <div class="col">
-              <span class="fw-semibold text-dark">Village:</span>
-              <span class="text-primary">{{ customer.village or '-' }}</span>
-            </div>
-            <div class="col">
-              <span class="fw-semibold text-dark">Connection Fee:</span>
-              <span class="text-primary">
-                {% if customer.connection_fee %}
-                  {{ "{:,}".format(customer.connection_fee|int) }} ugx
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-            </div>
-            <div class="col">
-              <span class="fw-semibold text-dark">Total Debt:</span>
-              <span class="text-primary">
-                {% if customer.bpb %}
-                  {{ "{:,}".format(customer.get("total_debt", 0)|int) }} ugx
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-            </div>
-            {% if customer.get("type") == "ES" %}
-            <div class="col">
-              <span class="fw-semibold text-dark">Connection Balance:</span>
-              <span class="text-primary">
-                {% if customer.balance_on_connection %}
-                  {{ "{:,}".format(customer.get("balance_on_connection", 0)|int) }} ugx
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-              <span class="small text-muted d-block">
-                refer to ES reports
-              </span>
-            </div>
-            {% endif %}
-            <div class="col">
-              <span class="fw-semibold text-dark">Contact:</span>
-              <span class="text-primary">
-                {% if customer.contact %}
-                  {{ customer.contact }}
-                {% else %}
-                  -
-                {% endif %}
-              </span>
-            </div>
+</div>
+
+<!-- Customer Details Card -->
+<div class="row mb-1 flex-shrink-0">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm bg-opacity-10 mb-2">
+      <div class="card-body py-2 px-3">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-2 align-items-center" style="font-size:0.8rem;">
+          <div class="col">
+            <span class="fw-semibold text-dark">Customer Reference:</span>
+            <span class="text-primary">{{ customer.customer_reference or '-' }}</span>
+          </div>
+          <div class="col">
+            <span class="fw-semibold text-dark">Connection Date:</span>
+            <span class="text-primary">
+              {% if customer.connection_date %}
+                {{ customer.connection_date.strftime('%d %b %Y') }}
+              {% else %}
+                -
+              {% endif %}
+            </span>
+          </div>
+          <div class="col">
+            <span class="fw-semibold text-dark">Scheme:</span>
+            <span class="text-primary">{{ customer.scheme or '-' }}</span>
+          </div>
+          <div class="col">
+            <span class="fw-semibold text-dark">Village:</span>
+            <span class="text-primary">{{ customer.village or '-' }}</span>
+          </div>
+          <div class="col">
+            <span class="fw-semibold text-dark">Connection Fee:</span>
+            <span class="text-primary">
+              {% if customer.connection_fee %}
+                {{ "{:,}".format(customer.connection_fee|int) }} ugx
+              {% else %}
+                -
+              {% endif %}
+            </span>
+          </div>
+          <div class="col">
+            <span class="fw-semibold text-dark">Total Debt:</span>
+            <span class="text-primary">
+              {% if customer.bpb %}
+                {{ "{:,}".format(customer.get("total_debt", 0)|int) }} ugx
+              {% else %}
+                -
+              {% endif %}
+            </span>
+          </div>
+          {% if customer.get("type") == "ES" %}
+          <div class="col">
+            <span class="fw-semibold text-dark">Connection Balance:</span>
+            <span class="text-primary">
+              {% if customer.balance_on_connection %}
+                {{ "{:,}".format(customer.get("balance_on_connection", 0)|int) }} ugx
+              {% else %}
+                -
+              {% endif %}
+            </span>
+            <span class="small text-muted d-block">
+              refer to ES reports
+            </span>
+          </div>
+          {% endif %}
+          <div class="col">
+            <span class="fw-semibold text-dark">Contact:</span>
+            <span class="text-primary">
+              {% if customer.contact %}
+                {{ customer.contact }}
+              {% else %}
+                -
+              {% endif %}
+            </span>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
   <!-- Customer Table Container (Fixed Flex Scroll) -->
   <div class="table-responsive flex-grow-1" style="min-height: 0; overflow-y: auto; overscroll-behavior: contain;">
@@ -111,7 +117,7 @@
       <thead>
         <tr>
           <th class="bg-secondary text-white sticky-top" style="top: 0; z-index: 2;">Month</th>
-          <th class="bg-secondary text-white sticky-top" style="top: 0; z-index: 2;">Consumption (m3)</th>
+          <th class="bg-secondary text-white sticky-top" style="top: 0; z-index: 2;">Consumption</th>
           <th class="bg-secondary text-white sticky-top" style="top: 0; z-index: 2;">Bill</th>
           <th class="bg-secondary text-white sticky-top" style="top: 0; z-index: 2;">Payment</th>
         </tr>

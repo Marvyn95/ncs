@@ -2,9 +2,9 @@
 
 {% block content %}
 <!-- Main Viewport Container -->
-<div class="d-flex flex-column vh-100 w-100 overflow-hidden bg-light p-0">
+<div class="w-100 h-100 d-flex flex-column overflow-hidden bg-light p-0">
 
-  <!-- Fixed Header -->
+  <!-- Fixed Header (Static, will not scroll) -->
   <div class="row align-items-start px-3 pt-3 mb-2 flex-shrink-0 me-0 ms-0">
     <div class="col-12 px-0">
       <h5 class="fw-bold text-primary mb-0">Dashboard</h5>
@@ -12,7 +12,7 @@
     </div>
   </div>
 
-  <!-- Scrollable Inner Content Body -->
+  <!-- Scrollable Inner Content Body (Everything inside here scrolls) -->
   <div class="flex-grow-1 overflow-y-auto px-3 pb-3 me-0">
     
     <!-- Top Metric Cards (Compact 4-Column Layout) -->
@@ -354,7 +354,7 @@
         </div>
       </div>
 
-      <!-- Cumulative Parameters Card (Replaces Invoices & System Status) -->
+      <!-- Cumulative Parameters Card -->
       <div class="col-md-6">
         <div class="card border-0 shadow-sm rounded-2 h-100">
           <div class="card-body p-3 d-flex flex-column">

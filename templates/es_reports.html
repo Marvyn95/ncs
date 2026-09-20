@@ -2,272 +2,281 @@
 
 {% block content %}
 <div class="w-100 h-100 d-flex flex-column overflow-hidden">
-  <div class="row align-items-start mt-4">
 
-    <div class="col-4">
-      <h4 class="fw-bold text-primary mb-0 mt-0">ES Reports</h4>
-      <p class="text-muted">Manage Equitable Service Customer Reports</p>
-    </div>
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  
+  <!-- Heading Section (Never wraps) -->
+  <div class="text-nowrap flex-shrink-0 me-3">
+    <h4 class="fw-bold text-primary mb-0 mt-0">ES Reports</h4>
+    <p class="text-muted mb-0 small">Manage Equitable Service Customer Reports</p>
+  </div>
 
-    <div class="col-8 text-end">
+  <!-- Action Buttons Container (Left-aligned on mobile, right-aligned on desktop) -->
+  <div class="d-flex flex-wrap align-items-center justify-content-start justify-content-sm-end gap-2 flex-grow-1">
+    <div class="d-flex flex-wrap gap-2 align-items-center me-auto ms-sm-auto">
       {% if user.role in ["administrator", "billing_officer"] %}
-        <button class="btn btn-success btn-xs me-1 py-1 px-2" data-bs-toggle="modal" data-bs-target="#addMonthlyBillingSheetModal" style="font-size: 0.75rem;">
+        <button class="btn btn-success btn-sm px-2 py-1 text-nowrap d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#addMonthlyBillingSheetModal" style="font-size: 0.8rem;">
           <i class="bi bi-file-earmark-excel me-1"></i> Add Monthly Billing
         </button>
-        <button class="btn btn-primary btn-xs py-1 px-2" data-bs-toggle="modal" data-bs-target="#addMonthlyPaymentSheetModal" style="font-size: 0.75rem;">
+        <button class="btn btn-primary btn-sm px-2 py-1 text-nowrap d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#addMonthlyPaymentSheetModal" style="font-size: 0.8rem;">
           <i class="bi bi-upload me-1"></i> Add Monthly Payment
         </button>
       {% endif %}
 
-      <a href="{{ url_for('download_es_reports') }}" class="btn btn-outline-secondary btn-sm" title="Download Records" style="padding:2px 6px;font-size:0.9em;">
+      <a href="{{ url_for('download_es_reports') }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center" title="Download Records" style="padding:4px 8px; font-size:0.9em;">
         <i class="bi bi-download"></i>
       </a>
 
       {% if user.role in ["admin"] %}
-        <a href="{{ url_for('reload_es_reports') }}" class="btn btn-outline-secondary btn-sm" title="Reload Records" style="padding:2px 6px;font-size:0.9em;">
+        <a href="{{ url_for('reload_es_reports') }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center" title="Reload Records" style="padding:4px 8px; font-size:0.9em;">
           <i class="bi bi-arrow-clockwise"></i>
         </a>
       {% endif %}
+    </div>
 
-      <!-- Add Monthly Payment Sheet Modal -->
-      <div class="modal fade" id="addMonthlyPaymentSheetModal" tabindex="-1" aria-labelledby="addMonthlyPaymentSheetModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <form method="POST" action="{{ url_for('customer_monthly_payment_sheet_update') }}" enctype="multipart/form-data">
-              <div class="modal-header py-2">
-                <h5 class="modal-title" id="addMonthlyPaymentSheetModalLabel">Add Monthly Payment Sheet</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- Add Monthly Payment Sheet Modal -->
+    <div class="modal fade" id="addMonthlyPaymentSheetModal" tabindex="-1" aria-labelledby="addMonthlyPaymentSheetModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form method="POST" action="{{ url_for('customer_monthly_payment_sheet_update') }}" enctype="multipart/form-data">
+            <div class="modal-header py-2">
+              <h5 class="modal-title" id="addMonthlyPaymentSheetModalLabel">Add Monthly Payment Sheet</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-2">
+                <label for="monthly_payment_sheet_file" class="form-label">Monthly Payment Sheet File (CSV/Excel)</label>
+                <input type="file" class="form-control" id="monthly_payment_sheet_file" name="monthly_payment_sheet_file" accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
               </div>
-              <div class="modal-body">
-                <div class="mb-2">
-                  <label for="monthly_payment_sheet_file" class="form-label">Monthly Payment Sheet File (CSV/Excel)</label>
-                  <input type="file" class="form-control" id="monthly_payment_sheet_file" name="monthly_payment_sheet_file" accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
-                </div>
-              </div>
-              <div class="modal-footer py-2">
-                <button type="submit" class="btn btn-primary btn-sm">Submit</button>
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-              </div>
-            </form>
-          </div>
+            </div>
+            <div class="modal-footer py-2">
+              <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
         </div>
       </div>
+    </div>
 
-      <!-- Add Monthly Billing Sheet Modal -->
-      <div class="modal fade" id="addMonthlyBillingSheetModal" tabindex="-1" aria-labelledby="addMonthlyBillingSheetModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <form method="POST" action="{{ url_for('customer_monthly_billing_sheet_update') }}" enctype="multipart/form-data">
-              <div class="modal-header py-2">
-                <h5 class="modal-title" id="addMonthlyBillingSheetModalLabel">Add Monthly Billing Sheet</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- Add Monthly Billing Sheet Modal -->
+    <div class="modal fade" id="addMonthlyBillingSheetModal" tabindex="-1" aria-labelledby="addMonthlyBillingSheetModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form method="POST" action="{{ url_for('customer_monthly_billing_sheet_update') }}" enctype="multipart/form-data">
+            <div class="modal-header py-2">
+              <h5 class="modal-title" id="addMonthlyBillingSheetModalLabel">Add Monthly Billing Sheet</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-2">
+                <label for="monthly_billing_sheet_file" class="form-label">Monthly Billing Sheet File (CSV/Excel)</label>
+                <input type="file" class="form-control" id="monthly_billing_sheet_file" name="monthly_billing_sheet_file" accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
               </div>
-              <div class="modal-body">
-                <div class="mb-2">
-                  <label for="monthly_billing_sheet_file" class="form-label">Monthly Billing Sheet File (CSV/Excel)</label>
-                  <input type="file" class="form-control" id="monthly_billing_sheet_file" name="monthly_billing_sheet_file" accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
-                </div>
-              </div>
-              <div class="modal-footer py-2">
-                <button type="submit" class="btn btn-success btn-sm">Submit</button>
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-              </div>
-            </form>
-          </div>
+            </div>
+            <div class="modal-footer py-2">
+              <button type="submit" class="btn btn-success btn-sm">Submit</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
 
   </div>
+</div>
 
-  <div class="row mb-3">
+<div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
 
-    <div class="col-3">
-      <form method="POST" action="{{ url_for('search_es_reports') }}">
-        <div class="input-group input-group-sm">
-          <span class="input-group-text bg-white px-1">
-            <button type="submit" class="btn btn-link p-0" style="color:inherit;font-size:0.9em;">
-              <i class="bi bi-search"></i>
-            </button>
-          </span>
-          <input type="text" name="search" class="form-control" style="font-size:0.85em;padding:2px 6px;" placeholder="Search..." value="{{ session.get('es_reports_search_query', '') }}">
-        </div>
-      </form>
-    </div>
-  
-
-      <div class="col-2">
-        <form method="POST" action="{{ url_for('set_es_reports_area') }}">
-          <div class="input-group input-group-sm">
-            <label class="input-group-text" for="area_select">Area</label>
-            <select class="form-select" id="area_select" name="area_id" required onchange="this.form.submit()"
-              {% if user.area_id %}
-                {% for area in areas %}
-                  {% if user.area_id|string == area._id|string %}
-                    disabled
-                  {% endif %}
-                {% endfor %}
-              {% endif %}
-            >
-              <option value="" {% if not session.get("selected_es_reports_area_id") %}selected{% endif %}>All Areas</option>
-              {% for area in areas %}
-                <option value="{{ area._id }}"
-                  {% if session.get("selected_es_reports_area_id")|string == area._id|string or (user.area_id|string == area._id|string) %}selected{% endif %}>
-                  {{ area.area }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-        </form>
+  <!-- Search Input -->
+  <div class="flex-grow-1" style="min-width: 180px;">
+    <form method="POST" action="{{ url_for('search_es_reports') }}" class="w-100">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white px-1">
+          <button type="submit" class="btn btn-link p-0" style="color:inherit;font-size:0.9em;">
+            <i class="bi bi-search"></i>
+          </button>
+        </span>
+        <input type="text" name="search" class="form-control" style="font-size:0.85em;padding:2px 6px;" placeholder="Search..." value="{{ session.get('es_reports_search_query', '') }}">
       </div>
+    </form>
+  </div>
 
-    <div class="col-3">
-      <form method="POST" action="{{ url_for('set_es_reports_scheme') }}" class="d-flex align-items-center me-1 flex-wrap gap-1">
-        <div class="input-group input-group-sm me-1">
-          <label class="input-group-text" for="scheme_select">Scheme</label>
-          <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
-            {% for scheme in schemes %}
-              {% if user.scheme_id|string == scheme._id|string %} disabled {% endif %}
-            {% endfor %}>
-            <option value="" selected>All Schemes</option>
-            {% for scheme in schemes %}
-              <option value="{{ scheme._id }}" {% if session.get("es_reports_selected_scheme_id")|string == scheme._id|string or user.scheme_id|string == scheme._id|string %}selected{% endif %}>
-                {{ scheme.scheme }}
-              </option>
+  <!-- Area Select -->
+  <div class="flex-grow-1" style="min-width: 160px;">
+    <form method="POST" action="{{ url_for('set_es_reports_area') }}" class="w-100">
+      <div class="input-group input-group-sm">
+        <label class="input-group-text" for="area_select">Area</label>
+        <select class="form-select" id="area_select" name="area_id" required onchange="this.form.submit()"
+          {% if user.area_id %}
+            {% for area in areas %}
+              {% if user.area_id|string == area._id|string %}
+                disabled
+              {% endif %}
             {% endfor %}
-          </select>
-        </div>
-      </form>
-    </div>
+          {% endif %}
+        >
+          <option value="" {% if not session.get("selected_es_reports_area_id") %}selected{% endif %}>All Areas</option>
+          {% for area in areas %}
+            <option value="{{ area._id }}"
+              {% if session.get("selected_es_reports_area_id")|string == area._id|string or (user.area_id|string == area._id|string) %}selected{% endif %}>
+              {{ area.area }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
 
-    <div class="col-3">
-      <form method="POST" action="{{ url_for('es_report_date_filter') }}" id="dateFilterForm">
-        <div class="input-group input-group-sm">
-          <input type="date" class="form-control" id="date_1" name="start_date" {% if session.get("es_reports_start_date") %} value="{{ session.get("es_reports_start_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
-          <input type="date" class="form-control" id="date_2" name="end_date" {% if session.get("es_reports_end_date") %} value="{{ session.get("es_reports_end_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
-        </div>
-      </form>
+  <!-- Scheme Select -->
+  <div class="flex-grow-1" style="min-width: 160px;">
+    <form method="POST" action="{{ url_for('set_es_reports_scheme') }}" class="w-100">
+      <div class="input-group input-group-sm">
+        <label class="input-group-text" for="scheme_select">Scheme</label>
+        <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
+          {% for scheme in schemes %}
+            {% if user.scheme_id|string == scheme._id|string %} disabled {% endif %}
+          {% endfor %}
+        >
+          <option value="" selected>All Schemes</option>
+          {% for scheme in schemes %}
+            <option value="{{ scheme._id }}" {% if session.get("es_reports_selected_scheme_id")|string == scheme._id|string or user.scheme_id|string == scheme._id|string %}selected{% endif %}>
+              {{ scheme.scheme }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
 
-      <script>
-        function checkAndSubmitDateForm() {
-          const startDate = document.getElementById('date_1').value;
-          const endDate = document.getElementById('date_2').value;
-          if ((startDate && endDate) || (!startDate && !endDate)) {
-            document.getElementById('dateFilterForm').submit();
-          }
+  <!-- Date Range Filter -->
+  <div class="flex-grow-1" style="min-width: 240px;">
+    <form method="POST" action="{{ url_for('es_report_date_filter') }}" id="dateFilterForm" class="w-100">
+      <div class="input-group input-group-sm">
+        <input type="date" class="form-control" id="date_1" name="start_date" {% if session.get("es_reports_start_date") %} value="{{ session.get("es_reports_start_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
+        <input type="date" class="form-control" id="date_2" name="end_date" {% if session.get("es_reports_end_date") %} value="{{ session.get("es_reports_end_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
+      </div>
+    </form>
+
+    <script>
+      function checkAndSubmitDateForm() {
+        const startDate = document.getElementById('date_1').value;
+        const endDate = document.getElementById('date_2').value;
+        if ((startDate && endDate) || (!startDate && !endDate)) {
+          document.getElementById('dateFilterForm').submit();
         }
-      </script>
-    </div>
-
+      }
+    </script>
   </div>
 
-  <!-- Customer Reports Table -->
-  <div class="table-responsive" style="overflow-y: auto; overscroll-behavior: contain;">
-    <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.70rem;">
-      <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa; font-size:0.70rem;">
-        <tr class="table-secondary">
-          <th>Customer</th>
-          <th class="d-none d-sm-table-cell">Reference No.</th>
-          <th>Type</th>
-          <th class="d-none d-sm-table-cell">Connection Date</th>
-          <th>Connection Fee</th>
-          <th class="d-none d-sm-table-cell">Initial Clearance</th>
-          <th>Connection Balance</th>
-          <th>Bill Balance</th>
-          <th>Total Consumption</th>
-          <th>Total Amount  Billed</th>
-          <th>Total Amount  Paid</th>
-          <th>Actions</th>
+</div>
+
+<!-- Customer Reports Table -->
+<div class="table-responsive" style="overflow-y: auto; overscroll-behavior: contain;">
+  <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.70rem;">
+    <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa; font-size:0.70rem;">
+      <tr class="table-secondary">
+        <th>Customer</th>
+        <th class="d-none d-lg-table-cell">Reference No.</th>
+        <th class="d-none d-lg-table-cell">Type</th>
+        <th class="d-none d-lg-table-cell">Connection Date</th>
+        <th class="d-none d-lg-table-cell">Connection Fee</th>
+        <th class="d-none d-lg-table-cell">Initial Clearance</th>
+        <th>Connection Bal.</th>
+        <th>Bill Bal.</th>
+        <th class="d-none d-lg-table-cell">Total Consumption</th>
+        <th class="d-none d-lg-table-cell">Total Billed</th>
+        <th class="d-none d-lg-table-cell">Total Paid</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody style="font-size:0.70rem;">
+      {% for customer in customers %}
+        <tr class="table-light my-1" style="font-size:0.65rem;">
+          <td class="fw-semibold text-truncate" style="max-width: 120px;">{{ customer.name or '-' }}</td>
+          <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 120px;">{{ customer.customer_reference or '-' }}</td>
+          <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 100px;">{{ customer.type or '-' }}</td>
+          <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 100px;">
+            {% if customer.connection_date %}
+              {{ customer.connection_date.strftime('%d %b %Y') }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 100px;">
+            {% if customer.connection_fee %}
+              {{ "{:,}".format(customer.connection_fee|int) }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 120px;">
+            {% if customer.amount_paid %}
+              {{ "{:,}".format(customer.amount_paid|int) }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td class="fw-semibold text-muted text-truncate" style="max-width: 120px;">
+            {% if session.get('es_reports_start_date') or session.get('es_reports_end_date') %}
+              n/a
+            {% else %}
+              {% if customer.bpb %}
+                {{ "{:,}".format(customer.bpb[-1].get('balance_on_connection', 0)|int) }}
+              {% else %}
+                {{ "{:,}".format(customer.amount_due or 0|int) if customer.amount_due else '-' }}
+              {% endif %}
+            {% endif %}
+          </td>
+          <td class="fw-semibold text-muted text-truncate" style="max-width: 120px;">
+            {% if session.get('es_reports_start_date') or session.get('es_reports_end_date') %}
+              n/a
+            {% else %}
+              {% if customer.bpb %}
+                {{ "{:,}".format(customer.bpb[-1].get('balance_on_bill', 0)|int) }}
+              {% else %}
+                -
+              {% endif %}
+            {% endif %}
+          </td>
+          <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 120px;">
+            {% if customer.bpb %}
+              {{ "{:,}".format(customer.get("total_consumption", 0)|int) }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 120px;">
+            {% if customer.bpb %}
+              {{ "{:,}".format(customer.get("total_bill", 0)|int) }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 120px;">
+            {% if customer.bpb %}
+              {{ "{:,}".format(customer.get("total_payment", 0)|int) }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('es_customer_history') }}" style="display:inline;">
+              <input type="hidden" name="customer_id" value="{{ customer._id }}">
+              <input type="hidden" name="customer_reference" value="{{ customer.customer_reference }}">
+              <button type="submit" class="btn btn-outline-primary btn-sm" title="View History">
+                <i class="bi bi-list-columns-reverse"></i>
+              </button>
+            </form>
+          </td>
         </tr>
-      </thead>
-      <tbody style="font-size:0.70rem;">
-        {% for customer in customers %}
-          <tr class="table-light my-1" style="font-size:0.65rem;">
-            <td class="fw-semibold text-truncate" style="max-width: 120px;">{{ customer.name or '-' }}</td>
-            <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell" style="max-width: 120px;">{{ customer.customer_reference or '-' }}</td>
-            <td class="fw-semibold text-muted text-truncate" style="max-width: 100px;">{{ customer.type or '-' }}</td>
-            <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell" style="max-width: 100px;">
-              {% if customer.connection_date %}
-                {{ customer.connection_date.strftime('%d %b %Y') }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
-            <td class="fw-semibold text-muted text-truncate" style="max-width: 100px;">
-              {% if customer.connection_fee %}
-                {{ "{:,}".format(customer.connection_fee|int) }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
-            <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell" style="max-width: 120px;">
-              {% if customer.amount_paid %}
-                {{ "{:,}".format(customer.amount_paid|int) }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
-            <td class="fw-semibold text-muted text-truncate" style="max-width: 120px;">
-              {% if session.get('es_reports_start_date') or session.get('es_reports_end_date') %}
-                n/a
-              {% else %}
-                {% if customer.bpb %}
-                  {{ "{:,}".format(customer.bpb[-1].get('balance_on_connection', 0)|int) }}
-                {% else %}
-                  {{ "{:,}".format(customer.amount_due or 0|int) if customer.amount_due else '-' }}
-                {% endif %}
-              {% endif %}
-            </td>
-            <td class="fw-semibold text-muted text-truncate" style="max-width: 120px;">
-              {% if session.get('es_reports_start_date') or session.get('es_reports_end_date') %}
-                n/a
-              {% else %}
-                {% if customer.bpb %}
-                  {{ "{:,}".format(customer.bpb[-1].get('balance_on_bill', 0)|int) }}
-                {% else %}
-                  -
-                {% endif %}
-              {% endif %}
-            </td>
-            <td class="fw-semibold text-muted text-truncate" style="max-width: 120px;">
-              {% if customer.bpb %}
-                {{ "{:,}".format(customer.get("total_consumption", 0)|int) }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
-            <td class="fw-semibold text-muted text-truncate" style="max-width: 120px;">
-              {% if customer.bpb %}
-                {{ "{:,}".format(customer.get("total_bill", 0)|int) }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
-            <td class="fw-semibold text-muted text-truncate" style="max-width: 120px;">
-              {% if customer.bpb %}
-                {{ "{:,}".format(customer.get("total_payment", 0)|int) }}
-              {% else %}
-                -
-              {% endif %}
-            </td>
-            <td>
-              <form method="POST" action="{{ url_for('es_customer_history') }}" style="display:inline;">
-                <input type="hidden" name="customer_id" value="{{ customer._id }}">
-                <input type="hidden" name="customer_reference" value="{{ customer.customer_reference }}">
-                <button type="submit" class="btn btn-outline-primary btn-sm" title="View History">
-                  <i class="bi bi-list-columns-reverse"></i>
-                </button>
-              </form>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 
 
 
-  <div class="row d-flex justify-content-start mt-2 mb-0">
+  <div class="row d-flex justify-content-start">
     
     <div class="col-3">
       <span class="align-self-center text-muted" style="font-size:0.85em;">

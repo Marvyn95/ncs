@@ -3,324 +3,330 @@
 {% block content %}
 <div class="w-100 h-100 d-flex flex-column overflow-hidden">
 
-  <div class="row align-items-start mb-3 mt-4">
-    
-    <div class="col-4 mb-2">
-      <h4 class="fw-bold text-primary mb-0 mt-0">New Connections</h4>
-      <p class="text-muted">Manage New Applicant information</p>
-    </div>
-
-    <div class="col-8">
-      <div class="d-flex flex-wrap justify-content-end align-items-center gap-1 me-4 mb-2">
-        <div style="display:flex; gap:8px;">
-          <a href="{{ url_for('download_new_connections') }}" class="btn btn-outline-secondary btn-sm" title="Download Records" style="padding:2px 6px;font-size:0.9em;">
-            <i class="bi bi-download"></i>
-          </a>
-          
-          {% if user.role in ["administrator", "billing_officer"] %}
-            <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadCustomersModal" style="padding:2px 6px;font-size:0.9em;">
-              <i class="bi bi-upload"></i>
-            </button>
-            <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#uploadCustomersReferenceModal" style="padding:2px 6px;font-size:0.9em;">
-              <i class="bi bi-upload"> Ref</i>
-            </button>
-          {% endif %}
-
-          {% if user.role in ['administrator', 'scheme_manager', 'commercial_officer', 'billing_officer', 'area_manager'] %}
-            <button class="btn btn-primary btn-sm px-2 py-1" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
-              <i class="bi bi-plus-lg me-1"></i> Add Customer
-            </button>
-          {% endif %}
-        </div>
-
-        <!-- upload customers reference modal -->
-        <div class="modal fade" id="uploadCustomersReferenceModal" tabindex="-1" aria-labelledby="uploadCustomersReferenceModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content" style="font-size:0.9rem;">
-              <form method="POST" action="{{ url_for('upload_customers_reference') }}" enctype="multipart/form-data">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="uploadCustomersReferenceModalLabel" style="font-size:1rem;">Upload Customers References</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  <div class="mb-3">
-                    <label for="customers_file" class="form-label" style="font-size:0.95em;">Select File (CSV or XLSX)</label>
-                    <input type="file" class="form-control" id="customers_file" name="customers_file" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required style="font-size:0.95em;">
-                  </div>
-                </div>
-                <div class="modal-footer py-2">
-                  <button type="submit" class="btn btn-success btn-sm">Upload</button>
-                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <!-- Upload Customers Modal -->
-        <div class="modal fade" id="uploadCustomersModal" tabindex="-1" aria-labelledby="uploadCustomersModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content" style="font-size:0.9rem;">
-              <form method="POST" action="{{ url_for('upload_customers') }}" enctype="multipart/form-data">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="uploadCustomersModalLabel" style="font-size:1rem;">Upload multiple Customers</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  <div class="mb-3">
-                    <label for="customers_file" class="form-label" style="font-size:0.95em;">Select File (CSV or XLSX)</label>
-                    <input type="file" class="form-control" id="customers_file" name="customers_file" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required style="font-size:0.95em;">
-                  </div>
-                </div>
-                <div class="modal-footer py-2">
-                  <button type="submit" class="btn btn-success btn-sm">Upload</button>
-                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <!-- Add Customer Modal -->
-        <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-              <form method="POST" action="{{ url_for('add_customer') }}" enctype="multipart/form-data">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="addCustomerModalLabel">Add New Customer</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  <div class="row g-2">
-                    <div class="col-md-6 mb-2">
-                      <label for="name" class="form-label">Name</label>
-                      <input type="text" class="form-control" id="name" name="name" required>
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <label for="contact" class="form-label">Contact</label>
-                      <input type="text" class="form-control" id="contact" name="contact" required>
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <label for="scheme_id" class="form-label">Scheme</label>
-                      <select name="scheme_id" class="form-select" id="scheme_id" required onchange="filterVillages()">
-                        <option value="" disabled selected>Select Scheme</option>
-                        {% for scheme in schemes %}
-                          <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <label for="village_id" class="form-label">Village</label>
-                      <select name="village_id" class="form-select" id="village_id" required>
-                        <option value="" disabled selected>Select Village</option>
-                        {% for village in villages %}
-                          <option value="{{ village._id }}" data-scheme="{{ village.scheme_id }}">{{ village.village }}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-
-                    <script>
-                      function filterVillages() {
-                        var schemeSelect = document.getElementById('scheme_id');
-                        var villageSelect = document.getElementById('village_id');
-                        var selectedScheme = schemeSelect.value;
-                        Array.from(villageSelect.options).forEach(function(option) {
-                          if (!option.value) return; // Skip 'Select Village'
-                          option.style.display = (option.getAttribute('data-scheme') === selectedScheme) ? '' : 'none';
-                        });
-                        // Reset village selection if not matching
-                        if (villageSelect.selectedOptions[0] && villageSelect.selectedOptions[0].style.display === 'none') {
-                          villageSelect.value = '';
-                        }
-                      }
-                      document.getElementById('scheme_id').addEventListener('change', filterVillages);
-                      document.addEventListener('DOMContentLoaded', filterVillages);
-                    </script>
-
-                    <div class="col-md-6 mb-2">
-                      <label for="application_id" class="form-label">Application ID</label>
-                      <input type="text" class="form-control" id="application_id" name="application_id" required>
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <label for="date_applied" class="form-label">Date Applied</label>
-                      <input type="date" class="form-control" id="date_applied" name="date_applied" value="{{ now().strftime('%Y-%m-%d') }}" required>
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <label for="id_document" class="form-label">Identification Document</label>
-                      <input type="file" class="form-control" id="id_document" name="id_document" accept="application/pdf,image/*" required>
-                    </div>
-                    <div class="col-md-6 mb-2">
-                      <label for="recommendation_letter" class="form-label">Recommendation Letter</label>
-                      <input type="file" class="form-control" id="recommendation_letter" name="recommendation_letter" accept="application/pdf,image/*" required>
-                    </div>
-                    <div class="col-md-12 mb-2">
-                      <label for="application_form_comment" class="form-label">Comment</label>
-                      <input type="text" class="form-control" id="application_form_comment" name="application_form_comment" placeholder="Optional" rows="3">
-                    </div>
-                    
-                  </div>
-                </div>
-
-                <div class="modal-footer py-2">
-                  <button type="submit" class="btn btn-success btn-sm">Add Customer</button>
-                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-        
-      </div>
-    </div>
-
-    <div class="row mb-2">
-
-      <div class="col-2">
-        <form method="POST" action="{{ url_for('search_new_connections') }}" style="max-width:180px;">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-white">
-              <button type="submit" class="btn btn-link p-0" style="color:inherit;font-size:0.9em;">
-                <i class="bi bi-search"></i>
-              </button>
-            </span>
-            <input type="text" name="new_connections_search" class="form-control" style="font-size:0.85em;padding:2px 6px;" placeholder="Search..." value="{{ session.get('new_connections_search_query', '') }}">
-          </div>
-        </form>
-      </div>
-
-      <div class="col-2">
-        <form method="POST" action="{{ url_for('set_new_connections_area') }}">
-          <div class="input-group input-group-sm">
-            <label class="input-group-text" for="area_select">Area</label>
-            <select class="form-select" id="area_select" name="area_id" required onchange="this.form.submit()"
-              {% if user.area_id %}
-                {% for area in areas %}
-                  {% if user.area_id|string == area._id|string %}
-                    disabled
-                  {% endif %}
-                {% endfor %}
-              {% endif %}
-            >
-              <option value="" {% if not session.get("selected_new_connections_area_id") %}selected{% endif %}>All Areas</option>
-              {% for area in areas %}
-                <option value="{{ area._id }}"
-                  {% if session.get("selected_new_connections_area_id")|string == area._id|string or (user.area_id|string == area._id|string) %}selected{% endif %}>
-                  {{ area.area }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-        </form>
-      </div>
-
-
-      <div class="col-2">
-        <form method="POST" action="{{ url_for('set_new_connections_scheme') }}">
-          <div class="input-group input-group-sm">
-            <label class="input-group-text" for="scheme_select">Scheme</label>
-            <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
-              {% if user.scheme_id %}
-                {% for scheme in schemes %}
-                  {% if user.scheme_id|string == scheme._id|string %}
-                    disabled
-                  {% endif %}
-                {% endfor %}
-              {% endif %}
-            >
-              <option value="" {% if not session.get("new_connections_selected_scheme_id") %}selected{% endif %}>All Schemes</option>
-              {% for scheme in schemes %}
-                <option value="{{ scheme._id }}"
-                  {% if session.get("new_connections_selected_scheme_id")|string == scheme._id|string or (user.scheme_id|string == scheme._id|string) %}selected{% endif %}>
-                  {{ scheme.scheme }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-        </form>
-      </div>
-
-      <div class="col-2">
-        <form method="POST" action="{{ url_for('set_new_connections_status') }}">
-          <div class="input-group input-group-sm">
-            <label class="input-group-text" for="status_select">Status</label>
-            <select class="form-select" id="status_select" name="status" required onchange="this.form.submit()">
-              <option value="" {% if not session.get("new_connections_status_filter") or session.get("new_connections_status_filter") == "" %}selected{% endif %}>All Statuses</option>
-              <option value="applied" {% if session.get("new_connections_status_filter") == "applied" %}selected{% endif %}>Applied</option>
-              <option value="surveyed" {% if session.get("new_connections_status_filter") == "surveyed" %}selected{% endif %}>Surveyed</option>
-              <option value="approved" {% if session.get("new_connections_status_filter") == "approved" %}selected{% endif %}>Approved</option>
-              <option value="disapproved" {% if session.get("new_connections_status_filter") == "disapproved" %}selected{% endif %}>Disapproved</option>
-              <option value="paid" {% if session.get("new_connections_status_filter") == "paid" %}selected{% endif %}>Paid</option>
-              <option value="verified" {% if session.get("new_connections_status_filter") == "verified" %}selected{% endif %}>Verified</option>
-              <option value="not verified" {% if session.get("new_connections_status_filter") == "not verified" %}selected{% endif %}>Not Verified</option>
-              <option value="materials issued" {% if session.get("new_connections_status_filter") == "materials issued" %}selected{% endif %}>Materials Issued</option>
-              <option value="materials pending" {% if session.get("new_connections_status_filter") == "materials pending" %}selected{% endif %}>Materials Pending</option>
-              <option value="connected" {% if session.get("new_connections_status_filter") == "connected" %}selected{% endif %}>Connected</option>
-              <option value="not connected" {% if session.get("new_connections_status_filter") == "not connected" %}selected{% endif %}>Not Connected</option>
-              <option value="confirmed" {% if session.get("new_connections_status_filter") == "confirmed" %}selected{% endif %}>Confirmed</option>
-            </select>
-          </div>
-        </form>
-      </div>
-
-      <div class="col-auto">
-        <form method="POST" action="{{ url_for('new_connections_date_filter_data') }}" style="display: flex; align-items: center; flex-wrap: nowrap;" id="dateFilterForm">
-          <div class="input-group input-group-sm" style="flex: 1; min-width: 250px;">
-            <label class="input-group-text" for="filter_select">Date Filter</label>
-            <select class="form-select" id="filter_select" name="filter_field" required onchange="toggleDateFields(); handleFieldChange()">
-              <option value="" {% if not session.get("new_connections_date_filter_field") or session.get("new_connections_date_filter_field") == "" %}selected{% endif %}>No Filter</option>
-              <option value="application_period" {% if session.get("new_connections_date_filter_field") == "date_applied" %}selected{% endif %}>Application Period</option>
-              <option value="survey_period" {% if session.get("new_connections_date_filter_field") == "survey_date" %}selected{% endif %}>Survey Period</option>
-              <option value="payment_period" {% if session.get("new_connections_date_filter_field") == "date_paid" %}selected{% endif %}>Payment Period</option>
-              <option value="verification_period" {% if session.get("new_connections_date_filter_field") == "verification_date" %}selected{% endif %}>Verification Period</option>
-              <option value="material_issuance_period" {% if session.get("new_connections_date_filter_field") == "issuance_date" %}selected{% endif %}>Material Issuance Period</option>
-              <option value="connection_period" {% if session.get("new_connections_date_filter_field") == "connection_date" %}selected{% endif %}>Connection Period</option>
-            </select>
-          </div>
-          <div class="input-group input-group-sm">
-            <input type="date" class="form-control" id="date_1" name="start_date" required disabled placeholder="start date" onchange="handleFieldChange()" {% if session.get("new_connections_start_date") %}value="{{ session.get("new_connections_start_date") }}"{% endif %}>
-            <input type="date" class="form-control" id="date_2" name="end_date" required disabled placeholder="end date" onchange="handleFieldChange()" {% if session.get("new_connections_end_date") %}value="{{ session.get("new_connections_end_date") }}"{% endif %}>
-          </div>
-        </form>
-
-        <script>
-          function toggleDateFields() {
-            const filterSelect = document.getElementById('filter_select');
-            const dateGroup = document.querySelector('.input-group:has(#date_1)');
-            const date1 = document.getElementById('date_1');
-            const date2 = document.getElementById('date_2');
-            
-            if (filterSelect.value !== "") {
-              dateGroup.style.display = 'flex';
-              date1.disabled = false;
-              date2.disabled = false;
-            } else {
-              dateGroup.style.display = 'none';
-              date1.disabled = true;
-              date2.disabled = true;
-              date1.value = "";
-              date2.value = "";
-            }
-          }
-          function handleFieldChange() {
-            const filterSelect = document.getElementById('filter_select');
-            const date1 = document.getElementById('date_1');
-            const date2 = document.getElementById('date_2');
-            
-            if (filterSelect.value === "") {
-              date1.value = "";
-              date2.value = "";
-              document.getElementById('dateFilterForm').submit();
-            } else if (date1.value === "" || date2.value === "") {
-              return;
-            } else {
-              document.getElementById('dateFilterForm').submit();
-            }
-          }
-          toggleDateFields();
-        </script>
-      </div>
-    </div>
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  
+  <!-- Heading Section (Never wraps) -->
+  <div class="text-nowrap flex-shrink-0 me-3">
+    <h4 class="fw-bold text-primary mb-0 mt-0">New Connections</h4>
+    <p class="text-muted mb-0 small">Manage New Applicant information</p>
   </div>
+
+  <!-- Action Buttons Container (Left-aligned on mobile, right-aligned on desktop) -->
+  <div class="d-flex flex-wrap align-items-center justify-content-start justify-content-sm-end gap-2 flex-grow-1">
+    <div class="d-flex flex-wrap gap-2 align-items-center me-auto ms-sm-auto">
+      <a href="{{ url_for('download_new_connections') }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center" title="Download Records" style="padding:4px 8px; font-size:0.9em;">
+        <i class="bi bi-download"></i>
+      </a>
+      
+      {% if user.role in ["administrator", "billing_officer"] %}
+        <button class="btn btn-outline-success btn-sm d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#uploadCustomersModal" title="Upload Customers" style="padding:4px 8px; font-size:0.9em;">
+          <i class="bi bi-upload"></i>
+        </button>
+        <button class="btn btn-outline-success btn-sm d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#uploadCustomersReferenceModal" title="Upload References" style="padding:4px 8px; font-size:0.9em;">
+          <i class="bi bi-upload me-1"></i> Ref
+        </button>
+      {% endif %}
+
+      {% if user.role in ['administrator', 'scheme_manager', 'commercial_officer', 'billing_officer', 'area_manager'] %}
+        <button class="btn btn-primary btn-sm px-2 py-1 text-nowrap d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+          <i class="bi bi-plus-lg me-1"></i> Add Customer
+        </button>
+      {% endif %}
+    </div>
+
+    <!-- upload customers reference modal -->
+    <div class="modal fade" id="uploadCustomersReferenceModal" tabindex="-1" aria-labelledby="uploadCustomersReferenceModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content" style="font-size:0.9rem;">
+          <form method="POST" action="{{ url_for('upload_customers_reference') }}" enctype="multipart/form-data">
+            <div class="modal-header">
+              <h5 class="modal-title" id="uploadCustomersReferenceModalLabel" style="font-size:1rem;">Upload Customers References</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="customers_file" class="form-label" style="font-size:0.95em;">Select File (CSV or XLSX)</label>
+                <input type="file" class="form-control" id="customers_file" name="customers_file" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required style="font-size:0.95em;">
+              </div>
+            </div>
+            <div class="modal-footer py-2">
+              <button type="submit" class="btn btn-success btn-sm">Upload</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Customers Modal -->
+    <div class="modal fade" id="uploadCustomersModal" tabindex="-1" aria-labelledby="uploadCustomersModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content" style="font-size:0.9rem;">
+          <form method="POST" action="{{ url_for('upload_customers') }}" enctype="multipart/form-data">
+            <div class="modal-header">
+              <h5 class="modal-title" id="uploadCustomersModalLabel" style="font-size:1rem;">Upload multiple Customers</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="customers_file" class="form-label" style="font-size:0.95em;">Select File (CSV or XLSX)</label>
+                <input type="file" class="form-control" id="customers_file" name="customers_file" accept=".csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required style="font-size:0.95em;">
+              </div>
+            </div>
+            <div class="modal-footer py-2">
+              <button type="submit" class="btn btn-success btn-sm">Upload</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Customer Modal -->
+    <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <form method="POST" action="{{ url_for('add_customer') }}" enctype="multipart/form-data">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addCustomerModalLabel">Add New Customer</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row g-2">
+                <div class="col-md-6 mb-2">
+                  <label for="name" class="form-label">Name</label>
+                  <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <label for="contact" class="form-label">Contact</label>
+                  <input type="text" class="form-control" id="contact" name="contact" required>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <label for="scheme_id" class="form-label">Scheme</label>
+                  <select name="scheme_id" class="form-select" id="scheme_id" required onchange="filterVillages()">
+                    <option value="" disabled selected>Select Scheme</option>
+                    {% for scheme in schemes %}
+                      <option value="{{ scheme._id }}">{{ scheme.scheme }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <label for="village_id" class="form-label">Village</label>
+                  <select name="village_id" class="form-select" id="village_id" required>
+                    <option value="" disabled selected>Select Village</option>
+                    {% for village in villages %}
+                      <option value="{{ village._id }}" data-scheme="{{ village.scheme_id }}">{{ village.village }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <script>
+                  function filterVillages() {
+                    var schemeSelect = document.getElementById('scheme_id');
+                    var villageSelect = document.getElementById('village_id');
+                    var selectedScheme = schemeSelect.value;
+                    Array.from(villageSelect.options).forEach(function(option) {
+                      if (!option.value) return; // Skip 'Select Village'
+                      option.style.display = (option.getAttribute('data-scheme') === selectedScheme) ? '' : 'none';
+                    });
+                    // Reset village selection if not matching
+                    if (villageSelect.selectedOptions[0] && villageSelect.selectedOptions[0].style.display === 'none') {
+                      villageSelect.value = '';
+                    }
+                  }
+                  document.getElementById('scheme_id').addEventListener('change', filterVillages);
+                  document.addEventListener('DOMContentLoaded', filterVillages);
+                </script>
+
+                <div class="col-md-6 mb-2">
+                  <label for="application_id" class="form-label">Application ID</label>
+                  <input type="text" class="form-control" id="application_id" name="application_id" required>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <label for="date_applied" class="form-label">Date Applied</label>
+                  <input type="date" class="form-control" id="date_applied" name="date_applied" value="{{ now().strftime('%Y-%m-%d') }}" required>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <label for="id_document" class="form-label">Identification Document</label>
+                  <input type="file" class="form-control" id="id_document" name="id_document" accept="application/pdf,image/*" required>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <label for="recommendation_letter" class="form-label">Recommendation Letter</label>
+                  <input type="file" class="form-control" id="recommendation_letter" name="recommendation_letter" accept="application/pdf,image/*" required>
+                </div>
+                <div class="col-md-12 mb-2">
+                  <label for="application_form_comment" class="form-label">Comment</label>
+                  <input type="text" class="form-control" id="application_form_comment" name="application_form_comment" placeholder="Optional" rows="3">
+                </div>
+                
+              </div>
+            </div>
+
+            <div class="modal-footer py-2">
+              <button type="submit" class="btn btn-success btn-sm">Add Customer</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+<!-- Filters Row -->
+<div class="d-flex flex-wrap gap-2 mb-2 align-items-center">
+
+  <!-- Search Input -->
+  <div class="flex-grow-1" style="min-width: 180px;">
+    <form method="POST" action="{{ url_for('search_new_connections') }}" class="w-100">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white">
+          <button type="submit" class="btn btn-link p-0" style="color:inherit;font-size:0.9em;">
+            <i class="bi bi-search"></i>
+          </button>
+        </span>
+        <input type="text" name="new_connections_search" class="form-control" style="font-size:0.85em;padding:2px 6px;" placeholder="Search..." value="{{ session.get('new_connections_search_query', '') }}">
+      </div>
+    </form>
+  </div>
+
+  <!-- Area Select -->
+  <div class="flex-grow-1" style="min-width: 160px;">
+    <form method="POST" action="{{ url_for('set_new_connections_area') }}" class="w-100">
+      <div class="input-group input-group-sm">
+        <label class="input-group-text" for="area_select">Area</label>
+        <select class="form-select" id="area_select" name="area_id" required onchange="this.form.submit()"
+          {% if user.area_id %}
+            {% for area in areas %}
+              {% if user.area_id|string == area._id|string %}
+                disabled
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        >
+          <option value="" {% if not session.get("selected_new_connections_area_id") %}selected{% endif %}>All Areas</option>
+          {% for area in areas %}
+            <option value="{{ area._id }}"
+              {% if session.get("selected_new_connections_area_id")|string == area._id|string or (user.area_id|string == area._id|string) %}selected{% endif %}>
+              {{ area.area }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <!-- Scheme Select -->
+  <div class="flex-grow-1" style="min-width: 160px;">
+    <form method="POST" action="{{ url_for('set_new_connections_scheme') }}" class="w-100">
+      <div class="input-group input-group-sm">
+        <label class="input-group-text" for="scheme_select">Scheme</label>
+        <select class="form-select" id="scheme_select" name="scheme_id" required onchange="this.form.submit()"
+          {% if user.scheme_id %}
+            {% for scheme in schemes %}
+              {% if user.scheme_id|string == scheme._id|string %}
+                disabled
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        >
+          <option value="" {% if not session.get("new_connections_selected_scheme_id") %}selected{% endif %}>All Schemes</option>
+          {% for scheme in schemes %}
+            <option value="{{ scheme._id }}"
+              {% if session.get("new_connections_selected_scheme_id")|string == scheme._id|string or (user.scheme_id|string == scheme._id|string) %}selected{% endif %}>
+              {{ scheme.scheme }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <!-- Status Select -->
+  <div class="flex-grow-1" style="min-width: 170px;">
+    <form method="POST" action="{{ url_for('set_new_connections_status') }}" class="w-100">
+      <div class="input-group input-group-sm">
+        <label class="input-group-text" for="status_select">Status</label>
+        <select class="form-select" id="status_select" name="status" required onchange="this.form.submit()">
+          <option value="" {% if not session.get("new_connections_status_filter") or session.get("new_connections_status_filter") == "" %}selected{% endif %}>All Statuses</option>
+          <option value="applied" {% if session.get("new_connections_status_filter") == "applied" %}selected{% endif %}>Applied</option>
+          <option value="surveyed" {% if session.get("new_connections_status_filter") == "surveyed" %}selected{% endif %}>Surveyed</option>
+          <option value="approved" {% if session.get("new_connections_status_filter") == "approved" %}selected{% endif %}>Approved</option>
+          <option value="disapproved" {% if session.get("new_connections_status_filter") == "disapproved" %}selected{% endif %}>Disapproved</option>
+          <option value="paid" {% if session.get("new_connections_status_filter") == "paid" %}selected{% endif %}>Paid</option>
+          <option value="verified" {% if session.get("new_connections_status_filter") == "verified" %}selected{% endif %}>Verified</option>
+          <option value="not verified" {% if session.get("new_connections_status_filter") == "not verified" %}selected{% endif %}>Not Verified</option>
+          <option value="materials issued" {% if session.get("new_connections_status_filter") == "materials issued" %}selected{% endif %}>Materials Issued</option>
+          <option value="materials pending" {% if session.get("new_connections_status_filter") == "materials pending" %}selected{% endif %}>Materials Pending</option>
+          <option value="connected" {% if session.get("new_connections_status_filter") == "connected" %}selected{% endif %}>Connected</option>
+          <option value="not connected" {% if session.get("new_connections_status_filter") == "not connected" %}selected{% endif %}>Not Connected</option>
+          <option value="confirmed" {% if session.get("new_connections_status_filter") == "confirmed" %}selected{% endif %}>Confirmed</option>
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <!-- Date Filter Form -->
+  <div class="flex-grow-1" style="min-width: 280px;">
+    <form method="POST" action="{{ url_for('new_connections_date_filter_data') }}" class="d-flex flex-wrap gap-2 align-items-center w-100" id="dateFilterForm">
+      <div class="input-group input-group-sm flex-grow-1" style="min-width: 180px;">
+        <label class="input-group-text" for="filter_select">Date Filter</label>
+        <select class="form-select" id="filter_select" name="filter_field" required onchange="toggleDateFields(); handleFieldChange()">
+          <option value="" {% if not session.get("new_connections_date_filter_field") or session.get("new_connections_date_filter_field") == "" %}selected{% endif %}>No Filter</option>
+          <option value="application_period" {% if session.get("new_connections_date_filter_field") == "date_applied" %}selected{% endif %}>Application Period</option>
+          <option value="survey_period" {% if session.get("new_connections_date_filter_field") == "survey_date" %}selected{% endif %}>Survey Period</option>
+          <option value="payment_period" {% if session.get("new_connections_date_filter_field") == "date_paid" %}selected{% endif %}>Payment Period</option>
+          <option value="verification_period" {% if session.get("new_connections_date_filter_field") == "verification_date" %}selected{% endif %}>Verification Period</option>
+          <option value="material_issuance_period" {% if session.get("new_connections_date_filter_field") == "issuance_date" %}selected{% endif %}>Material Issuance Period</option>
+          <option value="connection_period" {% if session.get("new_connections_date_filter_field") == "connection_date" %}selected{% endif %}>Connection Period</option>
+        </select>
+      </div>
+      <div class="input-group input-group-sm flex-grow-1" id="dateGroup" style="min-width: 220px;">
+        <input type="date" class="form-control" id="date_1" name="start_date" required disabled placeholder="start date" onchange="handleFieldChange()" {% if session.get("new_connections_start_date") %}value="{{ session.get("new_connections_start_date") }}"{% endif %}>
+        <input type="date" class="form-control" id="date_2" name="end_date" required disabled placeholder="end date" onchange="handleFieldChange()" {% if session.get("new_connections_end_date") %}value="{{ session.get("new_connections_end_date") }}"{% endif %}>
+      </div>
+    </form>
+
+    <script>
+      function toggleDateFields() {
+        const filterSelect = document.getElementById('filter_select');
+        const dateGroup = document.getElementById('dateGroup');
+        const date1 = document.getElementById('date_1');
+        const date2 = document.getElementById('date_2');
+        
+        if (filterSelect.value !== "") {
+          dateGroup.style.display = 'flex';
+          date1.disabled = false;
+          date2.disabled = false;
+        } else {
+          dateGroup.style.display = 'none';
+          date1.disabled = true;
+          date2.disabled = true;
+          date1.value = "";
+          date2.value = "";
+        }
+      }
+      function handleFieldChange() {
+        const filterSelect = document.getElementById('filter_select');
+        const date1 = document.getElementById('date_1');
+        const date2 = document.getElementById('date_2');
+        
+        if (filterSelect.value === "") {
+          date1.value = "";
+          date2.value = "";
+          document.getElementById('dateFilterForm').submit();
+        } else if (date1.value === "" || date2.value === "") {
+          return;
+        } else {
+          document.getElementById('dateFilterForm').submit();
+        }
+      }
+      toggleDateFields();
+    </script>
+  </div>
+
+</div>
 
   <div class="h-100 w-100" style="overflow-y: auto; -ms-overflow-style: none;">
     <table class="table table-secondary table-hover table-sm align-middle" style="font-size:0.65rem; border-radius: 0.5rem; overflow: hidden;">
@@ -1183,7 +1189,7 @@
     </table>
   </div>
 
-  <div class="d-flex justify-content-center align-items-center gap-1 my-2" style="margin-right: auto;">
+  <div class="d-flex justify-content-center align-items-center gap-1 mt-2" style="margin-right: auto;">
     <span class="me-3 align-self-center text-muted" style="font-size:0.85em;">
       Total: <strong>{{ total }}</strong>
     </span>

@@ -140,8 +140,6 @@ def home():
         applicant_totals_query["date_applied"] = {"$gte": first_date_of_year, "$lte": last_date_of_year}
         connection_totals_query["connection_date"] = {"$gte": first_date_of_year, "$lte": last_date_of_year}
 
-    print("Applicant Totals Query:", applicant_totals_query)
-    print("Connection Totals Query:", connection_totals_query)
     applicant_totals_count = db.Customers.count_documents(applicant_totals_query)
     connection_totals_count = db.Customers.count_documents(connection_totals_query)
 
@@ -2274,8 +2272,6 @@ def upload_customers():
         elif type == "MS":
             ms_no += 1
 
-        print(ms_no+es_no+bp_no)
-         
     flash(f"{cust_no} Customers processed!, {es_no} ES, {ms_no} MS, {bp_no} BP, {es_no + ms_no + bp_no} uploaded", "success")
     return redirect(url_for("new_connections"))
 
