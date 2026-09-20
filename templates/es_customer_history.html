@@ -162,7 +162,7 @@
       <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-secondary">
           <th>Month</th>
-          <th>Consumption</th>
+          <th class="d-none d-sm-table-cell">Consumption</th>
           <th>Bill</th>
           <th>Payment</th>
           <th>Connection Bal.</th>
@@ -183,7 +183,7 @@
                 {% endif %}
               </td>
 
-              <td class="text-truncate" style="max-width: 120px;">
+              <td class="text-truncate d-none d-lg-table-cell" style="max-width: 120px;">
                 {% if bpb.consumption %}
                   {{ "{:,}".format(bpb.consumption|int) }}
                 {% else %}
