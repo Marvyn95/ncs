@@ -76,6 +76,12 @@
             </div>
           </td>
         </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% for area in areas %}
 <!-- Edit Modal -->
 <div class="modal fade" id="editModal-{{ area._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ area._id }}" aria-hidden="true">
   <div class="modal-dialog">
@@ -130,9 +136,8 @@
             </div>
           </div>
         </div>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  {% endfor %}
+
+
 </div>
 {% endblock %}

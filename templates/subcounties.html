@@ -80,6 +80,12 @@
             </div>
           </td>
         </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+{% for subcounty in subcounties %}
         <!-- Edit Modal -->
         <div class="modal fade" id="editModal-{{ subcounty._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ subcounty._id }}" aria-hidden="true">
           <div class="modal-dialog">
@@ -134,10 +140,7 @@
             </div>
           </div>
         </div>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+{% endfor %}
 
 <div class="d-flex justify-content-end my-3">
   <nav>

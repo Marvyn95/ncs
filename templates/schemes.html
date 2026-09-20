@@ -117,7 +117,12 @@
             </div>
           </td>
         </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
+{% for scheme in schemes %}
         <!-- Edit Modal -->
         <div class="modal fade" id="editModal-{{ scheme._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ scheme._id }}" aria-hidden="true">
           <div class="modal-dialog">
@@ -190,10 +195,7 @@
             </div>
           </div>
         </div>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+{% endfor %}
 
   <!-- Footer Total -->
   <div class="d-flex justify-content-end my-2">

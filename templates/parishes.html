@@ -106,6 +106,12 @@
             </div>
           </td>
         </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% for parish in parishes %}
         <!-- Edit Modal -->
         <div class="modal fade" id="editModal-{{ parish._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ parish._id }}" aria-hidden="true">
           <div class="modal-dialog">
@@ -207,10 +213,7 @@
             </div>
           </div>
         </div>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  {% endfor %}
 
   <div class="d-flex justify-content-end my-3">
   <nav>

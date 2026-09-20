@@ -69,6 +69,13 @@
             </div>
           </td>
         </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+
+  {% for umbrella in umbrellas %}
         <!-- Edit Modal -->
         <div class="modal fade" id="editModal-{{ umbrella._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ umbrella._id }}" aria-hidden="true">
           <div class="modal-dialog">
@@ -93,6 +100,7 @@
             </div>
           </div>
         </div>
+
         <!-- Delete Modal -->
         <div class="modal fade" id="deleteModal-{{ umbrella._id }}" tabindex="-1" aria-labelledby="deleteModalLabel-{{ umbrella._id }}" aria-hidden="true">
           <div class="modal-dialog">
@@ -114,9 +122,6 @@
             </div>
           </div>
         </div>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  {% endfor %}
 </div>
 {% endblock %}

@@ -145,6 +145,13 @@
             </div>
           </td>
         </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% for user in users %}
 
         <!-- Edit User Modal -->
         <div class="modal fade" id="editModal-{{ user._id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ user._id }}" aria-hidden="true">
@@ -282,11 +289,7 @@
             </div>
           </div>
         </div>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+{% endfor %}
 
 <script>
 function filterAreas() {
