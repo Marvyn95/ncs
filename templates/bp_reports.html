@@ -146,7 +146,7 @@
   </div>
 
   <!-- Date Range Filter -->
-  <div class="flex-grow-1" style="min-width: 240px;">
+  <div class="flex-grow-1 d-none d-lg-block" style="min-width: 240px;">
     <form method="POST" action="{{ url_for('bp_report_date_filter') }}" id="dateFilterForm" class="w-100">
       <div class="input-group input-group-sm">
         <input type="date" class="form-control" id="date_1" name="start_date" {% if session.get("bp_reports_start_date") %} value="{{ session.get("bp_reports_start_date") }}" {% endif %} onchange="checkAndSubmitDateForm()">
