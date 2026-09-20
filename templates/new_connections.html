@@ -338,7 +338,7 @@
           <th class="d-none d-sm-table-cell">Scheme</th>
           <th class="d-none d-sm-table-cell">Village</th>
           <th>Status</th>
-          <th>Connection Fee</th>
+          <th class="d-none d-sm-table-cell">Connection Fee</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -351,7 +351,7 @@
             <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.scheme or '-' }}</td>
             <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.village or '-' }}</td>
             <td class="fw-semibold text-muted text-truncate">{{ customer.status or '-' }}</td>
-            <td class="fw-semibold text-muted text-truncate">
+            <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">
               {% if customer.connection_fee %}
                 {{ "{:,}".format(customer.connection_fee|int) }}
               {% else %}
