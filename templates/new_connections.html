@@ -333,7 +333,7 @@
       <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; font-size:0.75rem;">
         <tr class="table-secondary">
           <th>Name</th>
-          <th>Type</th>
+          <th class="d-none d-sm-table-cell">Type</th>
           <th class="d-none d-sm-table-cell">Contact</th>
           <th class="d-none d-sm-table-cell">Scheme</th>
           <th class="d-none d-sm-table-cell">Village</th>
@@ -346,7 +346,7 @@
         {% for customer in customers %}
           <tr class=" table-light">
             <td class="fw-semibold text-truncate">{{ customer.name or '-' }}</td>
-            <td class="fw-semibold text-muted text-truncate">{{ customer.type or '-' }}</td>
+            <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.type or '-' }}</td>
             <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.contact or '-' }}</td>
             <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.scheme or '-' }}</td>
             <td class="fw-semibold text-muted text-truncate d-none d-sm-table-cell">{{ customer.village or '-' }}</td>
