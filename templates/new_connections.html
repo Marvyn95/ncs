@@ -19,10 +19,10 @@
       </a>
       
       {% if user.role in ["administrator", "billing_officer"] %}
-        <button class="btn btn-outline-success btn-sm d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#uploadCustomersModal" title="Upload Customers" style="padding:4px 8px; font-size:0.9em;">
+        <button class="btn btn-outline-success btn-sm d-inline-flex align-items-center justify-content-center d-none d-lg-inline-flex" data-bs-toggle="modal" data-bs-target="#uploadCustomersModal" title="Upload Customers" style="padding:4px 8px; font-size:0.9em;">
           <i class="bi bi-upload"></i>
         </button>
-        <button class="btn btn-outline-success btn-sm d-inline-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#uploadCustomersReferenceModal" title="Upload References" style="padding:4px 8px; font-size:0.9em;">
+        <button class="btn btn-outline-success btn-sm d-inline-flex align-items-center justify-content-center d-none d-lg-inline-flex" data-bs-toggle="modal" data-bs-target="#uploadCustomersReferenceModal" title="Upload References" style="padding:4px 8px; font-size:0.9em;">
           <i class="bi bi-upload me-1"></i> Ref
         </button>
       {% endif %}
@@ -192,7 +192,7 @@
   </div>
 
   <!-- Area Select -->
-  <div class="flex-grow-1" style="min-width: 160px;">
+  <div class="flex-grow-1 d-none d-lg-block" style="min-width: 160px;">
     <form method="POST" action="{{ url_for('set_new_connections_area') }}" class="w-100">
       <div class="input-group input-group-sm">
         <label class="input-group-text" for="area_select">Area</label>
@@ -1191,7 +1191,7 @@
 
   <div class="d-flex justify-content-center align-items-center gap-1 mt-2" style="margin-right: auto;">
     <span class="me-3 align-self-center text-muted" style="font-size:0.85em;">
-      Total: <strong>{{ total }}</strong>
+      <strong>{{ total }}</strong>
     </span>
     <nav>
       <ul class="pagination pagination-sm mb-0">
