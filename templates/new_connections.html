@@ -637,12 +637,8 @@
 function testLocationButton(button) {
 
     const inputGroup = button.closest(".input-group");
-
     const inputField = inputGroup.querySelector('input[name="location"]');
-
-    if (inputField.value != "") {
-        inputField.value = "Loading ...";
-    }
+    inputField.placeholder = "Loading ...";
 
     if (!navigator.geolocation) {
         alert(
@@ -1006,12 +1002,8 @@ function testLocationButton(button) {
 function testLocationButton(button) {
 
     const inputGroup = button.closest(".input-group");
-
     const inputField = inputGroup.querySelector('input[name="location"]');
-
-    if (inputField.value != "") {
-        inputField.value = "";
-    }
+    inputField.placeholder = "Loading ...";
 
     if (!navigator.geolocation) {
         alert(
