@@ -602,26 +602,83 @@
                           </select>
                         </div>
 
-                      <div class="mb-2">
-                        <label for="location" class="form-label">Location</label>
-                        <div class="input-group">
-                          <input type="text" class="form-control" id="location" name="location" value="{{ customer.location or '' }}">
-                          <button type="button" class="btn btn-primary" onclick="getLocation()">Get My Location</button>
-                        </div>
-                      </div>
+<div class="mb-2">
+  <label for="location" class="form-label">Current Location</label>
+  <div class="input-group">
+    <input 
+      type="text" 
+      class="form-control" 
+      id="location" 
+      name="location" 
+      placeholder="Latitude, Longitude"
+      value="{{ customer.location or '' }}"
+      readonly
+    >
+    <button 
+      type="button" 
+      class="btn btn-primary" 
+      id="geo-btn"
+      onclick="getCurrentLocation()"
+    >
+      Get My Location
+    </button>
+  </div>
+</div>
 
-                      <script>
-                      function getLocation() {
-                        if (navigator.geolocation) {
-                          navigator.geolocation.getCurrentPosition(function(position) {
-                            document.getElementById("location").value =
-                              position.coords.latitude + ", " + position.coords.longitude;
-                          });
-                        } else {
-                          alert("Geolocation is not supported by this browser.");
-                        }
-                      }
-                      </script>
+<script>
+function getCurrentLocation() {
+  const locationInput = document.getElementById('location');
+  const geoBtn = document.getElementById('geo-btn');
+
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported by your browser.");
+    return;
+  }
+
+  // Provide visual feedback while fetching
+  geoBtn.disabled = true;
+  geoBtn.textContent = "Locating...";
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
+      
+      // Formats as "latitude, longitude" using ES6 template literal
+      locationInput.value = `${latitude}, ${longitude}`;
+
+      // Reset button state
+      geoBtn.disabled = false;
+      geoBtn.textContent = "Get My Location";
+    },
+    (error) => {
+      // Reset button state
+      geoBtn.disabled = false;
+      geoBtn.textContent = "Get My Location";
+
+      // Clear error logging for fast debugging
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          alert("Location access denied. Please allow location permissions in your browser settings.");
+          break;
+        case error.POSITION_UNAVAILABLE:
+          alert("Location information is unavailable.");
+          break;
+        case error.TIMEOUT:
+          alert("The location request timed out.");
+          break;
+        default:
+          alert("An unknown error occurred while retrieving location.");
+          break;
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
+}
+</script>
                         
                       <div class="col-12 mb-1">
                         <label for="survey_form_comment_{{ customer._id }}" class="form-label">Survey Comment</label>
