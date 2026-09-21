@@ -603,80 +603,79 @@
                         </div>
 
 <div class="mb-2">
-  <label for="location" class="form-label">Current Location</label>
+
+  <label for="location_{{ customer._id }}" class="form-label">
+    Location
+  </label>
+
   <div class="input-group">
-    <input 
-      type="text" 
-      class="form-control" 
-      id="location" 
-      name="location" 
-      placeholder="Latitude, Longitude"
+
+    <input
+      type="text"
+      class="form-control"
+      id="location_{{ customer._id }}"
+      name="location"
       value="{{ customer.location or '' }}"
+      placeholder="Latitude, Longitude"
       readonly
     >
-    <button 
-      type="button" 
-      class="btn btn-primary" 
-      id="geo-btn"
-      onclick="getCurrentLocation()"
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      onclick="testLocationButton(this)"
     >
       Get Location
     </button>
+
   </div>
+
 </div>
 
+
 <script>
-function getCurrentLocation() {
-  const locationInput = document.getElementById('location');
-  const geoBtn = document.getElementById('geo-btn');
+function testLocationButton(button) {
 
-  if (!navigator.geolocation) {
-    alert("Geolocation is not supported by your browser.");
-    return;
-  }
+    const inputGroup = button.closest(".input-group");
 
-  // Provide visual feedback while fetching
-  geoBtn.disabled = true;
-  geoBtn.textContent = "Locating...";
+    const inputField = inputGroup.querySelector('input[name="location"]');
 
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const { latitude, longitude } = position.coords;
-      
-      // Formats as "latitude, longitude" using ES6 template literal
-      locationInput.value = `${latitude}, ${longitude}`;
-
-      // Reset button state
-      geoBtn.disabled = false;
-      geoBtn.textContent = "Get My Location";
-    },
-    (error) => {
-      // Reset button state
-      geoBtn.disabled = false;
-      geoBtn.textContent = "Get My Location";
-
-      // Clear error logging for fast debugging
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          alert("Location access denied. Please allow location permissions in your browser settings.");
-          break;
-        case error.POSITION_UNAVAILABLE:
-          alert("Location information is unavailable.");
-          break;
-        case error.TIMEOUT:
-          alert("The location request timed out.");
-          break;
-        default:
-          alert("An unknown error occurred while retrieving location.");
-          break;
-      }
-    },
-    {
-      enableHighAccuracy: false,
-      timeout: 30000,
-      maximumAge: 60000
+    if (inputField.value != "") {
+        inputField.value = "Loading ...";
     }
-  );
+
+    if (!navigator.geolocation) {
+        alert(
+            "Geolocation is not supported by this browser."
+        );
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+
+        function(position) {
+
+            console.log('coordinates: ' + position.coords.latitude + ", " + position.coords.longitude);
+
+            const coords =
+                position.coords.latitude +
+                ", " +
+                position.coords.longitude;
+            inputField.value = coords;
+        },
+
+
+        function(error) {
+            alert("Error getting location: " + error.message);
+        },
+
+        {
+            enableHighAccuracy: false,
+            timeout: 30000,
+            maximumAge: 5000
+        }
+
+    );
 }
 </script>
                         
@@ -973,82 +972,82 @@ function getCurrentLocation() {
                       </div>
 
 <div class="mb-2">
-  <label for="location" class="form-label">Current Location</label>
+
+  <label for="location_{{ customer._id }}" class="form-label">
+    Location
+  </label>
+
   <div class="input-group">
-    <input 
-      type="text" 
-      class="form-control" 
-      id="location" 
-      name="location" 
-      placeholder="Latitude, Longitude"
+
+    <input
+      type="text"
+      class="form-control"
+      id="location_{{ customer._id }}"
+      name="location"
       value="{{ customer.location or '' }}"
+      placeholder="Latitude, Longitude"
       readonly
     >
-    <button 
-      type="button" 
-      class="btn btn-primary" 
-      id="geo-btn"
-      onclick="getCurrentLocation()"
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      onclick="testLocationButton(this)"
     >
       Get Location
     </button>
+
   </div>
+
 </div>
 
+
 <script>
-function getCurrentLocation() {
-  const locationInput = document.getElementById('location');
-  const geoBtn = document.getElementById('geo-btn');
+function testLocationButton(button) {
 
-  if (!navigator.geolocation) {
-    alert("Geolocation is not supported by your browser.");
-    return;
-  }
+    const inputGroup = button.closest(".input-group");
 
-  // Provide visual feedback while fetching
-  geoBtn.disabled = true;
-  geoBtn.textContent = "Locating...";
+    const inputField = inputGroup.querySelector('input[name="location"]');
 
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const { latitude, longitude } = position.coords;
-      
-      // Formats as "latitude, longitude" using ES6 template literal
-      locationInput.value = `${latitude}, ${longitude}`;
-
-      // Reset button state
-      geoBtn.disabled = false;
-      geoBtn.textContent = "Get My Location";
-    },
-    (error) => {
-      // Reset button state
-      geoBtn.disabled = false;
-      geoBtn.textContent = "Get My Location";
-
-      // Clear error logging for fast debugging
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          alert("Location access denied. Please allow location permissions in your browser settings.");
-          break;
-        case error.POSITION_UNAVAILABLE:
-          alert("Location information is unavailable.");
-          break;
-        case error.TIMEOUT:
-          alert("The location request timed out.");
-          break;
-        default:
-          alert("An unknown error occurred while retrieving location.");
-          break;
-      }
-    },
-    {
-      enableHighAccuracy: false,
-      timeout: 30000,
-      maximumAge: 60000
+    if (inputField.value != "") {
+        inputField.value = "";
     }
-  );
+
+    if (!navigator.geolocation) {
+        alert(
+            "Geolocation is not supported by this browser."
+        );
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+
+        function(position) {
+
+            console.log('coordinates: ' + position.coords.latitude + ", " + position.coords.longitude);
+
+            const coords =
+                position.coords.latitude +
+                ", " +
+                position.coords.longitude;
+            inputField.value = coords;
+        },
+
+
+        function(error) {
+            alert("Error getting location: " + error.message);
+        },
+
+        {
+            enableHighAccuracy: false,
+            timeout: 30000,
+            maximumAge: 5000
+        }
+
+    );
 }
 </script>
+
 
 
                       <div class="mb-2">
