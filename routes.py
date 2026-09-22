@@ -2174,8 +2174,8 @@ def upload_customers():
         creation_date = row[9]
         application_id = str(row[10]).strip() if len(row) > 10 else None
         pipe_length = str(row[11]).strip() if len(row) > 11 else None
-        connection_fee = row[12] if len(row) > 12 else None
-        initial_amount_paid = row[13] if len(row) > 13 else None
+        connection_fee = int(row[12]) if len(row) > 12 else 0
+        initial_amount_paid = int(row[13]) if len(row) > 13 else 0
 
         if pd.isna(meter_ref) or pd.isna(name) or pd.isna(scheme_name) or pd.isna(umbrella_name) or pd.isna(creation_date) or pd.isna(village_name):
             continue
@@ -2204,7 +2204,7 @@ def upload_customers():
                 break
 
         if umbrella_id is None:
-            flash("Umbrella not found in the database, make sure the umbrella 'NAME' for your uploads in your upload is the same as your umbrella", "error")
+            flash("Umbrella not found in the database for, make sure the umbrella 'NAME' for your uploads in your file is the same as your umbrella", "error")
             return redirect(url_for("new_connections"))
         
         # checking if customer exists
@@ -2254,7 +2254,10 @@ def upload_customers():
             "transaction_id": secrets.token_hex(16),
             "first_meter_reading": "0",
             "pipe_length": pipe_length if pipe_length else None,
-            "application_id": application_id if application_id else None
+            "application_id": application_id if application_id else None,
+            "connection_fee": int(connection_fee) if connection_fee else 0,
+            "amount_paid": int(initial_amount_paid) if initial_amount_paid else 0,
+            "amount_due": int(connection_fee) - int(initial_amount_paid) if connection_fee and initial_amount_paid else 0
         }
 
         if type == "ES":
@@ -2271,6 +2274,8 @@ def upload_customers():
             bp_no += 1
         elif type == "MS":
             ms_no += 1
+
+        print(ms_no+es_no+bp_no)
 
     flash(f"{cust_no} Customers processed!, {es_no} ES, {ms_no} MS, {bp_no} BP, {es_no + ms_no + bp_no} uploaded", "success")
     return redirect(url_for("new_connections"))
