@@ -394,7 +394,7 @@
                     </div>
                   </div>
                   <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle custom-small fw-bold">
-                    {{ applicant_totals_count|default(0) }}
+                    {{ applicant_totals_count or '??' }}
                   </span>
                 </div>
               </div>
@@ -412,7 +412,7 @@
                     </div>
                   </div>
                   <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle custom-small fw-bold">
-                    {{ connection_totals_count|default(0) }}
+                    {{ connection_totals_count or '??' }}
                   </span>
                 </div>
               </div>
