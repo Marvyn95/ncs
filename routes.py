@@ -2977,7 +2977,7 @@ def customer_monthly_billing_sheet_update():
     
     if file.filename.endswith(".csv"):
         df = pd.read_csv(file)
-    elif file.filename.endswith((".xls", ".xlsx")):
+    elif file.filename.endswith(".xlsx"):
         df = pd.read_excel(file)
     else:
         flash("Unsupported file format, upload a CSV or Excel file!", "danger")
@@ -2992,12 +2992,11 @@ def customer_monthly_billing_sheet_update():
         return redirect(request.referrer or url_for("home"))
     
     year_months = df["Period"].astype(str).str[:6]
-
     if len(year_months.unique()) != 1:
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
         return redirect(request.referrer or url_for("home"))
 
-    all_customers = db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed"})
+    all_customers = db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}})
     customer_reference_numbers = [str(customer.get("customer_reference")) for customer in all_customers]
 
     found = 0
@@ -3087,7 +3086,7 @@ def customer_monthly_payment_sheet_update():
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
         return redirect(url_for("es_reports"))
 
-    all_customers = db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}, "status": "confirmed"})
+    all_customers = db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}})
     customer_reference_numbers = [str(cust.get("customer_reference")) for cust in all_customers]
 
     found = 0
@@ -3095,7 +3094,8 @@ def customer_monthly_payment_sheet_update():
 
     for entry in df.itertuples():
         customer_ref = str(entry.CustomerRef)
-        tran_amount = int(entry.TranAmount)
+        customer_payments = df[df["CustomerRef"].astype(str) == str(customer_ref)]
+        tran_amount = int(customer_payments["TranAmount"].sum())
         payment_date = str(entry.PaymentDate)
 
         if customer_ref not in customer_reference_numbers:
@@ -3127,7 +3127,7 @@ def customer_monthly_payment_sheet_update():
                     bpb.append(bpb_entry)
                 elif month_entry is not None:
                     month_entry_copy = month_entry
-                    month_entry_copy["payment"] = month_entry.get("payment", 0) + tran_amount
+                    month_entry_copy["payment"] = tran_amount
                     bpb.remove(month_entry)
                     bpb.append(month_entry_copy)
 
