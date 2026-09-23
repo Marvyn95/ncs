@@ -2257,7 +2257,8 @@ def upload_customers():
             "application_id": application_id if application_id else None,
             "connection_fee": int(connection_fee) if connection_fee else 0,
             "amount_paid": int(initial_amount_paid) if initial_amount_paid else 0,
-            "amount_due": int(connection_fee) - int(initial_amount_paid) if connection_fee and initial_amount_paid else 0
+            "amount_due": int(connection_fee) - int(initial_amount_paid) if connection_fee and initial_amount_paid else 0,
+            "upload_source": "manual_process"
         }
 
         if type == "ES":
