@@ -171,6 +171,7 @@ def home():
                            )
 
 @app.route('/set_dashboard_new_connections_cumulative_totals_selected_year', methods=["POST"])
+@login_required
 def set_dashboard_new_connections_cumulative_totals_selected_year():
     selected_year = request.form.get('year')
     session['dashboard_new_connections_cumulative_totals_selected_year'] = int(selected_year)
@@ -201,8 +202,6 @@ def login():
         return render_template("login.html")
 
 
-
-
 @app.route('/logout', methods=["GET"])
 def logout():
     session.clear()
@@ -212,7 +211,6 @@ def logout():
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
-
     with open("../config.json") as config_file:
         config = json.load(config_file)
 
@@ -274,6 +272,7 @@ def profile():
 
 
 @app.route('/update_profile', methods=["POST"])
+@login_required
 def update_profile():
     user_info = db.Users.find_one({"_id": ObjectId(request.form.get("user_id"))})
 
@@ -295,6 +294,7 @@ def update_profile():
 
 
 @app.route('/change_password', methods=["POST"])
+@login_required
 def change_password():
     user_id = request.form.get("user_id")
     new_password = request.form.get("new_password")
@@ -341,6 +341,7 @@ def umbrellas():
                            umbrellas=sorted(umbrellas, key=lambda x: x["umbrella"].lower()))
 
 @app.route('/add_umbrella', methods=["POST"])
+@login_required
 def add_umbrella():
     umbrella_name = request.form.get("umbrella")
     umbrella_name = str(umbrella_name).strip().upper()  # Convert to uppercase for consistency
@@ -356,6 +357,7 @@ def add_umbrella():
 
 
 @app.route('/edit_umbrella', methods=["POST"])
+@login_required
 def edit_umbrella():
     umbrella_id = request.form.get("umbrella_id")
     new_umbrella_name = request.form.get("umbrella")
@@ -373,6 +375,7 @@ def edit_umbrella():
 
 
 @app.route('/delete_umbrella', methods=["POST"])
+@login_required
 def delete_umbrella():
     umbrella_id = request.form.get("umbrella_id")
 
@@ -515,7 +518,6 @@ def edit_user():
     return redirect(url_for("users"))
 
 
-
 @app.route('/update_user_password', methods=["POST"])
 @login_required
 def update_user_password():
@@ -585,6 +587,7 @@ def areas():
                            umbrellas=umbrellas)
 
 @app.route('/add_area', methods=["POST"])
+@login_required
 def add_area():
     area_name = request.form.get("area")
     area_name = str(area_name).strip().upper()  # Convert to uppercase for consistency
@@ -600,6 +603,7 @@ def add_area():
 
 
 @app.route('/edit_area', methods=["POST"])
+@login_required
 def edit_area():
     area_id = request.form.get("area_id")
     new_area_name = request.form.get("area")
@@ -618,6 +622,7 @@ def edit_area():
     return redirect(url_for("areas"))
 
 @app.route('/delete_area', methods=["POST"])
+@login_required
 def delete_area():
     area_id = request.form.get("area_id")
 
@@ -631,7 +636,6 @@ def delete_area():
     db.Areas.delete_one({"_id": ObjectId(area_id)})
     flash("Area deleted successfully!", "success")
     return redirect(url_for("areas"))
-
 
 
 # schemes
@@ -802,7 +806,9 @@ def districts():
                            page=page,
                            total_pages=total_pages)
 
+
 @app.route('/add_district', methods=["POST"])
+@login_required
 def add_district():
     district_name = request.form.get("district")
     district_name = str(district_name).strip().upper()  # Convert to uppercase for consistency
@@ -816,6 +822,7 @@ def add_district():
     return redirect(url_for("districts"))
 
 @app.route('/edit_district', methods=["POST"])
+@login_required
 def edit_district():
     district_id = request.form.get("district_id")
     new_district_name = request.form.get("district")
@@ -831,6 +838,7 @@ def edit_district():
     return redirect(url_for("districts"))
 
 @app.route('/delete_district', methods=["POST"])
+@login_required
 def delete_district():
     district_id = request.form.get("district_id")
 
@@ -846,6 +854,7 @@ def delete_district():
 
 
 @app.route('/search_villages', methods=["POST"])
+@login_required
 def search_villages():
     village_search_query = request.form.get("village_search_query", "").strip()
     session['village_search_query'] = village_search_query
@@ -948,6 +957,7 @@ def villages():
                            total=total)
 
 @app.route('/add_village', methods=["POST"])
+@login_required
 def add_village():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     village = request.form.get("village")
@@ -977,6 +987,7 @@ def add_village():
 
 
 @app.route('/edit_village', methods=["POST"])
+@login_required
 def edit_village():
     village_id = request.form.get("village_id")
     new_village_name = request.form.get("village")
@@ -1005,6 +1016,7 @@ def edit_village():
 
 
 @app.route('/delete_village', methods=["POST"])
+@login_required
 def delete_village():
     village_id = request.form.get("village_id")
     customers = db.Customers.find({"village_id": str(village_id)})
@@ -1774,6 +1786,7 @@ def es_reports():
 
 
 @app.route('/es_customer_history', methods=['POST'])
+@login_required
 def es_customer_history():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
@@ -1792,7 +1805,8 @@ def es_customer_history():
     return render_template('es_customer_history.html', user=user, customer=customer, now=datetime.datetime.now, date=datetime.datetime.now(), section="es_reports")
 
 
-@app.route("/subcounties")
+@app.route("/subcounties", methods=['GET'])
+@login_required
 def subcounties():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
 
@@ -1952,6 +1966,7 @@ def parishes():
                            total_pages=total_pages)
 
 @app.route('/add_parish', methods=['POST'])
+@login_required
 def add_parish():
     parish = request.form.get('parish')
     parish = parish.strip().upper()
@@ -1973,6 +1988,7 @@ def add_parish():
 
 
 @app.route('/edit_parish', methods=['POST'])
+@login_required
 def edit_parish():
     parish_id = request.form.get('parish_id')
     new_name = request.form.get('parish')
@@ -1994,6 +2010,7 @@ def edit_parish():
 
 
 @app.route('/delete_parish', methods=['POST'])
+@login_required
 def delete_parish():
     parish_id = request.form.get('parish_id')
 
@@ -2104,6 +2121,7 @@ def download_new_connections():
 
 
 @app.route("/customer_report_download", methods=["POST"])
+@login_required
 def customer_report_download():
     customer_id = request.form.get("customer_id")
     umbrella_id = request.form.get("umbrella_id")
@@ -2123,6 +2141,7 @@ def customer_report_download():
 
 
 @app.route("/upload_customers", methods=["POST"])
+@login_required
 def upload_customers():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
 
@@ -2283,6 +2302,7 @@ def upload_customers():
 
 
 @app.route("/search_new_connections", methods=["POST"])
+@login_required
 def search_new_connections():
     search_query = request.form.get("new_connections_search", "").strip()
     if search_query:
@@ -2295,6 +2315,7 @@ def search_new_connections():
 
 
 @app.route("/search_es_reports", methods=["POST"])
+@login_required
 def search_es_reports():
     search_query = request.form.get("search", "").strip()
     session["es_reports_search_query"] = search_query if search_query else None
@@ -2305,6 +2326,7 @@ def search_es_reports():
 
 
 @app.route("/download_es_reports")
+@login_required
 def download_es_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     date = datetime.datetime.now().strftime("%d.%B.%Y")
@@ -2415,18 +2437,21 @@ def download_es_reports():
 
 
 @app.route("/village_sort_by_scheme")
+@login_required
 def village_sort_by_scheme():
     session["village_sort_by_scheme"] = True
     session.pop("village_sort_by_village", None)
     return redirect(request.referrer or url_for("villages"))
 
 @app.route("/village_sort_by_village")
+@login_required
 def village_sort_by_village():
     session["village_sort_by_village"] = True
     session.pop("village_sort_by_scheme", None)
     return redirect(request.referrer or url_for("villages"))
 
 @app.route("/set_new_connections_status", methods=["POST"])
+@login_required
 def set_new_connections_status():
     status = request.form.get("status")
     session["new_connections_status_filter"] = status if status != "" else None
@@ -2436,6 +2461,7 @@ def set_new_connections_status():
 
 
 @app.route("/new_connections_date_filter_data", methods=["POST"])
+@login_required
 def new_connections_date_filter_data():
 
     filter_field = request.form.get("filter_field")
@@ -2469,6 +2495,7 @@ def new_connections_date_filter_data():
 
 
 @app.route("/es_report_date_filter", methods=["POST"])
+@login_required
 def es_report_date_filter():
     start_date_str = request.form.get("start_date")
     end_date_str = request.form.get("end_date")
@@ -2481,6 +2508,7 @@ def es_report_date_filter():
     return redirect(url_for("es_reports"))
 
 @app.route("/bp_report_date_filter", methods=["POST"])
+@login_required
 def bp_report_date_filter():
     start_date_str = request.form.get("start_date")
     end_date_str = request.form.get("end_date")
@@ -2490,6 +2518,7 @@ def bp_report_date_filter():
     return redirect(url_for("bp_reports"))
 
 @app.route('/bp_reports', methods=['GET'])
+@login_required
 def bp_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
@@ -2585,6 +2614,7 @@ def bp_reports():
 
 
 @app.route('/set_bp_reports_scheme', methods=['POST'])
+@login_required
 def set_bp_reports_scheme():
     scheme_id = request.form.get("scheme_id")
     session["bp_reports_selected_scheme_id"] = scheme_id if scheme_id else None
@@ -2595,6 +2625,7 @@ def set_bp_reports_scheme():
 
 
 @app.route('/search_bp_reports', methods=['POST'])
+@login_required
 def search_bp_reports():
     search_query = request.form.get("search", "").strip()
     if search_query:
@@ -2609,6 +2640,7 @@ def search_bp_reports():
 
 
 @app.route('/download_bp_reports', methods=['GET'])
+@login_required
 def download_bp_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     date = datetime.datetime.now().strftime("%d.%B.%Y")
@@ -2696,6 +2728,7 @@ def bp_customer_history():
 
 
 @app.route("/bp_customer_report_download", methods=["POST"])
+@login_required
 def bp_customer_report_download():
     customer_id = request.form.get("customer_id")
     umbrella_id = request.form.get("umbrella_id")
@@ -2805,6 +2838,7 @@ def upload_customers_reference():
 
 
 @app.route("/reload_es_reports")
+@login_required
 def reload_es_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "type": "ES", "status": "confirmed"}))
@@ -2821,6 +2855,7 @@ def reload_es_reports():
 
 
 @app.route('/ms_reports', methods=['GET'])
+@login_required
 def ms_reports():
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
     user["umbrella"] = db.Umbrellas.find_one({"_id": ObjectId(user.get("umbrella_id"))}).get("umbrella") if user.get("umbrella_id") else None
@@ -3258,6 +3293,7 @@ def download_ms_reports():
 
 
 @app.route("/ms_customer_report_download", methods=["POST"])
+@login_required
 def ms_customer_report_download():
     customer_id = request.form.get("customer_id")
     umbrella_id = request.form.get("umbrella_id")
