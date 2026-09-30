@@ -1034,6 +1034,7 @@ def delete_village():
 @app.route('/new_connections', methods=["GET"])
 @login_required
 def new_connections():
+    session.pop("selected_materials_request_scheme_id", None)
     user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
 
     if user is None:
@@ -1073,7 +1074,7 @@ def new_connections():
 
     if user.get("area_id"):
         schemes = sorted(list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")})), key=lambda x: x["scheme"].lower())
-        scheme_ids_for_area = [str(scheme["_id"]) for scheme in schemes]
+        scheme_ids_for_area = [str(scheme.get("_id")) for scheme in schemes]
         query["scheme_id"] = {"$in": scheme_ids_for_area}
 
     if session.get("new_connections_selected_scheme_id"):
@@ -3399,3 +3400,72 @@ def set_bp_reports_area():
     session.pop("bp_reports_selected_scheme_id", None)
     session.pop("bp_reports_page", None)
     return redirect(url_for("bp_reports"))
+
+@app.route("/materials_request_page", methods=["GET"])
+@login_required
+def materials_request_page():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if user is None:
+        flash("User not found.", "danger")
+        return redirect(url_for("logout"))
+
+    page = request.args.get("page", 1, type=int)
+    per_page = 50
+
+    query = {"umbrella_id": user.get("umbrella_id"), "status": "verified"}
+    schemes = sorted(list(db.Schemes.find({"umbrella_id": str(user.get("umbrella_id"))})), key=lambda x: x.get("scheme", "").lower())
+
+    if user.get("area_id"):
+        query["area_id"] = user.get("area_id")
+        schemes = sorted(list(db.Schemes.find({"umbrella_id": str(user.get("umbrella_id")), "area_id": str(user.get("area_id"))})), key=lambda x: x.get("scheme", "").lower())
+        scheme_ids_for_area = [str(scheme.get("_id")) for scheme in schemes]
+        query["scheme_id"] = {"$in": scheme_ids_for_area}
+
+    if session.get("selected_materials_request_scheme_id"):
+        query["scheme_id"] = session.get("selected_materials_request_scheme_id")
+    elif session.get("new_connections_selected_scheme_id"):
+        query["scheme_id"] = session.get("new_connections_selected_scheme_id")
+
+    if user.get("scheme_id"):
+        query["scheme_id"] = user.get("scheme_id")
+
+    verified_customers = list(db.Customers.find(query))
+
+    for i in verified_customers:
+        i["scheme"] = next((scheme.get("scheme") for scheme in schemes if str(scheme.get("_id")) == str(i.get("scheme_id"))), None)
+
+    bill_of_materials = dict()
+    for customer in verified_customers:
+        # service line
+        key = f"{customer.get('pipe_type')}-DN{customer.get('pipe_diameter')}"
+        pipe_length = int(customer.get("pipe_length", 0))
+        if key not in bill_of_materials:
+            bill_of_materials[key] = {"quantity": 0, "units": "m"}
+        bill_of_materials[key]["quantity"] += int(pipe_length)
+
+        # saddle clamp
+        if "saddle clamp" not in bill_of_materials:
+            bill_of_materials["saddle clamp"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials["saddle clamp"]["quantity"] += 1
+
+        # meter and tap stand support
+        if f"GI {customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"GI {customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"GI {customer.get('pipe_diameter')}"]["quantity"] += 130
+
+
+
+
+
+    return render_template("materials_request.html", user=user, schemes=schemes, verified_customers=verified_customers, bill_of_materials=bill_of_materials)
+
+@app.route("/set_materials_request_scheme", methods=["POST"])
+@login_required
+def set_materials_request_scheme():
+    scheme_id = request.form.get("scheme_id")
+    if scheme_id:
+        session["selected_materials_request_scheme_id"] = scheme_id
+    else:
+        session.pop("selected_materials_request_scheme_id", None)
+    return redirect(url_for("materials_request_page"))
