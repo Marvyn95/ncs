@@ -253,14 +253,14 @@
 
 
               <!-- Submit Action Button -->
-              {% if not session.selected_materials_request_scheme_id %}
+              {% if not session.selected_materials_request_scheme_id or verified_customers == [] %}
 
               <div class="mt-auto pt-2 border-top d-flex justify-content-end">
                 <span
                   class="btn btn-primary btn-sm disabled"
                   aria-disabled="true"
                 >
-                  Select a scheme to enable material requests.
+                  Select scheme with verified customers to make requests
                 </span>
               </div>
 
