@@ -3431,8 +3431,6 @@ def materials_request_page():
         query["scheme_id"] = user.get("scheme_id")
 
     verified_customers = list(db.Customers.find(query))
-    print(verified_customers)
-
     for i in verified_customers:
         i["scheme"] = next((scheme.get("scheme") for scheme in schemes if str(scheme.get("_id")) == str(i.get("scheme_id"))), None)
 
