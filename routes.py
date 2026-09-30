@@ -13,6 +13,7 @@ import pandas as pd
 import io
 import secrets
 from collections import defaultdict
+import materials_request_api
 
 @app.route('/home', methods=["GET", "POST"])
 @login_required
@@ -3417,7 +3418,6 @@ def materials_request_page():
     schemes = sorted(list(db.Schemes.find({"umbrella_id": str(user.get("umbrella_id"))})), key=lambda x: x.get("scheme", "").lower())
 
     if user.get("area_id"):
-        query["area_id"] = user.get("area_id")
         schemes = sorted(list(db.Schemes.find({"umbrella_id": str(user.get("umbrella_id")), "area_id": str(user.get("area_id"))})), key=lambda x: x.get("scheme", "").lower())
         scheme_ids_for_area = [str(scheme.get("_id")) for scheme in schemes]
         query["scheme_id"] = {"$in": scheme_ids_for_area}
@@ -3437,7 +3437,6 @@ def materials_request_page():
     # bill of materials dictionary to accumulate quantities for each material type and all customers
     bill_of_materials = {}
     for customer in verified_customers:
-
         # service line 01
         if f"{customer.get('pipe_type')}-Pipe-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
             bill_of_materials[f"{customer.get('pipe_type')}-Pipe-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "m"}
@@ -3502,6 +3501,7 @@ def materials_request_page():
 
     return render_template("materials_request.html", user=user, schemes=schemes, verified_customers=verified_customers, bill_of_materials=bill_of_materials)
 
+
 @app.route("/set_materials_request_scheme", methods=["POST"])
 @login_required
 def set_materials_request_scheme():
@@ -3510,4 +3510,88 @@ def set_materials_request_scheme():
         session["selected_materials_request_scheme_id"] = scheme_id
     else:
         session.pop("selected_materials_request_scheme_id", None)
+    return redirect(url_for("materials_request_page"))
+
+@app.route("/send_materials_request", methods=["GET"])
+@login_required
+def send_materials_request():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+    if not user:
+        flash("User not found.", "error")
+        return redirect(url_for("login"))
+
+    scheme_id = request.args.get("scheme_id")
+    if not scheme_id:
+        flash("Scheme is required to send materials request.", "error")
+        return redirect(url_for("materials_request_page"))
+
+    verified_customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": str(scheme_id), "status": "verified"}))
+    
+    bill_of_materials = {}
+    for customer in verified_customers:
+        # service line 01
+        if f"{customer.get('pipe_type')}-Pipe-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"{customer.get('pipe_type')}-Pipe-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "m"}
+        bill_of_materials[f"{customer.get('pipe_type')}-Pipe-DN{customer.get('pipe_diameter')}"]["quantity"] += float(customer.get("pipe_length", 0))
+
+        # saddle clamp and/or tee
+        if float(customer.get("tap_pipe_size", 0)) < 32:
+            # tee for the service line from tapping
+            if f"Tee-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})" not in bill_of_materials:
+                bill_of_materials[f"Tee-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})"] = {"quantity": 0, "units": "pcs"}
+            bill_of_materials[f"Tee-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})"]["quantity"] += 1
+        elif float(customer.get("tap_pipe_size", 0)) >= 32:
+            # saddle clamp for service line from tapping
+            if f"Saddle-clamp-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})" not in bill_of_materials:
+                bill_of_materials[f"Saddle-clamp-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})"] = {"quantity": 0, "units": "pcs"}
+            bill_of_materials[f"Saddle-clamp-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})"]["quantity"] += 1
+
+            # adoptor for the saddle clamp
+            if f"Adoptor-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+                bill_of_materials[f"Adoptor-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+            bill_of_materials[f"Adoptor-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
+
+        # adoptor from service line to the meter stand
+        if f"Adoptor-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"Adoptor-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"Adoptor-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
+
+        # Elbows
+        if f"GI-Elbow-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"GI-Elbow-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"GI-Elbow-DN{customer.get('pipe_diameter')}"]["quantity"] += 6
+
+        # Nipples
+        if f"GI-Nipple-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"GI-Nipple-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"GI-Nipple-DN{customer.get('pipe_diameter')}"]["quantity"] += 2
+
+        # meter and tap stand support (GI pipes)
+        if f"GI-Pipe-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"GI-Pipe-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "130mm pcs"}
+        bill_of_materials[f"GI-Pipe-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
+
+        # water meter
+        if f"Water-Meter-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"Water-Meter-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"Water-Meter-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
+
+        # gate valve
+        if f"Gate-Valve-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"Gate-Valve-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"Gate-Valve-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
+
+        # tap valve
+        if f"Tap-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"Tap-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"Tap-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
+
+        # thread tape
+        if "Thread-Tape" not in bill_of_materials:
+            bill_of_materials["Thread-Tape"] = {"quantity": 0, "units": "pcs    "}
+        bill_of_materials["Thread-Tape"]["quantity"] += 1
+
+    response, status_code = materials_request_api.materials_request(url="http://example.com/api/materials_request", data=bill_of_materials)
+    print(response.get_json(), status_code)
+
     return redirect(url_for("materials_request_page"))

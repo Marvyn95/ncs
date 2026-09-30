@@ -267,16 +267,14 @@
               {% else %}
 
               <div class="mt-auto pt-2 border-top d-flex justify-content-end">
-                <button
-                  type="submit"
-                  class="btn btn-success btn-sm d-inline-flex align-items-center gap-1"
-                  {% if not session.selected_materials_request_scheme_id %}
-                    disabled
-                  {% endif %}
+                <a
+                  href="{{ url_for('send_materials_request', scheme_id=session.selected_materials_request_scheme_id) }}"
+                  class="btn btn-success btn-sm d-inline-flex align-items-center gap-1 {% if not session.selected_materials_request_scheme_id %}disabled{% endif %}"
+                  {% if not session.selected_materials_request_scheme_id %}aria-disabled="true"{% endif %}
                 >
                   <i class="bi bi-send-check"></i>
                   Generate Material Request
-                </button>
+                </a>
               </div>
 
               {% endif %}
