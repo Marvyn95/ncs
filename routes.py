@@ -3435,28 +3435,71 @@ def materials_request_page():
     for i in verified_customers:
         i["scheme"] = next((scheme.get("scheme") for scheme in schemes if str(scheme.get("_id")) == str(i.get("scheme_id"))), None)
 
-    bill_of_materials = dict()
+    # bill of materials dictionary to accumulate quantities for each material type and all customers
+    bill_of_materials = {}
     for customer in verified_customers:
-        # service line
-        key = f"{customer.get('pipe_type')}-DN{customer.get('pipe_diameter')}"
-        pipe_length = int(customer.get("pipe_length", 0))
-        if key not in bill_of_materials:
-            bill_of_materials[key] = {"quantity": 0, "units": "m"}
-        bill_of_materials[key]["quantity"] += int(pipe_length)
 
-        # saddle clamp
-        if "saddle clamp" not in bill_of_materials:
-            bill_of_materials["saddle clamp"] = {"quantity": 0, "units": "pcs"}
-        bill_of_materials["saddle clamp"]["quantity"] += 1
+        # service line 01
+        if f"{customer.get('pipe_type')}-Pipe-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"{customer.get('pipe_type')}-Pipe-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "m"}
+        bill_of_materials[f"{customer.get('pipe_type')}-Pipe-DN{customer.get('pipe_diameter')}"]["quantity"] += float(customer.get("pipe_length", 0))
 
-        # meter and tap stand support
-        if f"GI {customer.get('pipe_diameter')}" not in bill_of_materials:
-            bill_of_materials[f"GI {customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
-        bill_of_materials[f"GI {customer.get('pipe_diameter')}"]["quantity"] += 130
+        # saddle clamp and/or tee
+        if float(customer.get("tap_pipe_size", 0)) < 32:
+            # tee for the service line from tapping
+            if f"Tee-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})" not in bill_of_materials:
+                bill_of_materials[f"Tee-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})"] = {"quantity": 0, "units": "pcs"}
+            bill_of_materials[f"Tee-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})"]["quantity"] += 1
+        elif float(customer.get("tap_pipe_size", 0)) >= 32:
+            # saddle clamp for service line from tapping
+            if f"Saddle-clamp-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})" not in bill_of_materials:
+                bill_of_materials[f"Saddle-clamp-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})"] = {"quantity": 0, "units": "pcs"}
+            bill_of_materials[f"Saddle-clamp-DN({customer.get('tap_pipe_size')}X{customer.get('pipe_diameter')})"]["quantity"] += 1
 
+            # adoptor for the saddle clamp
+            if f"Adoptor-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+                bill_of_materials[f"Adoptor-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+            bill_of_materials[f"Adoptor-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
 
+        # adoptor from service line to the meter stand
+        if f"Adoptor-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"Adoptor-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"Adoptor-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
 
+        # Elbows
+        if f"GI-Elbow-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"GI-Elbow-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"GI-Elbow-DN{customer.get('pipe_diameter')}"]["quantity"] += 6
 
+        # Nipples
+        if f"GI-Nipple-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"GI-Nipple-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"GI-Nipple-DN{customer.get('pipe_diameter')}"]["quantity"] += 2
+
+        # meter and tap stand support (GI pipes)
+        if f"GI-Pipe-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"GI-Pipe-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "130mm pcs"}
+        bill_of_materials[f"GI-Pipe-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
+
+        # water meter
+        if f"Water-Meter-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"Water-Meter-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"Water-Meter-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
+
+        # gate valve
+        if f"Gate-Valve-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"Gate-Valve-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"Gate-Valve-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
+
+        # tap valve
+        if f"Tap-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
+            bill_of_materials[f"Tap-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials[f"Tap-DN{customer.get('pipe_diameter')}"]["quantity"] += 1
+
+        # thread tape
+        if "Thread-Tape" not in bill_of_materials:
+            bill_of_materials["Thread-Tape"] = {"quantity": 0, "units": "pcs"}
+        bill_of_materials["Thread-Tape"]["quantity"] += 1
 
     return render_template("materials_request.html", user=user, schemes=schemes, verified_customers=verified_customers, bill_of_materials=bill_of_materials)
 
