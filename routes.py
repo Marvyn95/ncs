@@ -5,7 +5,7 @@ from flask import render_template, flash, request, url_for, session, redirect, s
 import json
 from bson.objectid import ObjectId
 import datetime
-from utils import save_file, login_required, delete_file, roll_down_balances, generate_customer_report
+from utils import save_file, login_required, delete_file, roll_down_balances, generate_customer_report, materials_request
 import pandas as pd
 import io
 from dateutil.relativedelta import relativedelta
@@ -3624,12 +3624,13 @@ def send_materials_request():
     })
 
     # sending materials request to external SIMS API 
+    scheme["_id"] = str(scheme["_id"])
     payload = {
         "material_request_id": str(result.inserted_id),
         "scheme": scheme,
         "bill_of_materials": bill_of_materials
     }
-    response = materials_request_api.materials_request(payload)
+    response = materials_request(payload)
 
     # handling response from external SIMS API
     # second last step if api call is successful (update material request in db with sims request_id)

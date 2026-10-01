@@ -56,11 +56,14 @@
           </form>
         </div>
       </div>
-    </div>
+    </div>  
 
+
+    {% if user.role in ['admin'] %}
     <a href="{{ url_for('materials_request_page') }}" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center justify-content-center text-nowrap" title="Request for Materials" style="padding:4px 8px; font-size:0.9em;">
       <i class="bi bi-box-seam me-1"></i> Request for Materials
     </a>
+    {% endif %}
 
     <!-- Upload Customers Modal -->
     <div class="modal fade" id="uploadCustomersModal" tabindex="-1" aria-labelledby="uploadCustomersModalLabel" aria-hidden="true">

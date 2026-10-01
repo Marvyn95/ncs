@@ -1,14 +1,15 @@
 import os
 import secrets
+import json
 from functools import wraps
-from flask import session, flash, redirect, url_for
+from flask import config, session, flash, redirect, url_for
 from fpdf import FPDF
 import io
 from flask import send_file
 from __init__ import db
 from bson.objectid import ObjectId
 from datetime import datetime
-
+import requests
 
 def save_file(file, upload_folder='static/uploads'):
     if not file or file.filename == '':
@@ -229,3 +230,11 @@ def generate_customer_report(customer):
     pdf_output.write(pdf_bytes)
     pdf_output.seek(0)
     return pdf_output
+
+def materials_request(data):
+    url = "http://example.com/api/materials_request"
+    data_json = json.dumps(data)
+    timeout = 10
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(url, data=data_json, headers=headers, timeout=timeout)
+    return response
