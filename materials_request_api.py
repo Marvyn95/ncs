@@ -8,17 +8,10 @@ from __init__ import app, db, bcrypt
 from utils import login_required
 import requests
 
-def materials_request(url, data):
-    if url is None:
-        return jsonify({"status": "error", "message": "URL is required"}), 400
-    
-    if data is None:
-        return jsonify({"status": "error", "message": "JSON object is required"}), 400
-    
-    # response = requests.post(url, json=data)
-    # if response.status_code != 200:
-    #     return jsonify({"status": "error", "message": "Failed to send request to SIMS"}), response.status_code
+with open('../config.json') as config_file:
+    config = json.load(config_file)
 
-    data_2 = 'mandem mandem'
-    
-    return jsonify({"status": "success", "data": data_2}), 200
+def materials_request(data):
+    url = config.get("materials_request_url")
+    response = requests.post(url, data=data, timeout=10)
+    return response

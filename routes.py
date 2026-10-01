@@ -1506,7 +1506,7 @@ def customer_payment():
     update_data = {
         "amount_paid": int(amount_paid),
         "date_paid": datetime.datetime.strptime(date_paid, "%Y-%m-%d"),
-        "amount_due": int(customer.get("amount_due", customer.get("connection_fee", 0))) - int(amount_paid),
+        "amount_due": int(customer.get("connection_fee", 0)) - int(amount_paid),
         "transaction_id": transaction_id,
         "status": 'paid',
         "payment_form_comment": payment_form_comment
@@ -3411,24 +3411,29 @@ def materials_request_page():
         flash("User not found.", "danger")
         return redirect(url_for("logout"))
 
-    page = request.args.get("page", 1, type=int)
-    per_page = 50
+    # page = request.args.get("page", 1, type=int)
+    # per_page = 50
 
     query = {"umbrella_id": user.get("umbrella_id"), "status": "verified"}
+    material_requests_query = {"umbrella_id": str(user.get("umbrella_id"))}
     schemes = sorted(list(db.Schemes.find({"umbrella_id": str(user.get("umbrella_id"))})), key=lambda x: x.get("scheme", "").lower())
 
     if user.get("area_id"):
         schemes = sorted(list(db.Schemes.find({"umbrella_id": str(user.get("umbrella_id")), "area_id": str(user.get("area_id"))})), key=lambda x: x.get("scheme", "").lower())
         scheme_ids_for_area = [str(scheme.get("_id")) for scheme in schemes]
         query["scheme_id"] = {"$in": scheme_ids_for_area}
+        material_requests_query["scheme_id"] = {"$in": scheme_ids_for_area}
 
     if session.get("selected_materials_request_scheme_id"):
         query["scheme_id"] = session.get("selected_materials_request_scheme_id")
+        material_requests_query["scheme_id"] = session.get("selected_materials_request_scheme_id")
     elif session.get("new_connections_selected_scheme_id"):
         query["scheme_id"] = session.get("new_connections_selected_scheme_id")
+        material_requests_query["scheme_id"] = session.get("new_connections_selected_scheme_id")
 
     if user.get("scheme_id"):
         query["scheme_id"] = user.get("scheme_id")
+        material_requests_query["scheme_id"] = user.get("scheme_id")
 
     verified_customers = list(db.Customers.find(query))
     for i in verified_customers:
@@ -3499,7 +3504,21 @@ def materials_request_page():
             bill_of_materials["Thread-Tape"] = {"quantity": 0, "units": "pcs"}
         bill_of_materials["Thread-Tape"]["quantity"] += 1
 
-    return render_template("materials_request.html", user=user, schemes=schemes, verified_customers=verified_customers, bill_of_materials=bill_of_materials)
+    # getting material requests from database
+    material_requests = list(db.Material_requests.find(material_requests_query))
+    all_schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+    for req in material_requests:
+        req["scheme_name"] = next((scheme.get("scheme") for scheme in all_schemes if str(scheme.get("_id")) == str(req.get("scheme_id"))), "-")
+        req["customers"] = [db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(customer_id)}) for customer_id in req.get("customer_ids", [])]
+
+
+
+    return render_template("materials_request.html",
+                           user=user, schemes=schemes,
+                           verified_customers=verified_customers,
+                           bill_of_materials=bill_of_materials,
+                           material_requests=material_requests
+                           )
 
 
 @app.route("/set_materials_request_scheme", methods=["POST"])
@@ -3525,10 +3544,13 @@ def send_materials_request():
         flash("Scheme is required to send materials request.", "error")
         return redirect(url_for("materials_request_page"))
 
+    scheme = db.Schemes.find_one({"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(scheme_id)})
     verified_customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "scheme_id": str(scheme_id), "status": "verified"}))
     
     bill_of_materials = {}
+    customer_ids = []
     for customer in verified_customers:
+        customer_ids.append(str(customer.get("_id")))
         # service line 01
         if f"{customer.get('pipe_type')}-Pipe-DN{customer.get('pipe_diameter')}" not in bill_of_materials:
             bill_of_materials[f"{customer.get('pipe_type')}-Pipe-DN{customer.get('pipe_diameter')}"] = {"quantity": 0, "units": "m"}
@@ -3591,7 +3613,37 @@ def send_materials_request():
             bill_of_materials["Thread-Tape"] = {"quantity": 0, "units": "pcs    "}
         bill_of_materials["Thread-Tape"]["quantity"] += 1
 
-    response, status_code = materials_request_api.materials_request(url="http://example.com/api/materials_request", data=bill_of_materials)
-    print(response.get_json(), status_code)
+    # saving materials request in database
+    result = db.Material_requests.insert_one({
+        "umbrella_id": str(user.get("umbrella_id")),
+        "scheme_id": str(scheme_id),
+        "status": "pending",
+        "creation_date": datetime.datetime.now(),
+        "customer_ids": customer_ids,
+        "bill_of_materials": bill_of_materials
+    })
+
+    # sending materials request to external SIMS API 
+    payload = {
+        "material_request_id": str(result.inserted_id),
+        "scheme": scheme,
+        "bill_of_materials": bill_of_materials
+    }
+    response = materials_request_api.materials_request(payload)
+
+    # handling response from external SIMS API
+    # second last step if api call is successful (update material request in db with sims request_id)
+    # if response.get("status") == "success":
+    db.Material_requests.update_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)}, 
+                                    {"$set": {"sims_request_id": "bhjaskjdgaksgd-sample_request_id"}}
+                                    )
+
+    # last step if external API call step is successful
+    # if response.get("status") == "success":
+    for customer_id in customer_ids:
+        db.Customers.update_one(
+            {"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)},
+            {"$set": {"status": "materials pending"}}
+        )
 
     return redirect(url_for("materials_request_page"))
