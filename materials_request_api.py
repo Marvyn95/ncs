@@ -68,5 +68,6 @@ def require_api_key(f):
 @require_api_key
 def current_schemes():
     schemes = list(db.Schemes.find())
-    filtered_schemes = [{"_id": str(scheme["_id"]), "name": scheme.get("scheme")} for scheme in schemes]
-    return jsonify({"status": "success", "schemes": filtered_schemes, "count": len(filtered_schemes)})
+    for scheme in schemes:
+        scheme["_id"] = str(scheme["_id"])
+    return jsonify({"status": "success", "schemes": schemes, "count": len(schemes)})
