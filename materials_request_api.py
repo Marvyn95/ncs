@@ -58,3 +58,12 @@ def current_schemes():
     for scheme in schemes:
         scheme["_id"] = str(scheme["_id"])
     return jsonify({"status": "success", "schemes": schemes, "count": len(schemes)})
+
+
+@app.route('/api/current_areas', methods=['GET'])
+@require_api_key
+def current_areas():
+    areas = list(db.Areas.find())
+    for area in areas:
+        area["_id"] = str(area["_id"])
+    return jsonify({"status": "success", "areas": areas, "count": len(areas)})
