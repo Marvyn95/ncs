@@ -11,6 +11,9 @@ from bson.objectid import ObjectId
 from datetime import datetime
 import requests
 
+with open("../config.json") as config_file:
+    config_data = json.load(config_file)
+
 def save_file(file, upload_folder='static/uploads'):
     if not file or file.filename == '':
         return None
@@ -232,9 +235,12 @@ def generate_customer_report(customer):
     return pdf_output
 
 def materials_request(data):
-    url = "http://example.com/api/materials_request"
+    url = "https://stores.mwuws.org/?api=requisitions&action=create-new-connection"
     data_json = json.dumps(data)
     timeout = 10
-    headers = {'Content-Type': 'application/json'}
+    headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': config_data.get("SIMS_API_KEY")
+    }
     response = requests.post(url, data=data_json, headers=headers, timeout=timeout)
     return response

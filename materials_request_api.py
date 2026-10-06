@@ -1,4 +1,5 @@
 import json
+from bson import ObjectId
 from flask import request, jsonify
 from __init__ import app, db, bcrypt
 from functools import wraps
@@ -67,3 +68,40 @@ def current_areas():
     for area in areas:
         area["_id"] = str(area["_id"])
     return jsonify({"status": "success", "areas": areas, "count": len(areas)})
+
+
+@app.route('/api/update_request_status', methods=['POST'])
+@require_api_key
+def update_request_status():
+    data = request.get_json() or {}
+    material_request_id = data.get("request_id")
+    sims_request_id = data.get("sims_request_id")
+    request_status = data.get("request_status")
+
+    if not material_request_id:
+        return jsonify({"status": "error", "message": "Material request ID (material_request_id) is required"}), 400
+
+    if not sims_request_id:
+        return jsonify({"status": "error", "message": "Sims request ID (sims_request_id) is required"}), 400
+
+    if not request_status:
+        return jsonify({"status": "error", "message": "Request status (request_status) is required"}), 400
+
+    result = db.MaterialRequests.find_one({"_id": ObjectId(material_request_id), "sims_request_id": str(sims_request_id)})
+
+    if not result:
+        return jsonify({"status": "error", "message": "Material request not found"}), 404
+
+    db.MaterialRequests.update_one(
+        {"_id": ObjectId(material_request_id), "sims_request_id": str(sims_request_id)},
+        {"$set": {"status": request_status}}
+    )
+
+    if request_status == "delivered":
+        for customer_id in result.get("customer_ids", []):
+            db.Customers.update_one(
+                {"_id": ObjectId(customer_id)},
+                {"$set": {"status": "materials issued"}}
+            )
+
+    return jsonify({"status": "success", "message": "Request status updated successfully"}), 200

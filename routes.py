@@ -3505,7 +3505,7 @@ def materials_request_page():
         bill_of_materials["Thread-Tape"]["quantity"] += 1
 
     # getting material requests from database
-    material_requests = list(db.Material_requests.find(material_requests_query))
+    material_requests = list(db.MaterialRequests.find(material_requests_query))
     all_schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
     for req in material_requests:
         req["scheme_name"] = next((scheme.get("scheme") for scheme in all_schemes if str(scheme.get("_id")) == str(req.get("scheme_id"))), "-")
@@ -3614,7 +3614,7 @@ def send_materials_request():
         bill_of_materials["Thread-Tape"]["quantity"] += 1
 
     # saving materials request in database
-    result = db.Material_requests.insert_one({
+    result = db.MaterialRequests.insert_one({
         "umbrella_id": str(user.get("umbrella_id")),
         "scheme_id": str(scheme_id),
         "status": "pending",
@@ -3632,19 +3632,24 @@ def send_materials_request():
     }
     response = materials_request(payload)
 
-    # handling response from external SIMS API
-    # second last step if api call is successful (update material request in db with sims request_id)
-    # if response.get("status") == "success":
-    db.Material_requests.update_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)}, 
-                                    {"$set": {"sims_request_id": "bhjaskjdgaksgd-sample_request_id"}}
-                                    )
+    if response.status_code != 200:
+        db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)})
+        flash(f"Failed to communicate with external SIMS API: error {response.status_code}")
+        return redirect(url_for("materials_request_page"))
 
-    # last step if external API call step is successful
-    # if response.get("status") == "success":
-    for customer_id in customer_ids:
-        db.Customers.update_one(
-            {"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)},
-            {"$set": {"status": "materials pending"}}
-        )
+    # handling response from external SIMS API
+    if response.get("status") == "success" and response.get("sims_request_id") and response.status_code == 200:
+        db.MaterialRequests.update_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)}, 
+                                        {"$set": {"sims_request_id": response.get("sims_request_id")}}
+                                        )
+        for customer_id in customer_ids:
+            db.Customers.update_one(
+                {"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)},
+                {"$set": {"status": "materials pending"}}
+            )
+        flash("Materials request created successfully in external SIMS API", "success")
+    else:
+        db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)})
+        flash("Failed to create materials request in external SIMS API", "error")
 
     return redirect(url_for("materials_request_page"))
