@@ -3531,6 +3531,7 @@ def set_materials_request_scheme():
         session.pop("selected_materials_request_scheme_id", None)
     return redirect(url_for("materials_request_page"))
 
+
 @app.route("/send_materials_request", methods=["GET"])
 @login_required
 def send_materials_request():
