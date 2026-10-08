@@ -3657,5 +3657,4 @@ def send_materials_request():
         db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)})
         flash(f"An error occurred while communicating with external SIMS API: {str(e)}", "error")
         return redirect(url_for("materials_request_page"))
-
     return redirect(url_for("materials_request_page"))
