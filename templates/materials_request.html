@@ -200,6 +200,36 @@
               </table>
             </div>
 
+            <!-- Pagination -->
+            {% if total_material_request_pages > 1 %}
+            <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center flex-shrink-0 flex-wrap gap-1">
+              <span class="text-muted custom-small">
+                Page {{ page }} of {{ total_material_request_pages }}
+              </span>
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                  <a class="page-link" href="{{ url_for('materials_request_page', page=page-1) if page > 1 else '#' }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                  </a>
+                </li>
+                {% for p in range(1, total_material_request_pages + 1) %}
+                  {% if p == page %}
+                    <li class="page-item active" aria-current="page"><span class="page-link">{{ p }}</span></li>
+                  {% elif p == 1 or p == total_material_request_pages or (p >= page - 2 and p <= page + 2) %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('materials_request_page', page=p) }}">{{ p }}</a></li>
+                  {% elif p == page - 3 or p == page + 3 %}
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                  {% endif %}
+                {% endfor %}
+                <li class="page-item {% if page >= total_material_request_pages %}disabled{% endif %}">
+                  <a class="page-link" href="{{ url_for('materials_request_page', page=page+1) if page < total_material_request_pages else '#' }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+            {% endif %}
+
           </div>
         </div>
       </div>

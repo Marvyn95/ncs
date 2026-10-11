@@ -3505,19 +3505,26 @@ def materials_request_page():
         bill_of_materials["Thread-Tape"]["quantity"] += 1
 
     # getting material requests from database
-    material_requests = list(db.MaterialRequests.find(material_requests_query))
+    page = request.args.get("page", 1, type=int)
+    per_page = 50
+
+    total_material_requests = db.MaterialRequests.count_documents(material_requests_query)
+    total_material_request_pages = (total_material_requests + per_page - 1) // per_page
+
+    material_requests = list(db.MaterialRequests.find(material_requests_query).sort("creation_date", -1).skip((page - 1) * per_page).limit(per_page))
     all_schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
+    
     for req in material_requests:
         req["scheme_name"] = next((scheme.get("scheme") for scheme in all_schemes if str(scheme.get("_id")) == str(req.get("scheme_id"))), "-")
         req["customers"] = [db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(customer_id)}) for customer_id in req.get("customer_ids", [])]
-
-
 
     return render_template("materials_request.html",
                            user=user, schemes=schemes,
                            verified_customers=verified_customers,
                            bill_of_materials=bill_of_materials,
-                           material_requests=material_requests
+                           material_requests=material_requests,
+                           total_material_request_pages=total_material_request_pages, 
+                           page=page,              
                            )
 
 
@@ -3651,6 +3658,7 @@ def send_materials_request():
                     {"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)},
                     {"$set": {"status": "materials pending"}}
                 )
+            session.pop("selected_materials_request_scheme_id", None)
             flash("Materials request created successfully in SIMS", "success")
         else:
             db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)})
@@ -3660,4 +3668,4 @@ def send_materials_request():
         flash(f"An error occurred while communicating with SIMS: {str(e)}", "error")
         return redirect(url_for("materials_request_page"))
     
-    return redirect(url_for("materials_request_page"))
+    return redirect(url_for("materials_request_page", page=1))
