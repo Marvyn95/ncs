@@ -181,8 +181,8 @@
                       </button>
                     </td>
                     <td>
-                      <span class="badge py-2 px-2 {% if req.status == 'delivered' %}bg-success{% elif req.status == 'pending' %}bg-warning text-dark{% else %}bg-info{% endif %}">
-                        {{ req.status | capitalize if req.status else 'Pending' }}
+                      <span class="badge py-2 px-2 {% if req.status == 'Delivered' %}bg-success{% else %}bg-info{% endif %}">
+                        {{ req.status | capitalize or 'Pending' }}
                       </span>
                     </td>
                     <td class="text-start">

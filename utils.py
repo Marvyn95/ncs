@@ -236,11 +236,11 @@ def generate_customer_report(customer):
 
 def materials_request(data):
     url = "https://stores.mwuws.org/?api=requisitions&action=create-new-connection"
-    data_json = json.dumps(data)
-    timeout = 10
+    timeout = 20
     headers = {
-        'Content-Type': 'application/json',
-        'x-api-key': config_data.get("SIMS_API_KEY")
+        'Accept': 'application/json',
+        'X-API-Key': config_data.get("SIMS_API_KEY"),
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     }
-    response = requests.post(url, data=data_json, headers=headers, timeout=timeout)
+    response = requests.post(url, json=data, headers=headers, timeout=timeout)
     return response

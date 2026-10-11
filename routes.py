@@ -3633,7 +3633,8 @@ def send_materials_request():
     }
     try:
         response = materials_request(payload)
-
+        print(response.status_code)
+        print(response.text)
         # handling failure in communication with external SIMS API
         if response.status_code != 200:
             db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)})
@@ -3641,9 +3642,11 @@ def send_materials_request():
             return redirect(url_for("materials_request_page"))
 
         # handling ok response from external SIMS API
-        if response.get("status") == "success" and response.get("sims_request_id") and response.status_code == 200:
-            db.MaterialRequests.update_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)}, 
-                                            {"$set": {"sims_request_id": response.get("sims_request_id")}}
+        if response.json().get("success") == True and response.json().get("requisition_no") and response.status_code == 200:
+            db.MaterialRequests.update_one({"umbrella_id": str(user.get("umbrella_id")),
+                                            "_id": ObjectId(result.inserted_id)}, 
+                                            {"$set": {"sims_request_id": response.json().get("requisition_no"),
+                                                      "status": str(response.json().get("status"))}}
                                             )
             for customer_id in customer_ids:
                 db.Customers.update_one(
@@ -3658,4 +3661,5 @@ def send_materials_request():
         db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)})
         flash(f"An error occurred while communicating with external SIMS API: {str(e)}", "error")
         return redirect(url_for("materials_request_page"))
+    
     return redirect(url_for("materials_request_page"))
