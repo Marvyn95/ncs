@@ -3633,12 +3633,10 @@ def send_materials_request():
     }
     try:
         response = materials_request(payload)
-        print(response.status_code)
-        print(response.text)
         # handling failure in communication with external SIMS API
         if response.status_code != 200:
             db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)})
-            flash(f"Failed to communicate with external SIMS API: error {response.status_code}")
+            flash(f"Failed to communicate with SIMS: error {response.text}")
             return redirect(url_for("materials_request_page"))
 
         # handling ok response from external SIMS API
@@ -3653,13 +3651,13 @@ def send_materials_request():
                     {"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)},
                     {"$set": {"status": "materials pending"}}
                 )
-            flash("Materials request created successfully in external SIMS API", "success")
+            flash("Materials request created successfully in SIMS", "success")
         else:
             db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)})
-            flash("Failed to create materials request in external SIMS API", "error")
+            flash("Failed to create materials request in SIMS", "error")
     except Exception as e:
         db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)})
-        flash(f"An error occurred while communicating with external SIMS API: {str(e)}", "error")
+        flash(f"An error occurred while communicating with SIMS: {str(e)}", "error")
         return redirect(url_for("materials_request_page"))
     
     return redirect(url_for("materials_request_page"))
