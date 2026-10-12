@@ -894,14 +894,20 @@ def villages():
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id")}))
         village_db_query = {"umbrella_id": user.get("umbrella_id")}
 
-    elif user.get("area_id") and user.get("scheme_id") == None:
+    if user.get("area_id") and user.get("scheme_id") == None:
         schemes = list(db.Schemes.find({"umbrella_id": user.get("umbrella_id"), "area_id": user.get("area_id")}))
         schemes = sorted(schemes, key=lambda x: x["scheme"])
         scheme_ids = [str(scheme["_id"]) for scheme in schemes]
         village_db_query = {"umbrella_id": user.get("umbrella_id"), "scheme_id": {"$in": scheme_ids}}
 
-    elif user.get("scheme_id"):
+    if user.get("scheme_id"):
         village_db_query = {"umbrella_id": user.get("umbrella_id"), "scheme_id": user.get("scheme_id")}
+
+    if session.get("village_search_query"):
+        search_regex = re.compile(re.escape(session.get("village_search_query")), re.IGNORECASE)
+        village_db_query["$or"] = [
+            {"village": search_regex}
+        ]
 
     villages = list(db.Villages.find(village_db_query))
 
@@ -913,10 +919,6 @@ def villages():
         page = int(page)
     session['villages_page'] = page
     per_page = 120
-
-    if session.get('village_search_query'):
-        village_search_query = session.get('village_search_query').lower()
-        villages = [v for v in villages if village_search_query in v.get("village", "").lower()]
 
     districts = sorted(list(db.Districts.find()), key=lambda x: x["district"])
     subcounties = sorted(list(db.Subcounties.find()), key=lambda x: x["subcounty"])
