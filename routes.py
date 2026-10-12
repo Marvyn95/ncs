@@ -1097,9 +1097,10 @@ def new_connections():
         }
     
     if session.get("new_connections_search_query"):
+        search_regex = re.compile(re.escape(session.get("new_connections_search_query")), re.IGNORECASE)
         query["$or"] = [
-            {"name": {"$regex": session.get("new_connections_search_query"), "$options": "i"}},
-            {"contact": {"$regex": session.get("new_connections_search_query"), "$options": "i"}},
+            {"name": {"$regex": search_regex}},
+            {"contact": {"$regex": search_regex}},
         ]
 
     customers = list(db.Customers.find(query))
@@ -1738,9 +1739,10 @@ def es_reports():
         query["scheme_id"] = user.get("scheme_id")
     
     if session.get("es_reports_search_query"):
+        search_regex = re.compile(re.escape(session.get("es_reports_search_query")), re.IGNORECASE)
         query["$or"] = [
-            {"name": {"$regex": session.get("es_reports_search_query"), "$options": "i"}},
-            {"contact": {"$regex": session.get("es_reports_search_query"), "$options": "i"}},
+            {"name": {"$regex": search_regex}},
+            {"contact": {"$regex": search_regex}},
         ]
 
     customers = sorted(list(db.Customers.find(query)), key=lambda x: x.get("name", "").lower())
