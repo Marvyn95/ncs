@@ -14,6 +14,7 @@ import io
 import secrets
 from collections import defaultdict
 import materials_request_api
+from pymongo import UpdateOne
 
 @app.route('/home', methods=["GET", "POST"])
 @login_required
@@ -2301,8 +2302,6 @@ def upload_customers():
         elif type == "MS":
             ms_no += 1
 
-        print(ms_no+es_no+bp_no)
-
     flash(f"{cust_no} Customers processed!, {es_no} ES, {ms_no} MS, {bp_no} BP, {es_no + ms_no + bp_no} uploaded", "success")
     return redirect(url_for("new_connections"))
 
@@ -3043,55 +3042,65 @@ def customer_monthly_billing_sheet_update():
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
         return redirect(request.referrer or url_for("home"))
 
-    all_customers = db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}})
-    customer_reference_numbers = [str(customer.get("customer_reference")) for customer in all_customers]
+    df["MeterRef"] = df["MeterRef"].astype(str)
+    billed_customer_refs = df["MeterRef"].tolist()
+    queried_billed_customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$in": billed_customer_refs}}))
+    queried_billed_customers_map = {str(customer.get("customer_reference")): customer for customer in queried_billed_customers}
+
+    target_period_dt = datetime.datetime.strptime(year_months.iloc[0], "%Y%m")
 
     found = 0
     not_found = 0
+    bulk_operations = []
 
     for entry in df.itertuples():
+        ref_str = str(entry.MeterRef)
 
-        if str(entry.MeterRef) not in customer_reference_numbers:
+        if ref_str not in queried_billed_customers_map:
             not_found += 1
             continue
 
-        if str(entry.MeterRef) in customer_reference_numbers:
-            found += 1
-            customer = db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "customer_reference": str(entry.MeterRef)})
-            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period")) if customer.get("bpb") else []
+        found += 1
+        customer = queried_billed_customers_map[ref_str]
+        bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period")) if customer.get("bpb") else []
 
-            if bpb == []:
+        if bpb == []:
+            bpb_entry = {
+                "period": target_period_dt,
+                "consumption": int(entry.Consumption),
+                "bill": int(entry.TotalCharges),
+                "payment": 0,
+            }
+            bpb.append(bpb_entry)
+        elif bpb != []:
+            monthentry = next((item for item in bpb if item.get("period") == target_period_dt), None)
+            if monthentry is None:
                 bpb_entry = {
-                    "period": datetime.datetime.strptime(str(entry.Period)[:6], "%Y%m"),
+                    "period": target_period_dt,
                     "consumption": int(entry.Consumption),
                     "bill": int(entry.TotalCharges),
                     "payment": 0,
                 }
                 bpb.append(bpb_entry)
-            elif bpb != []:
-                monthentry = next((item for item in bpb if item.get("period") == datetime.datetime.strptime(str(entry.Period)[:6], "%Y%m")), None)
-                if monthentry is None:
-                    bpb_entry = {
-                        "period": datetime.datetime.strptime(str(entry.Period)[:6], "%Y%m"),
-                        "consumption": int(entry.Consumption),
-                        "bill": int(entry.TotalCharges),
-                        "payment": 0,
-                    }
-                    bpb.append(bpb_entry)
-                elif monthentry is not None:
-                    monthentry_copy = monthentry
-                    monthentry_copy["consumption"] = int(entry.Consumption)
-                    monthentry_copy["bill"] = int(entry.TotalCharges)
-                    bpb.remove(monthentry)
-                    bpb.append(monthentry_copy)
+            elif monthentry is not None:
+                monthentry_copy = monthentry
+                monthentry_copy["consumption"] = int(entry.Consumption)
+                monthentry_copy["bill"] = int(entry.TotalCharges)
+                bpb.remove(monthentry)
+                bpb.append(monthentry_copy)
 
-            bpb = sorted(bpb, key=lambda x: x.get("period"))
-            bpb = roll_down_balances(customer, bpb)
+        bpb = sorted(bpb, key=lambda x: x.get("period"))
+        bpb = roll_down_balances(customer, bpb)
 
-            db.Customers.update_one(
-                {"umbrella_id": user.get("umbrella_id"), "_id": customer.get("_id")},
+        bulk_operations.append(
+            UpdateOne(
+                {"_id": ObjectId(customer.get("_id"))},
                 {"$set": {"bpb": bpb}}
             )
+        )
+
+    if bulk_operations:
+        db.Customers.bulk_write(bulk_operations, ordered=False)
 
     flash(f"Monthly billing sheet processed successfully! Found: {found}, Not Found: {not_found}", "success")
     return redirect(request.referrer)
@@ -3133,55 +3142,69 @@ def customer_monthly_payment_sheet_update():
         flash(f"All entries must be in the same month! Found {len(year_months.unique())} different months!", "danger")
         return redirect(url_for("es_reports"))
 
-    all_customers = db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$exists": True, "$ne": None}})
-    customer_reference_numbers = [str(cust.get("customer_reference")) for cust in all_customers]
+    df["CustomerRef"] = df["CustomerRef"].astype(str)
+    df["period_str"] = df["PaymentDate"].astype(str).str[:7]
+
+    grouped_payments = df.groupby("CustomerRef")["TranAmount"].sum()
+    customer_refs = grouped_payments.index.tolist()
+    customer_refs_set = set(customer_refs)
+
+    queried_customers = list(db.Customers.find({"umbrella_id": user.get("umbrella_id"), "customer_reference": {"$in": customer_refs}}))
+    queried_customers_map = {cust.get("customer_reference"): cust for cust in queried_customers}
+
+    target_period = df["period_str"].iloc[0]
+    target_period_dt = datetime.datetime.strptime(target_period[:7], "%Y-%m")
+
+    bulk_operations = []
 
     found = 0
     not_found = 0
 
-    for entry in df.itertuples():
-        customer_ref = str(entry.CustomerRef)
-        customer_payments = df[df["CustomerRef"].astype(str) == str(customer_ref)]
-        tran_amount = int(customer_payments["TranAmount"].sum())
-        payment_date = str(entry.PaymentDate)
+    for customer_ref, tran_amount in grouped_payments.items():
+        ref_str = str(customer_ref)
 
-        if customer_ref not in customer_reference_numbers:
+        if ref_str not in queried_customers_map:
             not_found += 1
             continue
+        found += 1
+        customer = queried_customers_map[ref_str]
+        bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period", "")) if customer.get("bpb") else []
 
-        if customer_ref in customer_reference_numbers:
-            found += 1
-            customer = db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "customer_reference": str(customer_ref), "status": "confirmed"})
-            bpb = sorted(customer.get("bpb", []), key=lambda x: x.get("period", "")) if customer.get("bpb") else []
-
-            if bpb == []:
+        if bpb == []:
+            bpb_entry = {
+                "period": target_period_dt,
+                "consumption": 0,
+                "bill": 0,
+                "payment": tran_amount,
+            }
+            bpb.append(bpb_entry)
+        if bpb != []:
+            month_entry = next((entry for entry in bpb if entry.get("period") == target_period_dt), None)
+            if not month_entry:
                 bpb_entry = {
-                    "period": datetime.datetime.strptime(payment_date[:7], "%Y-%m"),
+                    "period": target_period_dt,
                     "consumption": 0,
                     "bill": 0,
                     "payment": tran_amount,
                 }
                 bpb.append(bpb_entry)
-            if bpb != []:
-                month_entry = next((entry for entry in bpb if entry.get("period") == datetime.datetime.strptime(payment_date[:7], "%Y-%m")), None)
-                if not month_entry:
-                    bpb_entry = {
-                        "period": datetime.datetime.strptime(payment_date[:7], "%Y-%m"),
-                        "consumption": 0,
-                        "bill": 0,
-                        "payment": tran_amount,
-                    }
-                    bpb.append(bpb_entry)
-                elif month_entry is not None:
-                    month_entry_copy = month_entry
-                    month_entry_copy["payment"] = tran_amount
-                    bpb.remove(month_entry)
-                    bpb.append(month_entry_copy)
+            elif month_entry is not None:
+                month_entry_copy = month_entry
+                month_entry_copy["payment"] = tran_amount
+                bpb.remove(month_entry)
+                bpb.append(month_entry_copy)
+        bpb = sorted(bpb, key=lambda x: x.get("period", ""))
+        bpb = roll_down_balances(customer, bpb)
 
-            bpb = sorted(bpb, key=lambda x: x["period"])
-            bpb = roll_down_balances(customer, bpb)
+        bulk_operations.append(
+            UpdateOne(
+                {"umbrella_id": user.get("umbrella_id"), "_id": ObjectId(customer.get("_id"))},
+                {"$set": {"bpb": bpb}}
+            )
+        )
 
-            db.Customers.update_one({"umbrella_id": user.get("umbrella_id"), "_id": customer["_id"]}, {"$set": {"bpb": bpb}})
+    if bulk_operations:
+        db.Customers.bulk_write(bulk_operations, ordered=False)
 
     flash(f"Monthly payment sheet processed successfully! Found: {found}, Not Found: {not_found}", "success")
     return redirect(request.referrer)
