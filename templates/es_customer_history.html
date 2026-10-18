@@ -162,13 +162,13 @@
       <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #f8f9fa;">
         <tr class="table-secondary">
           <th>Month</th>
-          <th class="d-none d-sm-table-cell">Consumption</th>
+          <th class="d-none d-md-table-cell">Consumption</th>
           <th>Bill</th>
           <th>Payment</th>
           <th>Connection Bal.</th>
           <th>Bill Bal.</th>
           <th>Prepaid Bal.</th>
-          <th class="d-none d-sm-table-cell">Overall Bal.</th>
+          <th class="d-none d-md-table-cell">Overall Bal.</th>
         </tr>
       </thead>
       <tbody>
@@ -183,7 +183,7 @@
                 {% endif %}
               </td>
 
-              <td class="text-truncate d-none d-lg-table-cell" style="max-width: 120px;">
+              <td class="text-truncate d-none d-md-table-cell" style="max-width: 120px;">
                 {% if bpb.consumption %}
                   {{ "{:,}".format(bpb.consumption|int) }}
                 {% else %}
@@ -231,7 +231,7 @@
                 {% endif %}
               </td>
 
-              <td class="text-truncate d-none d-sm-table-cell" style="max-width: 100px;">
+              <td class="text-truncate d-none d-md-table-cell" style="max-width: 100px;">
                 {{ "{:,}".format((bpb.balance_on_connection|int) + (bpb.balance_on_bill|int)) or "-" }}
               </td>
             </tr>
