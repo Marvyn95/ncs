@@ -3,6 +3,7 @@ from bson import ObjectId
 from flask import request, jsonify
 from __init__ import app, db, bcrypt
 from functools import wraps
+from pymongo import UpdateOne
 
 
 with open('../config.json') as config_file:
@@ -74,15 +75,20 @@ def current_areas():
 @require_api_key
 def update_request_status():
     data = request.get_json() or {}
-    material_request_id = data.get("request_id")
-    sims_request_id = data.get("sims_request_id")
+    material_request_id = data.get("external_reference")
+    sims_request_id = data.get("requisition_no")
     request_status = data.get("status")
+    success_status = data.get("success") 
+
+
+    if success_status != True:
+        return jsonify({"success": False, "status": "error", "message": "Request was not successful"}), 400
 
     if not material_request_id:
-        return jsonify({"success": False, "status": "error", "message": "Material request ID (material_request_id) is required"}), 400
+        return jsonify({"success": False, "status": "error", "message": "Material request ID (external_reference) is required"}), 400
 
     if not sims_request_id:
-        return jsonify({"success": False, "status": "error", "message": "Sims request ID (sims_request_id) is required"}), 400
+        return jsonify({"success": False, "status": "error", "message": "Sims request ID (requisition_no) is required"}), 400
 
     if not request_status:
         return jsonify({"success": False, "status": "error", "message": " 'status' is required"}), 400
@@ -97,11 +103,16 @@ def update_request_status():
         {"$set": {"status": request_status}}
     )
 
-    if request_status == "Delivered":
+    if request_status == "Issued":
+        bulk_operation = []
         for customer_id in result.get("customer_ids", []):
-            db.Customers.update_one(
-                {"_id": ObjectId(customer_id)},
-                {"$set": {"status": "materials issued"}}
+            bulk_operation.append(
+                UpdateOne(
+                    {"_id": ObjectId(customer_id)},
+                    {"$set": {"status": "materials issued"}}
+                )
             )
+        if bulk_operation:
+            db.Customers.bulk_write(bulk_operation)
 
     return jsonify({"success": True, "status": "success", "message": "Request status updated successfully"}), 200
