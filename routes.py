@@ -5,7 +5,7 @@ from flask import render_template, flash, request, url_for, session, redirect, s
 import json
 from bson.objectid import ObjectId
 import datetime
-from utils import save_file, login_required, delete_file, roll_down_balances, generate_customer_report, materials_request
+from utils import save_file, login_required, delete_file, roll_down_balances, generate_customer_report, materials_request, cancel_materials_request_api_call
 import pandas as pd
 import io
 from dateutil.relativedelta import relativedelta
@@ -3454,9 +3454,6 @@ def materials_request_page():
     if session.get("selected_materials_request_scheme_id"):
         query["scheme_id"] = session.get("selected_materials_request_scheme_id")
         material_requests_query["scheme_id"] = session.get("selected_materials_request_scheme_id")
-    elif session.get("new_connections_selected_scheme_id"):
-        query["scheme_id"] = session.get("new_connections_selected_scheme_id")
-        material_requests_query["scheme_id"] = session.get("new_connections_selected_scheme_id")
 
     if user.get("scheme_id"):
         query["scheme_id"] = user.get("scheme_id")
@@ -3685,7 +3682,7 @@ def send_materials_request():
                     {"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)},
                     {"$set": {"status": "materials pending"}}
                 )
-            session.pop("selected_materials_request_scheme_id", None)
+            # session.pop("selected_materials_request_scheme_id", None)
             flash("Materials request created successfully in SIMS", "success")
         else:
             db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(result.inserted_id)})
@@ -3696,3 +3693,61 @@ def send_materials_request():
         return redirect(url_for("materials_request_page"))
     
     return redirect(url_for("materials_request_page", page=1))
+
+
+@app.route('/cancel_materials_request', methods=['POST'])
+def cancel_materials_request():
+    user = db.Users.find_one({"_id": ObjectId(session.get("userid"))})
+
+    if not user:
+        flash("User not found", "error")
+        return redirect(url_for("materials_request_page"))
+
+    if user.get("role") not in ["administrator"]:
+        flash("You do not have permission to cancel materials requests", "error")
+        return redirect(url_for("materials_request_page"))
+
+    request_id = request.form.get("request_id")
+    sims_request_id = request.form.get("sims_request_id")
+
+    if not request_id or not sims_request_id:
+        flash("Request ID and SIMS requisition number are required", "error")
+        return redirect(url_for("materials_request_page"))
+
+    materials_request = db.MaterialRequests.find_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(request_id)})
+
+    if not materials_request:
+        flash("Materials request not found", "error")
+        return redirect(url_for("materials_request_page"))
+
+    payload = {
+        "external_reference": request_id,
+        "requisition_no": sims_request_id
+    }
+
+    try:
+        response = cancel_materials_request_api_call(payload)
+
+        if response.status_code != 200:
+            flash(f"Failed to communicate with SIMS: error {response.text}", "error")
+            return redirect(url_for("materials_request_page"))
+
+        if response.json().get("success") == False:
+            flash(f"Failed to cancel materials request in SIMS: {response.json().get('error', '')}", "error")
+
+        if response.json().get("success") == True:
+            db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(request_id)})
+
+            for customer_id in materials_request.get("customer_ids", []):
+                db.Customers.update_one(
+                    {"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)},
+                    {"$set": {"status": "verified"}}
+                )
+
+            flash("Materials request cancelled successfully in SIMS", "success")
+
+    except Exception as e:
+        flash(f"Error communicating with SIMS: {str(e)}", "error")
+
+    return redirect(url_for("materials_request_page"))
+

@@ -244,3 +244,14 @@ def materials_request(data):
     }
     response = requests.post(url, json=data, headers=headers, timeout=timeout)
     return response
+
+def cancel_materials_request_api_call(data):
+    url = "https://stores.mwuws.org/?api=requisitions&action=cancel"
+    timeout = 20
+    headers = {
+        'Accept': 'application/json',
+        'X-API-Key': config_data.get("SIMS_API_KEY"),
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    }
+    response = requests.post(url, json=data, headers=headers, timeout=timeout)
+    return response

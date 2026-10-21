@@ -35,7 +35,7 @@
                   <select class="form-select form-select-sm" id="filter_scheme" name="scheme_id" onchange="this.form.submit()">
                     <option value="" {% if not session.selected_materials_request_scheme_id %}selected{% endif %}>All Schemes</option>
                     {% for scheme in schemes %}
-                    <option value="{{ scheme._id }}" {% if session.selected_materials_request_scheme_id|string == scheme._id|string or user.scheme_id|string == scheme._id|string or session.new_connections_selected_scheme_id|string == scheme._id|string %}selected{% endif %}>
+                    <option value="{{ scheme._id }}" {% if session.selected_materials_request_scheme_id|string == scheme._id|string or user.scheme_id|string == scheme._id|string %}selected{% endif %}>
                       {{ scheme.scheme }}
                     </option>
                     {% endfor %}
@@ -189,6 +189,32 @@
                       <button class="btn btn-outline-primary btn-sm px-2 py-0" data-bs-toggle="modal" data-bs-target="#requestModal-{{ req._id }}">
                         <i class="bi bi-list-columns-reverse"></i>
                       </button>
+                      <button type="button" class="btn btn-outline-danger btn-sm px-2 py-0" title="Cancel Request" data-bs-toggle="modal" data-bs-target="#cancelModal-{{ req._id }}">
+                        <i class="bi bi-x-circle-fill"></i>
+                      </button>
+
+                      <div class="modal fade" id="cancelModal-{{ req._id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-sm">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h6 class="modal-title h6 fw-bold mb-0 text-primary">Cancel Materials Request</h6>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                              Are you sure you want to cancel request <span class="fw-bold mb-0 text-primary">{{ req.sims_request_id }}</span> for <span class="fw-bold mb-0 text-primary">{{ req.scheme_name }}</span>?
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">No</button>
+                              <form method="POST" action="{{ url_for('cancel_materials_request') }}" class="d-inline">
+                                <input type="hidden" name="request_id" value="{{ req._id }}">
+                                <input type="hidden" name="sims_request_id" value="{{ req.sims_request_id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Yes, Cancel</button>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                     </td>
                   </tr>
                   {% else %}
