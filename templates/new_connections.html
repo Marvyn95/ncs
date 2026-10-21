@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="w-100 h-100 d-flex flex-column overflow-hidden">
+<div class="w-100 h-100 d-flex flex-column overflow-hidden" style="min-height: 0;">
 
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
   
@@ -335,7 +335,7 @@
 
 </div>
 
-  <div class=" table-responsive" style="overflow-y: auto; overscroll-behavior: contain;">
+  <div class="table-responsive flex-grow-1" style="min-height:0; overflow-y: auto; overscroll-behavior: contain;">
     <table class="table table-secondary table-hover table-sm align-middle mb-0" style="font-size:0.65rem;">
       <thead class="table-secondary" style="position: sticky; top: 0; z-index: 2; background: #e2e3e5; font-size:0.75rem;">
         <tr class="table-secondary">
@@ -1303,7 +1303,7 @@ function testLocationButton(button) {
           </div>
   {% endfor %}
 
-  <div class="d-flex justify-content-center align-items-center gap-1 mt-2" style="margin-right: auto;">
+  <div class="d-flex justify-content-center align-items-center gap-1 mt-2 flex-shrink-0" style="margin-right: auto;">
     <span class="me-3 align-self-center text-muted" style="font-size:0.85em;">
       <strong>{{ total }}</strong>
     </span>
