@@ -3733,16 +3733,20 @@ def cancel_materials_request():
             return redirect(url_for("materials_request_page"))
 
         if response.json().get("success") == False:
-            flash(f"Failed to cancel materials request in SIMS: {response.json().get('error', '')}", "error")
+            flash(f"Failed to cancel materials request in SIMS: {response.json().get('error', '')}")
 
         if response.json().get("success") == True:
             db.MaterialRequests.delete_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(request_id)})
 
             for customer_id in materials_request.get("customer_ids", []):
-                db.Customers.update_one(
-                    {"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)},
-                    {"$set": {"status": "verified"}}
-                )
+                
+                customer = db.Customers.find_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)})
+                
+                if customer.get("status") == "materials issued":
+                    db.Customers.update_one(
+                        {"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)},
+                        {"$set": {"status": "verified"}}
+                    )
 
             flash("Materials request cancelled successfully in SIMS", "success")
 
