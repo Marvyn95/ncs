@@ -3729,7 +3729,7 @@ def cancel_materials_request():
         response = cancel_materials_request_api_call(payload)
 
         if response.status_code != 200:
-            flash(f"Failed to communicate with SIMS: error {response.text}", "error")
+            flash(f"Failed to communicate with SIMS: error {response.json().get('error', '')}", "error")
             return redirect(url_for("materials_request_page"))
 
         if response.json().get("success") == False:
