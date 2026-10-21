@@ -3742,7 +3742,7 @@ def cancel_materials_request():
                 
                 customer = db.Customers.find_one({"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)})
                 
-                if customer.get("status") == "materials issued":
+                if customer.get("status") == "materials pending":
                     db.Customers.update_one(
                         {"umbrella_id": str(user.get("umbrella_id")), "_id": ObjectId(customer_id)},
                         {"$set": {"status": "verified"}}
