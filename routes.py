@@ -3747,7 +3747,7 @@ def cancel_materials_request():
             flash("Materials request cancelled successfully in SIMS", "success")
 
     except Exception as e:
-        flash(f"Error communicating with SIMS: {str(e)}", "error")
+        flash(f"Error communicating with SIMS: {str(e)}")
 
     return redirect(url_for("materials_request_page"))
 
