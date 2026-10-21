@@ -3,7 +3,7 @@ from bson import ObjectId
 from flask import request, jsonify
 from __init__ import app, db, bcrypt
 from functools import wraps
-from pymongo import UpdateOne
+from pymongo import DeleteOne, UpdateOne
 
 
 with open('../config.json') as config_file:
@@ -116,3 +116,42 @@ def update_request_status():
             db.Customers.bulk_write(bulk_operation)
 
     return jsonify({"success": True, "status": "success", "message": "Request status updated successfully"}), 200
+
+
+@app.route('/api/delete_material_request', methods=['POST'])
+@require_api_key
+def delete_material_request():
+    data = request.get_json() or {}
+    material_request_id = data.get("external_reference")
+    sims_request_id = data.get("requisition_no")
+
+    if not material_request_id:
+        return jsonify({"success": False, "status": "error", "message": "Material request ID (external_reference) is required"}), 400
+
+    if not sims_request_id:
+        return jsonify({"success": False, "status": "error", "message": "Sims request ID (requisition_no) is required"}), 400
+
+    result = db.MaterialRequests.find_one({"_id": ObjectId(material_request_id), "sims_request_id": str(sims_request_id)})
+
+    if not result:
+        return jsonify({"success": False, "status": "error", "message": "Material request not found"}), 404
+
+    if result.get("status") != "Initiated":
+        return jsonify({"success": False, "status": "error", "message": "Only material requests with status 'Initiated' can be deleted"}), 400
+
+    db.MaterialRequests.delete_one({"_id": ObjectId(material_request_id), "sims_request_id": str(sims_request_id)})
+
+    bulk_operation = []
+    for customer_id in result.get("customer_ids", []):
+        bulk_operation.append(
+            UpdateOne(
+                {"_id": ObjectId(customer_id)},
+                {"$set": {"status": "verified"}}
+            )
+        )
+
+    if bulk_operation:
+        db.Customers.bulk_write(bulk_operation)
+
+    return jsonify({"success": True, "status": "success", "message": "Material request deleted successfully"}), 200
+
