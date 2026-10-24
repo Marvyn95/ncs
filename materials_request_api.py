@@ -114,6 +114,17 @@ def update_request_status():
             )
         if bulk_operation:
             db.Customers.bulk_write(bulk_operation)
+    else:
+        bulk_operation = []
+        for customer_id in result.get("customer_ids", []):
+            bulk_operation.append(
+                UpdateOne(
+                    {"_id": ObjectId(customer_id)},
+                    {"$set": {"status": "materials pending"}}
+                )
+            )
+        if bulk_operation:
+            db.Customers.bulk_write(bulk_operation)
 
     return jsonify({"success": True, "status": "success", "message": "Request status updated successfully"}), 200
 
