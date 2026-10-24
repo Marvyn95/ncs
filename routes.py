@@ -3720,6 +3720,10 @@ def cancel_materials_request():
         flash("Materials request not found", "error")
         return redirect(url_for("materials_request_page"))
 
+    if materials_request.get("status") in ["Issued", "Authorized"]:
+        flash("Materials requests which are 'Issued' or 'Authorized' can not be cancelled", "error")
+        return redirect(url_for("materials_request_page"))
+
     payload = {
         "external_reference": request_id,
         "requisition_no": sims_request_id
