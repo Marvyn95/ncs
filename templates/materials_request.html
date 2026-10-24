@@ -189,9 +189,12 @@
                       <button class="btn btn-outline-primary btn-sm px-2 py-0" data-bs-toggle="modal" data-bs-target="#requestModal-{{ req._id }}">
                         <i class="bi bi-list-columns-reverse"></i>
                       </button>
+
+                      {% if user.role in ['administrator', 'commercial_officer', 'billing_officer', 'stores_officer', 'area_manager'] and req.status not in ['Authorized', 'Issued', 'Delivered'] %}
                       <button type="button" class="btn btn-outline-danger btn-sm px-2 py-0" title="Cancel Request" data-bs-toggle="modal" data-bs-target="#cancelModal-{{ req._id }}">
                         <i class="bi bi-x-circle-fill"></i>
                       </button>
+                      {% endif %}
 
                       <div class="modal fade" id="cancelModal-{{ req._id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered modal-sm">
