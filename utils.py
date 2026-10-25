@@ -235,7 +235,7 @@ def generate_customer_report(customer):
     return pdf_output
 
 def materials_request(data):
-    url = "https://stores.mwuws.org/?api=requisitions&action=create-new-connection"
+    url = "https://mwuws.org/?api=requisitions&action=create-new-connection"
     timeout = 20
     headers = {
         'Accept': 'application/json',
@@ -246,7 +246,7 @@ def materials_request(data):
     return response
 
 def cancel_materials_request_api_call(data):
-    url = "https://stores.mwuws.org/?api=requisitions&action=cancel"
+    url = "https://mwuws.org/?api=requisitions&action=cancel"
     timeout = 20
     headers = {
         'Accept': 'application/json',
