@@ -186,7 +186,7 @@
                       </button>
                     </td>
                     <td>
-                      <span class="badge py-2 px-2 {% if req.status == 'Delivered' %}bg-success{% else %}bg-info{% endif %}">
+                      <span class="badge py-2 px-2 {% if req.status in ['Delivered', 'Partially Delivered', 'Authorized'] %}bg-success{% elif req.status in ['Initiated', 'Forwarded'] %}bg-warning{% else %}bg-info{% endif %}">
                         {{ req.status | capitalize or 'Pending' }}
                       </span>
                     </td>
@@ -195,7 +195,7 @@
                         <i class="bi bi-list-columns-reverse"></i>
                       </button>
 
-                      {% if user.role in ['administrator', 'commercial_officer', 'billing_officer', 'stores_officer', 'area_manager'] and req.status not in ['Authorized', 'Issued', 'Delivered'] %}
+                      {% if user.role in ['administrator', 'stores_officer', 'area_manager'] and req.status in ['Initiated', 'Forwarded'] %}
                       <button type="button" class="btn btn-outline-danger btn-sm px-2 py-0" title="Cancel Request" data-bs-toggle="modal" data-bs-target="#cancelModal-{{ req._id }}">
                         <i class="bi bi-x-circle-fill"></i>
                       </button>

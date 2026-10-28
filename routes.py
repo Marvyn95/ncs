@@ -3571,6 +3571,10 @@ def send_materials_request():
         flash("User not found.", "error")
         return redirect(url_for("login"))
 
+    if user.get("role") not in ["administrator", "stores_officer", "area_manager"]:
+        flash("You do not have permission to send materials request.", "error")
+        return redirect(url_for("materials_request_page"))
+
     scheme_id = request.args.get("scheme_id")
     if not scheme_id:
         flash("Scheme is required to send materials request.", "error")
@@ -3703,7 +3707,7 @@ def cancel_materials_request():
         flash("User not found", "error")
         return redirect(url_for("materials_request_page"))
 
-    if user.get("role") not in ["administrator"]:
+    if user.get("role") not in ["administrator", "stores_officer", "area_manager"]:
         flash("You do not have permission to cancel materials requests", "error")
         return redirect(url_for("materials_request_page"))
 
@@ -3720,8 +3724,8 @@ def cancel_materials_request():
         flash("Materials request not found", "error")
         return redirect(url_for("materials_request_page"))
 
-    if materials_request.get("status") in ["Issued", "Authorized"]:
-        flash("Materials requests which are 'Issued' or 'Authorized' can not be cancelled", "error")
+    if materials_request.get("status") not in ["Initiated", "Forwarded"]:
+        flash("Only Materials requests which are on the 'Initiated' or 'Forwarded' status can be cancelled", "error")
         return redirect(url_for("materials_request_page"))
 
     payload = {
