@@ -235,7 +235,7 @@ def generate_customer_report(customer):
     return pdf_output
 
 def materials_request(data):
-    url = "https://mwuws.org/?api=requisitions&action=create-new-connection"
+    url = f"{config_data.get('SIMS_API_BASE_URL')}/?api=requisitions&action=create-new-connection"
     timeout = 20
     headers = {
         'Accept': 'application/json',
@@ -246,7 +246,7 @@ def materials_request(data):
     return response
 
 def cancel_materials_request_api_call(data):
-    url = "https://mwuws.org/?api=requisitions&action=cancel"
+    url = f"{config_data.get('SIMS_API_BASE_URL')}/?api=requisitions&action=cancel"
     timeout = 20
     headers = {
         'Accept': 'application/json',

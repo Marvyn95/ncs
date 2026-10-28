@@ -129,15 +129,20 @@
               </div>
 
               <!-- Submit Action Button -->
+              {% if user.role in ['administrator', 'stores_officer', 'area_manager'] %}
+
               <div class="mt-auto pt-2 border-top d-flex justify-content-end flex-shrink-0 flex-wrap gap-1">
                 {% if not session.selected_materials_request_scheme_id or not verified_customers %}
-                  <span class="btn btn-primary btn-sm disabled text-wrap text-center" aria-disabled="true">Select scheme with verified customers to make requests</span>
+                  <span class="btn btn-primary btn-sm disabled text-wrap text-center" aria-disabled="true">Select scheme to make requests</span>
                 {% else %}
                   <a href="{{ url_for('send_materials_request', scheme_id=session.selected_materials_request_scheme_id) }}" class="btn btn-success btn-sm d-inline-flex align-items-center gap-1 text-wrap">
                     <i class="bi bi-send-check"></i> Generate Material Request
                   </a>
                 {% endif %}
               </div>
+
+              {% endif %}
+
             </form>
 
           </div>
