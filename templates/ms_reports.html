@@ -194,6 +194,7 @@
         <th class="d-none d-lg-table-cell">Total Billed</th>
         <th class="d-none d-lg-table-cell">Total Paid</th>
         <th>Total Debt</th>
+        <th class="d-none d-lg-table-cell">Last Payment Date</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -205,7 +206,7 @@
         <td class="fw-semibold text-muted text-truncate" style="max-width: 100px;">{{ customer.type or '-' }}</td>
         <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 100px;">
           {% if customer.connection_date %}
-            {{ customer.connection_date.strftime('%d %b %Y') }}
+            {{ customer.connection_date.strftime('%d %b, %Y') }}
           {% else %}
             -
           {% endif %}
@@ -247,6 +248,14 @@
             {% else %}
               {{ "{:,}".format(customer.get("total_debt", 0)|int) }}
             {% endif %}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+
+        <td class="fw-semibold text-muted text-truncate d-none d-lg-table-cell" style="max-width: 120px;">
+          {% if customer.bpb %}
+            {{ customer.get("last_payment_date", "-") }}
           {% else %}
             -
           {% endif %}

@@ -2926,11 +2926,13 @@ def ms_reports():
             c["total_bill"] = sum(int(entry.get("bill", 0)) for entry in c.get("bpb", []))
             c["total_payment"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
             c["total_debt"] = "n/a"
+            c["last_payment_date"] = datetime.datetime.strftime(c.get("bpb")[-1].get("period"), "%b, %Y") if c.get("bpb") else "-"
         else:
             c["total_consumption"] = sum(int(entry.get("consumption", 0)) for entry in c.get("bpb", []))
             c["total_bill"] = sum(int(entry.get("bill", 0)) for entry in c.get("bpb", []))
             c["total_payment"] = sum(int(entry.get("payment", 0)) for entry in c.get("bpb", []))
             c["total_debt"] = c["total_bill"] - c["total_payment"]
+            c["last_payment_date"] = datetime.datetime.strftime(c.get("bpb")[-1].get("period"), "%b, %Y") if c.get("bpb") else "-"
 
         overall_sum_paid += c["total_payment"]
 
@@ -3268,6 +3270,11 @@ def download_ms_reports():
 
             c["bpb"] = [entry for entry in c.get("bpb", []) if ms_report_start_date <= entry.get("period", datetime.datetime.min) <= ms_report_end_date]
 
+            total_cumulative_consumption = sum(entry.get("consumption", 0) for entry in c.get("bpb", []))
+            total_cumulative_bill = sum(entry.get("bill", 0) for entry in c.get("bpb", []))
+            total_cumulative_payment = sum(entry.get("payment", 0) for entry in c.get("bpb", []))
+            total_cumulative_debt = total_cumulative_bill - total_cumulative_payment if total_cumulative_bill >= total_cumulative_payment else 0
+
             data.append({
                 "Name": c.get("name"),
                 "Type": c.get("type"),
@@ -3283,12 +3290,19 @@ def download_ms_reports():
                 "Connection Balance": 'n/a',
                 "Bill Balance": 'n/a',
                 "Overall Balance": 'n/a',
-                "Total Cumulative Consumption": sum(entry.get("consumption", 0) for entry in c.get("bpb", [])),
-                "Total Cumulative Bill": sum(entry.get("bill", 0) for entry in c.get("bpb", [])),
-                "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
+                "Total Cumulative Consumption": total_cumulative_consumption,
+                "Total Cumulative Bill": total_cumulative_bill,
+                "Total Cumulative Payment": total_cumulative_payment,
+                "Total Cumulative Debt": total_cumulative_debt,
+                "Last Payment Date": datetime.datetime.strftime(c.get("bpb")[-1].get("period"), "%b, %Y") if c.get("bpb") and c.get("bpb")[-1].get("period") else None
             })  
     else:     
         for c in customers:
+            total_cumulative_consumption = sum(entry.get("consumption", 0) for entry in c.get("bpb", []))
+            total_cumulative_bill = sum(entry.get("bill", 0) for entry in c.get("bpb", []))
+            total_cumulative_payment = sum(entry.get("payment", 0) for entry in c.get("bpb", []))
+            total_cumulative_debt = total_cumulative_bill - total_cumulative_payment if total_cumulative_bill >= total_cumulative_payment else 0
+
             data.append({
                 "Name": c.get("name"),
                 "Type": c.get("type"),
@@ -3305,9 +3319,12 @@ def download_ms_reports():
                 "Connection Balance": c.get("bpb")[-1].get("balance_on_connection", 0) if c.get("bpb") else c.get("amount_due", 0),
                 "Bill Balance": c.get("bpb")[-1].get("balance_on_bill", 0) if c.get("bpb") else 0,
                 "Overall Balance": c.get("bpb")[-1].get("balance_on_connection", 0) + c.get("bpb")[-1].get("balance_on_bill", 0) if c.get("bpb") else c.get("amount_due", 0),
-                "Total Cumulative Consumption": sum(entry.get("consumption", 0) for entry in c.get("bpb", [])),
-                "Total Cumulative Bill": sum(entry.get("bill", 0) for entry in c.get("bpb", [])),
-                "Total Cumulative Payment": sum(entry.get("payment", 0) for entry in c.get("bpb", []))
+                "Total Cumulative Consumption": total_cumulative_consumption,
+                "Total Cumulative Bill": total_cumulative_bill,
+                "Total Cumulative Payment": total_cumulative_payment,
+                "Total Cumulative Debt": total_cumulative_debt,
+                "Last Payment Date": datetime.datetime.strftime(c.get("bpb")[-1].get("period"), "%b, %Y") if c.get("bpb") and c.get("bpb")[-1].get("period") else None
+
             })
         
     df = pd.DataFrame(data)

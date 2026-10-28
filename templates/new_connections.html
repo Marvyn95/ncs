@@ -18,10 +18,13 @@
         <i class="bi bi-download"></i>
       </a>
       
-      {% if user.role in ["administrator", "billing_officer"] %}
+      {% if user.role in ["administrator"] %}
         <button class="btn btn-outline-success btn-sm d-inline-flex align-items-center justify-content-center d-none d-lg-inline-flex" data-bs-toggle="modal" data-bs-target="#uploadCustomersModal" title="Upload Customers" style="padding:4px 8px; font-size:0.9em;">
           <i class="bi bi-upload"></i>
         </button>
+      {% endif %}
+      
+      {% if user.role in ["administrator", "billing_officer"] %}
         <button class="btn btn-outline-success btn-sm d-inline-flex align-items-center justify-content-center d-none d-lg-inline-flex" data-bs-toggle="modal" data-bs-target="#uploadCustomersReferenceModal" title="Upload References" style="padding:4px 8px; font-size:0.9em;">
           <i class="bi bi-upload me-1"></i> Ref
         </button>
@@ -1102,11 +1105,13 @@ function testLocationButton(button) {
                           <label for="connection_fee_{{ customer._id }}" class="form-label">Connection Fee</label>
                           <input type="number" class="form-control" id="connection_fee_{{ customer._id }}" name="connection_fee" min="0" step="0.01" required>
                         </div>
+
+                      </div>
+                        
                         <div class="mb-2">
                           <label for="approval_form_comment_{{ customer._id }}" class="form-label">Approval Comment</label>
                           <input class="form-control" id="approval_form_comment_{{ customer._id }}" name="approval_form_comment" placeholder="Optional">
                         </div>
-                      </div>
                       
                       <div class="modal-footer py-1">
                         <button type="submit" class="btn btn-primary btn-sm">Submit</button>
@@ -1120,6 +1125,7 @@ function testLocationButton(button) {
                         var customerTypeField = document.getElementById('customerTypeField_{{ customer._id }}');
                         var customerTypeRow = document.getElementById('customerTypeRow_{{ customer._id }}');
                         var paymentPeriodField = document.getElementById('paymentPeriodField_{{ customer._id }}');
+                        
                         if (select.value === 'approved') {
                           fields.style.display = 'block';
                           customerTypeField.style.display = 'block';
