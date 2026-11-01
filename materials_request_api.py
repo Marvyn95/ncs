@@ -129,7 +129,7 @@ def update_request_status():
     return jsonify({"success": True, "status": "success", "message": "Request status updated successfully"}), 200
 
 
-@app.route('/api/delete_material_request', methods=['POST'])
+@app.route('/api/delete_material_request', methods=['DELETE'])
 @require_api_key
 def delete_material_request():
     data = request.get_json() or {}
