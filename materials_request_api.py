@@ -147,8 +147,8 @@ def delete_material_request():
     if not result:
         return jsonify({"success": False, "status": "error", "message": "Material request not found"}), 404
 
-    if result.get("status") not in ["Initiated", "Forwarded"]:
-        return jsonify({"success": False, "status": "error", "message": "Only material requests with status 'Initiated' or 'Forwarded' can be deleted"}), 400
+    if result.get("status") not in ["Initiated", "Forwarded", "Cancelled"]:
+        return jsonify({"success": False, "status": "error", "message": "Only material requests with status 'Initiated', 'Forwarded' or 'Cancelled' can be deleted"}), 400
 
     db.MaterialRequests.delete_one({"_id": ObjectId(material_request_id), "sims_request_id": str(sims_request_id)})
 
