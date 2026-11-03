@@ -1250,8 +1250,8 @@ function testLocationButton(button) {
 
                       <div class="mb-2">
                         <label for="customer_category_{{ customer._id }}" class="form-label">Customer Category</label>
-                        <select class="form-select" id="customer_category_{{ customer._id }}" name="customer_category" required>
-                          <option value="" disabled>Select Category</option>
+                        <select class="form-select" id="customer_category_{{ customer._id }}" name="customer_category" placeholder="Select Customer Category" required>
+                          <option value="" disabled selected>Select Category</option>
                           <option value="domestic" {% if customer.category == 'domestic' %}selected{% endif %}>Domestic</option>
                           <option value="institutional" {% if customer.category == 'institutional' %}selected{% endif %}>Institutional</option>
                           <option value="commercial" {% if customer.category == 'commercial' %}selected{% endif %}>Commercial</option>
