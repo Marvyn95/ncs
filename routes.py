@@ -1263,8 +1263,9 @@ def edit_customer():
     if request.form.get("location"):
         update_data["location"] = request.form.get("location")
 
-    if request.form.get("application_id") != customer.get("application_id"):
-        if next((x for x in customers if x.get("application_id") == request.form.get("application_id")), None):
+    if request.form.get("application_id"):
+        existing_customer = db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "application_id": request.form.get("application_id")})
+        if existing_customer and str(existing_customer.get("_id")) != str(customer.get("_id")):
             flash("Application ID already exists!", "danger")
             return redirect(url_for("new_connections"))
         else:
@@ -1388,8 +1389,9 @@ def edit_customer():
             update_data["customer_reference"] = str(request.form.get("customer_reference"))
 
     if 'transaction_id' in request.form:
+        existing_customer = db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "transaction_id": request.form.get("transaction_id")})
         if request.form.get("transaction_id") != customer.get("transaction_id"):
-            if next((x for x in customers if x.get("transaction_id") == request.form.get("transaction_id")), None):
+            if existing_customer and str(existing_customer.get("_id")) != str(customer_id):
                 flash("Transaction ID already exists!", "danger")
                 return redirect(url_for("new_connections"))
             else:
