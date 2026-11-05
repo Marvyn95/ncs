@@ -1263,7 +1263,8 @@ def edit_customer():
     if request.form.get("location"):
         update_data["location"] = request.form.get("location")
 
-    if request.form.get("application_id"):
+    if request.form.get("application_id") and request.form.get("application_id") != customer.get("application_id"):
+
         existing_customer = db.Customers.find_one({"umbrella_id": user.get("umbrella_id"), "application_id": request.form.get("application_id")})
         if existing_customer and str(existing_customer.get("_id")) != str(customer.get("_id")):
             flash("Application ID already exists!", "danger")
