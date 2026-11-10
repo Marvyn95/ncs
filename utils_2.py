@@ -84,7 +84,7 @@ def check_upload_es_duplicates():
 
 
 def kagadi_customer_rectification():
-    customers = list(db.Customers.find({"scheme_id": "694271b547f68adeb47f55e0", "type": "ES", "status": {"$in": ["connected", "confirmed"]}}).sort("name", 1))
+    customers = list(db.Customers.find({"scheme_id": "694271b547f68adeb47f55e0", "type": "ES", "status": {"$in": ["connected"]}}).sort("name", 1))
 
     for customer in customers:
         customer["name"] = customer.get("name").replace("ES-", "").replace("ES -", "").strip().lower()
@@ -105,5 +105,3 @@ def kagadi_customer_rectification():
     print(len(customer_counts))
 
     return None
-
-# kagadi_customer_rectification()
