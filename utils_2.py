@@ -1,3 +1,5 @@
+from tabnanny import check
+
 from __init__ import app, db
 from bson.objectid import ObjectId
 from pymongo import UpdateOne
@@ -56,4 +58,52 @@ def rectify_es_customer_payment_data():
         
     print(f"Total customers processed: {total}")
 
-rectify_es_customer_payment_data()
+
+def check_upload_es_duplicates():
+    customers = list(db.Customers.find({"type": "ES", "status": {"$in": ["connected", "confirmed"]}, "scheme_id": {"$in": ["694271b547f68adeb47f55e0", "6a2c077f9016b4e86e9ce54d", "6965fd55ba8217d4dc0a3ee2", "69df663ac43627796f2c33d3", "696e27fa590ba2e40f04cb5c"]}}))
+
+    total = 0
+    duplicate_dict = {}
+    for customer in customers:
+        total += 1
+        name = customer.get("name").replace("ES-", "").replace("ES -", "")
+        if name in duplicate_dict:
+            duplicate_dict[name] += 1
+        else:
+            duplicate_dict[name] = 1
+        print(f"Customer ID: {customer['_id']}, Name: {customer.get('name')}")
+    print(f"Total customers checked: {total}")
+
+    print("Duplicate names and their counts:")
+    
+    for name, count in duplicate_dict.items():
+        if count > 1:
+            print(f"{name}: {count}")
+
+
+
+
+def kagadi_customer_rectification():
+    customers = list(db.Customers.find({"scheme_id": "694271b547f68adeb47f55e0", "type": "ES", "status": {"$in": ["connected", "confirmed"]}}).sort("name", 1))
+
+    for customer in customers:
+        customer["name"] = customer.get("name").replace("ES-", "").replace("ES -", "").strip().lower()
+
+    customer_counts = {}
+
+    for customer in customers:
+        name = customer.get("name")
+
+        if name in customer_counts:
+            customer_counts[name] += 1
+        else:
+            customer_counts[name] = 1
+
+    for name, count in customer_counts.items():
+        print(f"{name}: {count}")
+
+    print(len(customer_counts))
+
+    return None
+
+# kagadi_customer_rectification()
