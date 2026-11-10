@@ -1104,6 +1104,7 @@ def new_connections():
         query["$or"] = [
             {"name": {"$regex": search_regex}},
             {"contact": {"$regex": search_regex}},
+            {"customer_reference": {"$regex": search_regex}}
         ]
 
     customers = list(db.Customers.find(query))
